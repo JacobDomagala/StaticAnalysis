@@ -1,0 +1,12 @@
+name: 'Name ofc'
+description: 'Description #1 ofc'
+inputs:
+  compile_result:
+    required: true
+
+outputs:
+  time: # id of output
+    description: 'Description #2 ofc'
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
