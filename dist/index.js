@@ -7,36 +7,55 @@ module.exports =
 
 const core = __nccwpck_require__(380);
 const github = __nccwpck_require__(308);
-//const FileReader = require('filereader');
 
 try {
-  // `who-to-greet` input defined in action metadata file
   const result_in = core.getInput('compile_result');
-  // const repo = core.getInput('repo');
-  // const run_id = core.getInput('run_id');
-  console.log(`Going with ${result_in}!`);
 
-  	// Do something with your data
-  // 	console.log(data);
-  // });
-  //reader.readAsText(files[0]);
-  //const time = (new Date()).toTimeString();
-  // GET https://api.github.com/repos/<org>/<repo>/check-suites/<check_suite_id>/check-runs
-  // Get workflow_id
-  // https://api.github.com/repos/JacobDomagala/DGame/actions/workflows
-  // Get all run_id for given workflow
-  // https://api.github.com/repos/JacobDomagala/DGame/actions/workflows/2745476/runs
-  // const result = await request('GET /repos/{owner}/{repo}/actions/runs/{run_id}/runs', {
-  //   owner: owner,
-  //   repo: repo,
-  //   run_id: run_id
-  // })
-  //console.log(`Run duration=${result.data.run_duration_ms}`)
+  const processed_out = process_compile_output(result_in);
+  const comment_id = find_comment_id();
+  if (comment_id != -1) {
+    update_comment(comment_id, processed_out);
+  } else {
+    create_new_comment(processed_out);
+  }
   core.setOutput("time", 0);
 } catch (error) {
   core.setFailed(error.message);
 }
 
+function process_compile_output(compile_result) {
+  //console.log(`${result_in}`);
+  const repo_dir_len = '/home/runner/work/DGame'.length;
+  const splitLines = str => str.split(/\r?\n/);
+  var matchingStrings = [];
+  arrayOfLines = splitLines(compile_result);
+  arrayOfLines.forEach(function (item, index) {
+    //console.log(item, index);
+    var idx = item.indexOf("/home/runner/work/DGame/");
+    if (idx == 0) {
+      matchingStrings.push(item);
+    }
+  });
+
+  matchingStrings.forEach(function (item, index) {
+    console.log(item);
+  });
+
+  console.log(item);
+  return compile_result;
+}
+
+function find_comment_id() {
+  return -1;
+}
+
+function create_new_comment(comment_body) {
+
+}
+
+function update_comment(comment_id, comment_body) {
+
+}
 
 /***/ }),
 
