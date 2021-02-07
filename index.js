@@ -20,12 +20,13 @@ try {
 }
 
 function process_compile_output(compile_result) {
-  const str_begin_len = "/home/runner/work/DGame/".length;
+  const prefix = "/home/runner/work/DGame/DGame/";
+  const str_begin_len = prefix.length;
   const splitLines = str => str.split(/\r?\n/);
   var matchingStrings = [];
   arrayOfLines = splitLines(compile_result);
   arrayOfLines.forEach(item => {
-    var idx = item.indexOf("/home/runner/work/DGame/DGame");
+    var idx = item.indexOf(prefix);
     if (idx == 0) {
 
       // Retrive first occurence of ':'
@@ -35,9 +36,12 @@ function process_compile_output(compile_result) {
       file_path = item.substring(str_begin_len, file_path_end_idx);
 
       // Retrive line number of warning/error
-      file_line = item.substring(file_path_end_idx + 1, item.substring(file_path_end_idx + 1).indexOf(":"));
+      const file_name_offset = file_path_end_idx + 1;
+      file_line_start = item.substring(file_name_offset, file_name_offset + item.substring(file_name_offset).indexOf(":"));
+      file_line_end = (parseInt(file_line_start) + 3).toString();
 
-      var new_line = `https://github.com/JacobDomagala/DGame/blob/${gitsha}/${file_path}#L${file_line}`;
+
+      var new_line = `https://github.com/JacobDomagala/DGame/blob/${gitsha}/${file_path}#L${file_line_start}-${file_line_end}`;
       matchingStrings.push(new_line);
     }
   });
