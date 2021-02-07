@@ -25,12 +25,19 @@ function process_compile_output(compile_result) {
   var matchingStrings = [];
   arrayOfLines = splitLines(compile_result);
   arrayOfLines.forEach(item => {
-    var idx = item.indexOf("/home/runner/work/DGame/");
+    var idx = item.indexOf("/home/runner/work/DGame/DGame");
     if (idx == 0) {
-      end_str = item.indexOf(":");
-      sub_str = item.substring(str_begin_len, end_str);
 
-      var new_line = `https://github.com/JacobDomagala/DGame/blob/${gitsha}/${sub_str}`;
+      // Retrive first occurence of ':'
+      file_path_end_idx = item.indexOf(":");
+
+      // Retrive file path (without github worker dir)
+      file_path = item.substring(str_begin_len, file_path_end_idx);
+
+      // Retrive line number of warning/error
+      file_line = item.substring(file_path_end_idx + 1, item.substring(file_path_end_idx + 1).indexOf(":"));
+
+      var new_line = `https://github.com/JacobDomagala/DGame/blob/${gitsha}/${file_path}#L${file_line}`;
       matchingStrings.push(new_line);
     }
   });
