@@ -45,11 +45,11 @@ function process_compile_output(compile_result) {
       file_line_end = (parseInt(file_line_start) + parseInt(core.getInput("num_lines_to_display"))).toString();
 
       // warning/error description
-      description = item.substring(item.indexOf(" "));
+      description = "```diff\n" + `-Line: ${file_line_start} ` + item.substring(item.indexOf(" ")) + "\n```\n";
 
       // Concatinate both modified path to file and the description
       var link_with_description = `https://github.com/${github.context.issue.owner}/${github.context.issue.repo}` +
-      `/blob/${github.context.sha}/${file_path}#L${file_line_start}-L${file_line_end} ${description}\n\n`;
+      `/blob/${github.context.sha}/${file_path}#L${file_line_start}-L${file_line_end} ${description} </br>`;
 
       matchingStrings.push(link_with_description);
     }
