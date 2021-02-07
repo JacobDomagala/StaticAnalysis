@@ -3,6 +3,9 @@ const github = require('@actions/github');
 
 try {
   const result_in = core.getInput('compile_result');
+  gitsha = github.context.sha;
+
+  console.log(`GIT SHA = ${gitsha}`);
 
   const processed_out = process_compile_output(result_in);
   const comment_id = find_comment_id();
@@ -17,25 +20,24 @@ try {
 }
 
 function process_compile_output(compile_result) {
-  //console.log(`${result_in}`);
-  const repo_dir_len = '/home/runner/work/DGame'.length;
+  const str_begin_len = "/home/runner/work/DGame/".length;
   const splitLines = str => str.split(/\r?\n/);
   var matchingStrings = [];
   arrayOfLines = splitLines(compile_result);
-  arrayOfLines.forEach(function (item, index) {
-    //console.log(item, index);
+  arrayOfLines.forEach(item => {
     var idx = item.indexOf("/home/runner/work/DGame/");
     if (idx == 0) {
-      matchingStrings.push(item);
+      end_str = item.indexOf(":");
+      sub_str = item.substring(str_begin_len, end_str);
+
+      var new_line = `https://github.com/JacobDomagala/DGame/blob/${gitsha}/${sub_str}`;
+      matchingStrings.push(new_line);
     }
   });
 
-  matchingStrings.forEach(function (item, index) {
-    console.log(item);
-  });
+  matchingStrings.forEach(item => console.log(item));
 
-  console.log(item);
-  return compile_result;
+  return matchingStrings;
 }
 
 function find_comment_id() {
