@@ -34,8 +34,9 @@ function process_compile_output(compile_result) {
   arrayOfLines = splitLines(compile_result);
   arrayOfLines.forEach(item => {
     var idx = item.indexOf(prefix);
-    if (idx == 0) {
 
+    // Only consider lines that start with 'prefix'
+    if (idx == 0) {
       // Retrive first occurence of ':'
       file_path_end_idx = item.indexOf(":");
 
@@ -47,9 +48,13 @@ function process_compile_output(compile_result) {
       file_line_start = item.substring(file_name_offset, file_name_offset + item.substring(file_name_offset).indexOf(":"));
       file_line_end = (parseInt(file_line_start) + 3).toString();
 
+      // warning/error description
+      description = item.substring(item.indexOf(" "));
 
       var new_line = `https://github.com/JacobDomagala/DGame/blob/${gitsha}/${file_path}#L${file_line_start}-${file_line_end}`;
+
       matchingStrings.push(new_line);
+      matchingStrings.push(description);
     }
   });
 
@@ -59,6 +64,7 @@ function process_compile_output(compile_result) {
 }
 
 function find_comment_id() {
+
   return -1;
 }
 
