@@ -3,10 +3,11 @@ description: 'Description #1 ofc'
 inputs:
   compile_result:
     required: true
-
-outputs:
-  time: # id of output
-    description: 'Description #2 ofc'
+  token:
+    description: 'GITHUB_TOKEN or a repo scoped PAT.'
+    default: ${{ github.token }}
+  pr_number:
+    default: ${{ github.event.pull_request.number }}
 runs:
   using: 'node12'
   main: 'dist/index.js'

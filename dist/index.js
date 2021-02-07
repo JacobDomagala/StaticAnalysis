@@ -8,23 +8,19 @@ module.exports =
 const core = __nccwpck_require__(380);
 const github = __nccwpck_require__(308);
 
-try {
-  const result_in = core.getInput('compile_result');
-  gitsha = github.context.sha;
+async function main() {
+  try {
+    const result_in = core.getInput('compile_result');
 
-  console.log(`GIT SHA = ${gitsha}`);
+    await create_or_update_comment(await find_comment_id(), process_compile_output(result_in));
 
-  const processed_out = process_compile_output(result_in);
-  const comment_id = find_comment_id();
-  if (comment_id != -1) {
-    update_comment(comment_id, processed_out);
-  } else {
-    create_new_comment(processed_out);
+    core.setOutput("time", 0);
+  } catch (error) {
+    core.setFailed(error.message);
   }
-  core.setOutput("time", 0);
-} catch (error) {
-  core.setFailed(error.message);
 }
+
+main();
 
 function process_compile_output(compile_result) {
   const prefix = "/home/runner/work/DGame/DGame/";
@@ -51,7 +47,7 @@ function process_compile_output(compile_result) {
       // warning/error description
       description = item.substring(item.indexOf(" "));
 
-      var new_line = `https://github.com/JacobDomagala/DGame/blob/${gitsha}/${file_path}#L${file_line_start}-${file_line_end}`;
+      var new_line = `https://github.com/${github.context.issue.owner}/${github.context.issue.repo}/blob/${github.context.sha}/${file_path}#L${file_line_start}-${file_line_end}`;
 
       matchingStrings.push(new_line);
       matchingStrings.push(description);
@@ -63,18 +59,53 @@ function process_compile_output(compile_result) {
   return matchingStrings;
 }
 
-function find_comment_id() {
+async function find_comment_id() {
+  const octokit = github.getOctokit(core.getInput("token"));
+
+  await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}/commits', {
+    owner: github.context.issue.owner,
+    repo: github.context.issue.repo,
+    pull_number: core.getInput("pr_number")
+  });
 
   return -1;
 }
 
-function create_new_comment(comment_body) {
+async function create_or_update_comment(comment_id, comment_body) {
+  const octokit = github.getOctokit(core.getInput("token"));
 
+  const pr_num = core.getInput("pr_number");
+  const token = core.getInput("token");
+
+  console.log(`Token ${token}`);
+  console.log(`PR number ${pr_num}`);
+  console.log("Repo " + github.context.issue.repo);
+  console.log("Owner " + github.context.issue.owner);
+  console.log(`Comment_ID ${comment_id}`);
+
+  // const repository = process.env.GITHUB_REPOSITORY;
+  // const repo = repository.split("/");
+
+  // Create comment
+  if (comment_id == -1) {
+    await octokit.issues.createComment({
+      owner: github.context.issue.owner,
+      repo: github.context.issue.repo,
+      issue_number: pr_num,
+      body: comment_body,
+    });
+  }
+  // Update comment
+  else {
+    await octokit.issues.updateComment({
+      owner: github.context.issue.owner,
+      repo: github.context.issue.repo,
+      comment_id: comment_id,
+      body: comment_body,
+    });
+  }
 }
 
-function update_comment(comment_id, comment_body) {
-
-}
 
 /***/ }),
 
