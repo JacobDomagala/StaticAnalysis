@@ -13,6 +13,10 @@ inputs:
   num_lines_to_display:
     description: 'Number of lines for code snippet which will be displayed for each error/warning'
     default: 5
+  comment_title:
+    description: 'Comment title that will be displayed on top of the comment. Used also to determine whether
+                  comment already exists and should be edited or not'
+    default: COMPILE RESULT
 
 runs:
   using: 'node12'
