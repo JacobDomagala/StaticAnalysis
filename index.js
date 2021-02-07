@@ -40,7 +40,7 @@ function process_compile_output(compile_result) {
       // warning/error description
       description = item.substring(item.indexOf(" "));
 
-      var new_line = `https://github.com/${github.context.issue.owner}/${github.context.issue.repo}/blob/${github.context.sha}/${file_path}#L${file_line_start}-${file_line_end}`;
+      var new_line = `https://github.com/${github.context.issue.owner}/${github.context.issue.repo}/blob/${github.context.sha}/${file_path}#L${file_line_start}-L${file_line_end}`;
 
       matchingStrings.push(new_line);
       matchingStrings.push(description);
