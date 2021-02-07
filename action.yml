@@ -2,12 +2,18 @@ name: 'Name ofc'
 description: 'Description #1 ofc'
 inputs:
   compile_result:
+    description: 'String which contains compilation output with warnings/errors'
     required: true
   token:
     description: 'GITHUB_TOKEN or a repo scoped PAT.'
     default: ${{ github.token }}
-  pr_number:
+  pull_request_number:
+    description: 'Github Pull Request number'
     default: ${{ github.event.pull_request.number }}
+  num_lines_to_display:
+    description: 'Number of lines for code snippet which will be displayed for each error/warning'
+    default: 5
+
 runs:
   using: 'node12'
   main: 'dist/index.js'

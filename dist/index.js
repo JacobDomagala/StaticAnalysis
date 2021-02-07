@@ -42,15 +42,16 @@ function process_compile_output(compile_result) {
       // Retrive line number of warning/error
       const file_name_offset = file_path_end_idx + 1;
       file_line_start = item.substring(file_name_offset, file_name_offset + item.substring(file_name_offset).indexOf(":"));
-      file_line_end = (parseInt(file_line_start) + 3).toString();
+      file_line_end = (parseInt(file_line_start) + parseInt(core.getInput("num_lines_to_display"))).toString();
 
       // warning/error description
       description = item.substring(item.indexOf(" "));
 
-      var new_line = `https://github.com/${github.context.issue.owner}/${github.context.issue.repo}/blob/${github.context.sha}/${file_path}#L${file_line_start}-L${file_line_end}`;
+      // Concatinate both modified path to file and the description
+      var link_with_description = `https://github.com/${github.context.issue.owner}/${github.context.issue.repo}` +
+      `/blob/${github.context.sha}/${file_path}#L${file_line_start}-L${file_line_end} ${description}\n\n`;
 
-      matchingStrings.push(new_line);
-      matchingStrings.push(description);
+      matchingStrings.push(link_with_description);
     }
   });
 
@@ -63,7 +64,7 @@ async function find_comment_id() {
   await octokit.request('GET /repos/{owner}/{repo}/pulls/{pull_number}/commits', {
     owner: github.context.issue.owner,
     repo: github.context.issue.repo,
-    pull_number: core.getInput("pr_number")
+    pull_number: core.getInput("pull_request_number")
   });
 
   return -1;
@@ -72,21 +73,12 @@ async function find_comment_id() {
 async function create_or_update_comment(comment_id, comment_body) {
   const octokit = github.getOctokit(core.getInput("token"));
 
-  const pr_num = core.getInput("pr_number");
-  const token = core.getInput("token");
-
-  console.log(`Token ${token}`);
-  console.log(`PR number ${pr_num}`);
-  console.log("Repo " + github.context.issue.repo);
-  console.log("Owner " + github.context.issue.owner);
-  console.log(`Comment_ID ${comment_id}`);
-
   // Create comment
   if (comment_id == -1) {
     await octokit.issues.createComment({
       owner: github.context.issue.owner,
       repo: github.context.issue.repo,
-      issue_number: pr_num,
+      issue_number: core.getInput("pull_request_number"),
       body: comment_body,
     });
   }
