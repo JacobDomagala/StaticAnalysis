@@ -54,9 +54,7 @@ function process_compile_output(compile_result) {
     }
   });
 
-  matchingStrings.forEach(item => console.log(item));
-
-  return matchingStrings;
+  return matchingStrings.join('\n');
 }
 
 async function find_comment_id() {
@@ -82,9 +80,6 @@ async function create_or_update_comment(comment_id, comment_body) {
   console.log("Repo " + github.context.issue.repo);
   console.log("Owner " + github.context.issue.owner);
   console.log(`Comment_ID ${comment_id}`);
-
-  // const repository = process.env.GITHUB_REPOSITORY;
-  // const repo = repository.split("/");
 
   // Create comment
   if (comment_id == -1) {
