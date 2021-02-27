@@ -7,11 +7,12 @@ module.exports =
 
 const core = __nccwpck_require__(380);
 const github = __nccwpck_require__(308);
+var fs = __nccwpck_require__(747);
 
 async function main() {
   try {
-    const result_in = core.getInput('compile_result');
-    await create_or_update_comment(await find_comment_id(), process_compile_output(result_in));
+    //const result_in = core.getInput('compile_result');
+    await create_or_update_comment(await find_comment_id(), process_compile_output());
   } catch (error) {
     core.setFailed(error.message);
   }
@@ -19,8 +20,10 @@ async function main() {
 
 main();
 
-function process_compile_output(compile_result) {
-  const prefix = "/home/runner/work/DGame/DGame/";
+function process_compile_output() {
+  compile_result = fs.readFileSync(core.getInput('compile_result_file')).toString('utf-8');
+  console.log(`compile result = ${compile_result}`);
+  const prefix =  core.getInput('work_dir');
   const str_begin_len = prefix.length;
   const splitLines = str => str.split(/\r?\n/);
   var matchingStrings = [];
@@ -52,7 +55,12 @@ function process_compile_output(compile_result) {
     }
   });
 
-  return `<details> <summary> <b> ${core.getInput("comment_title")} </b> </summary>\r\n${matchingStrings.join('\n')} </details>`;
+  if (matchingStrings.length == 0) {
+    return `<b> ${core.getInput("comment_title")} - SUCCESS! </b>`
+  }else{
+    return `<details> <summary> <b> ${core.getInput("comment_title")} </b> </summary>\r\n${matchingStrings.join('\n')} </details>`;
+  }
+
 }
 
 function findCommentPredicate(comment) {

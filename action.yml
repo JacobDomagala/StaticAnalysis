@@ -3,6 +3,8 @@ description: 'GitHub action that parses the compile output and will create PR co
 inputs:
   compile_result:
     description: 'String which contains compilation output with warnings/errors'
+  compile_result_file:
+    description: 'File which contains compilation result'
     required: true
   token:
     description: 'GITHUB_TOKEN or a repo scoped PAT.'
