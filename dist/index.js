@@ -20,32 +20,66 @@ async function main() {
 
 main();
 
+function check_for_exclude_dir(line, prefix, exclude_dir) {
+   if(exclude_dir.length == 0) {
+     return true;
+   }
+
+   // substring(1) is here to skip file delimiter it can be either / or \
+   return line.replace(prefix, "").substring(1).indexOf(exclude_dir) != 0;
+}
+
+function check_if_valid_line(compiler, line){
+  var error_word = "error:";
+  var warning_word = "warning:";
+
+  if(compiler == "MSVC"){
+    error_word = "error C";
+    warning_word = "warning C"
+  }
+
+  return line.indexOf(warning_word) != -1 || line.indexOf(error_word) != -1;
+}
+
+function get_line_info(compiler, line) {
+  var end_file_char = ":";
+  var file_line_end_char = ":";
+
+  if(compiler == "MSVC"){
+    end_file_char = "(";
+    file_line_end_char = ",";
+  }
+
+  file_path_end_idx = line.indexOf(end_file_char);
+  const file_name_offset = file_path_end_idx + 1;
+  file_line_start = line.substring(file_name_offset, file_name_offset + line.substring(file_name_offset).indexOf(file_line_end_char));
+  file_line_end = (parseInt(file_line_start) + parseInt(core.getInput("num_lines_to_display"))).toString();
+  file_path = line.substring(0, file_path_end_idx).split("\\").join("/");
+
+  return [file_path, file_line_start, file_line_end];
+}
+
 function process_compile_output() {
   compile_result = fs.readFileSync(core.getInput('compile_result_file')).toString('utf-8');
   console.log(`compile result = ${compile_result}`);
   const prefix =  core.getInput('work_dir');
-  const str_begin_len = prefix.length;
+  const exclude_dir = core.getInput('exclude_dir');
+  const compiler = core.getInput('compiler');
+
   const splitLines = str => str.split(/\r?\n/);
   var matchingStrings = [];
   arrayOfLines = splitLines(compile_result);
-  arrayOfLines.forEach(item => {
-    var idx = item.indexOf(prefix);
+  arrayOfLines.forEach(line => {
+    var idx = line.indexOf(prefix);
 
     // Only consider lines that start with 'prefix'
-    if (idx == 0) {
-      // Retrive first occurence of ':'
-      file_path_end_idx = item.indexOf(":");
+    if (idx == 0 && check_for_exclude_dir(line, prefix, exclude_dir) && check_if_valid_line(compiler, line)) {
+      str = line.replace(prefix, "");
 
-      // Retrive file path (without github worker dir)
-      file_path = item.substring(str_begin_len, file_path_end_idx);
-
-      // Retrive line number of warning/error
-      const file_name_offset = file_path_end_idx + 1;
-      file_line_start = item.substring(file_name_offset, file_name_offset + item.substring(file_name_offset).indexOf(":"));
-      file_line_end = (parseInt(file_line_start) + parseInt(core.getInput("num_lines_to_display"))).toString();
+      const [file_path, file_line_start, file_line_end] = get_line_info(compiler, str);
 
       // warning/error description
-      description = "\n```diff\n" + `-Line: ${file_line_start} ` + item.substring(item.indexOf(" ")) + "\n```\n";
+      description = "\n```diff\n" + `-Line: ${file_line_start} ` + str.substring(str.indexOf(" ")) + "\n```\n";
 
       // Concatinate both modified path to file and the description
       var link_with_description = `\nhttps://github.com/${github.context.issue.owner}/${github.context.issue.repo}` +

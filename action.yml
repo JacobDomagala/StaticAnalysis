@@ -6,6 +6,10 @@ inputs:
   compile_result_file:
     description: 'File which contains compilation result'
     required: true
+  compiler:
+    description: 'Which compiler was used to produce the output. MSVC/GNU/CLANG'
+    required: true
+    default: GNU
   token:
     description: 'GITHUB_TOKEN or a repo scoped PAT.'
     required: true
@@ -14,6 +18,8 @@ inputs:
     description: 'Action work directory'
     required: true
     default: ${{ github.workspace }}
+  exclude_dir:
+    description: 'Ignore the warnings/errors from this DIR'
   pull_request_number:
     description: 'Github Pull Request number'
     required: true
