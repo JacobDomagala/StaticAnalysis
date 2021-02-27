@@ -13,7 +13,7 @@ async function main() {
 main();
 
 function process_compile_output(compile_result) {
-  const prefix = "/home/runner/work/DGame/DGame/";
+  const prefix =  core.getInput('work_dir');
   const str_begin_len = prefix.length;
   const splitLines = str => str.split(/\r?\n/);
   var matchingStrings = [];

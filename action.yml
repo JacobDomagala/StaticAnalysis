@@ -1,22 +1,29 @@
-name: 'Name ofc'
-description: 'Description #1 ofc'
+name: 'Post warnings/errors as PR comment'
+description: 'GitHub action that parses the compile output and will create PR comment with warnings/errors listed'
 inputs:
   compile_result:
     description: 'String which contains compilation output with warnings/errors'
     required: true
   token:
     description: 'GITHUB_TOKEN or a repo scoped PAT.'
+    required: true
     default: ${{ github.token }}
+  work_dir:
+    description: 'Action work directory'
+    required: true
+    default: ${{ github.workspace }}
   pull_request_number:
     description: 'Github Pull Request number'
+    required: true
     default: ${{ github.event.pull_request.number }}
-  num_lines_to_display:
-    description: 'Number of lines for code snippet which will be displayed for each error/warning'
-    default: 5
   comment_title:
     description: 'Comment title that will be displayed on top of the comment. Used also to determine whether
                   comment already exists and should be edited or not'
+    required: true
     default: COMPILE RESULT
+  num_lines_to_display:
+    description: 'Number of lines for code snippet which will be displayed for each error/warning'
+    default: 5
 
 runs:
   using: 'node12'
