@@ -1,0 +1,16 @@
+name: "Run static analysis for C++ project"
+description: "Runs cppcheck and clang-tidy on CMake based project. The result will be added as PR comment"
+
+inputs:
+  github_token:
+    description: 'Github token used for Github API requests'
+    required: true
+    default: ${{ github.token }}
+
+runs:
+  using: "docker"
+  image: "Dockerfile"
+
+branding:
+  icon: "book-open"
+  color: "white"
