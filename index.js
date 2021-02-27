@@ -45,7 +45,12 @@ function process_compile_output(compile_result) {
     }
   });
 
-  return `<details> <summary> <b> ${core.getInput("comment_title")} </b> </summary>\r\n${matchingStrings.join('\n')} </details>`;
+  if (matchingStrings.empty()) {
+    return `<b> ${core.getInput("comment_title")} - SUCCESS! </b>`
+  }else{
+    return `<details> <summary> <b> ${core.getInput("comment_title")} </b> </summary>\r\n${matchingStrings.join('\n')} </details>`;
+  }
+
 }
 
 function findCommentPredicate(comment) {
