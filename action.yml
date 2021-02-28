@@ -14,6 +14,12 @@ inputs:
     description: 'Repository name'
     default: ${{ github.repository }}
     required: true
+  work_dir:
+    description: 'GitHub Working directory'
+    required: true
+    default: ${{ github.workspace }}
+  exclude_dir:
+    description: 'Full path to directory which should be excluded'
   comment_title:
     description: 'Unique title for comment'
     default: Static analysis result

@@ -1,0 +1,130 @@
+clang-tidy-10 -p=/github/workspace/build /github/workspace/engine/Common/Utils.cpp
+/github/workspace/engine/Common/Utils.cpp:33:18: error: do not access members of unions; use (boost::)variant instead [cppcoreguidelines-pro-type-union-access,-warnings-as-errors]
+   if (direction.x >= 0)
+                 ^
+/github/workspace/engine/Common/Utils.cpp:35:27: error: do not access members of unions; use (boost::)variant instead [cppcoreguidelines-pro-type-union-access,-warnings-as-errors]
+      xCheck = currentPos.x >= targetPosWithNegativeMarigin.x;
+                          ^
+/github/workspace/engine/Common/Utils.cpp:35:61: error: do not access members of unions; use (boost::)variant instead [cppcoreguidelines-pro-type-union-access,-warnings-as-errors]
+      xCheck = currentPos.x >= targetPosWithNegativeMarigin.x;
+                                                            ^
+/github/workspace/engine/Common/Utils.cpp:39:27: error: do not access members of unions; use (boost::)variant instead [cppcoreguidelines-pro-type-union-access,-warnings-as-errors]
+      xCheck = currentPos.x <= targetPosWithPositiveMarigin.x;
+                          ^
+/github/workspace/engine/Common/Utils.cpp:39:61: error: do not access members of unions; use (boost::)variant instead [cppcoreguidelines-pro-type-union-access,-warnings-as-errors]
+      xCheck = currentPos.x <= targetPosWithPositiveMarigin.x;
+                                                            ^
+/github/workspace/engine/Common/Utils.cpp:42:18: error: do not access members of unions; use (boost::)variant instead [cppcoreguidelines-pro-type-union-access,-warnings-as-errors]
+   if (direction.y >= 0)
+                 ^
+/github/workspace/engine/Common/Utils.cpp:44:27: error: do not access members of unions; use (boost::)variant instead [cppcoreguidelines-pro-type-union-access,-warnings-as-errors]
+      yCheck = currentPos.y >= targetPosWithNegativeMarigin.y;
+                          ^
+/github/workspace/engine/Common/Utils.cpp:44:61: error: do not access members of unions; use (boost::)variant instead [cppcoreguidelines-pro-type-union-access,-warnings-as-errors]
+      yCheck = currentPos.y >= targetPosWithNegativeMarigin.y;
+                                                            ^
+/github/workspace/engine/Common/Utils.cpp:48:27: error: do not access members of unions; use (boost::)variant instead [cppcoreguidelines-pro-type-union-access,-warnings-as-errors]
+      yCheck = currentPos.y <= targetPosWithPositiveMarigin.y;
+                          ^
+/github/workspace/engine/Common/Utils.cpp:48:61: error: do not access members of unions; use (boost::)variant instead [cppcoreguidelines-pro-type-union-access,-warnings-as-errors]
+      yCheck = currentPos.y <= targetPosWithPositiveMarigin.y;
+                                                            ^
+/github/workspace/engine/Common/Utils.cpp:160:4: error: do not declare C-style arrays, use std::array<> instead [cppcoreguidelines-avoid-c-arrays,-warnings-as-errors]
+   char buffer[FILE_DIALOG_MAX_BUFFER];
+   ^
+/github/workspace/engine/Common/Utils.cpp:160:4: error: do not declare C-style arrays, use std::array<> instead [hicpp-avoid-c-arrays,-warnings-as-errors]
+/github/workspace/engine/Common/Utils.cpp:160:4: error: do not declare C-style arrays, use std::array<> instead [modernize-avoid-c-arrays,-warnings-as-errors]
+/github/workspace/engine/Common/Utils.cpp:167:17: error: statement should be inside braces [hicpp-braces-around-statements,-warnings-as-errors]
+   if (multiple)
+                ^
+                 {
+/github/workspace/engine/Common/Utils.cpp:167:17: error: statement should be inside braces [readability-braces-around-statements,-warnings-as-errors]
+   if (multiple)
+                ^
+                 {
+/github/workspace/engine/Common/Utils.cpp:169:13: error: statement should be inside braces [hicpp-braces-around-statements,-warnings-as-errors]
+   if (save)
+            ^
+             {
+/github/workspace/engine/Common/Utils.cpp:169:13: error: statement should be inside braces [readability-braces-around-statements,-warnings-as-errors]
+   if (save)
+            ^
+             {
+/github/workspace/engine/Common/Utils.cpp:172:14: error: loop variable is copied but only used as const reference; consider making it a const reference [performance-for-range-copy,-warnings-as-errors]
+   for (auto pair : filetypes)
+             ^
+        const  &
+/github/workspace/engine/Common/Utils.cpp:172:31: error: statement should be inside braces [hicpp-braces-around-statements,-warnings-as-errors]
+   for (auto pair : filetypes)
+                              ^
+                               {
+/github/workspace/engine/Common/Utils.cpp:172:31: error: statement should be inside braces [readability-braces-around-statements,-warnings-as-errors]
+   for (auto pair : filetypes)
+                              ^
+                               {
+/github/workspace/engine/Common/Utils.cpp:175:19: error: calling 'popen' uses a command processor [cert-env33-c,-warnings-as-errors]
+   FILE* output = popen(cmd.c_str(), "r");
+                  ^
+/github/workspace/engine/Common/Utils.cpp:176:26: error: statement should be inside braces [hicpp-braces-around-statements,-warnings-as-errors]
+   if (output == nullptr)
+                         ^
+                          {
+/github/workspace/engine/Common/Utils.cpp:176:26: error: statement should be inside braces [readability-braces-around-statements,-warnings-as-errors]
+   if (output == nullptr)
+                         ^
+                          {
+/github/workspace/engine/Common/Utils.cpp:178:17: error: do not implicitly decay an array into a pointer; consider using gsl::array_view or an explicit cast instead [cppcoreguidelines-pro-bounds-array-to-pointer-decay,-warnings-as-errors]
+   while (fgets(buffer, FILE_DIALOG_MAX_BUFFER, output) != NULL)
+                ^
+/github/workspace/engine/Common/Utils.cpp:178:17: error: do not implicitly decay an array into a pointer; consider using gsl::array_view or an explicit cast instead [hicpp-no-array-decay,-warnings-as-errors]
+/github/workspace/engine/Common/Utils.cpp:178:60: error: use nullptr [modernize-use-nullptr,-warnings-as-errors]
+   while (fgets(buffer, FILE_DIALOG_MAX_BUFFER, output) != NULL)
+                                                           ^~~~
+                                                           nullptr
+/github/workspace/engine/Common/Utils.cpp:178:65: error: statement should be inside braces [hicpp-braces-around-statements,-warnings-as-errors]
+   while (fgets(buffer, FILE_DIALOG_MAX_BUFFER, output) != NULL)
+                                                                ^
+                                                                 {
+/github/workspace/engine/Common/Utils.cpp:178:65: error: statement should be inside braces [readability-braces-around-statements,-warnings-as-errors]
+   while (fgets(buffer, FILE_DIALOG_MAX_BUFFER, output) != NULL)
+                                                                ^
+                                                                 {
+/github/workspace/engine/Common/Utils.cpp:181:22: error: do not implicitly decay an array into a pointer; consider using gsl::array_view or an explicit cast instead [cppcoreguidelines-pro-bounds-array-to-pointer-decay,-warnings-as-errors]
+   std::string paths(buffer);
+                     ^
+/github/workspace/engine/Common/Utils.cpp:181:22: error: do not implicitly decay an array into a pointer; consider using gsl::array_view or an explicit cast instead [hicpp-no-array-decay,-warnings-as-errors]
+clang-tidy-10 -p=/github/workspace/build /github/workspace/engine/Core/Application.cpp
+/github/workspace/engine/Core/Application.cpp:45:14: error: method 'IsGame' can be made const [readability-make-member-function-const,-warnings-as-errors]
+Application::IsGame()
+             ^
+                      const
+/github/workspace/engine/Core/Application.cpp:57:37: error: the parameter #1 is copied for each invocation but only used as a const reference; consider making it a const reference [performance-unnecessary-value-param,-warnings-as-errors]
+Application::RenderText(std::string , const glm::vec2& , float , const glm::vec3& )
+                                    ^
+                        const      &
+/github/workspace/engine/Core/Application.cpp:57:37: error: all parameters should be named in a function [readability-named-parameter,-warnings-as-errors]
+Application::RenderText(std::string , const glm::vec2& , float , const glm::vec3& )
+                                    ^
+                                     /*unused*/         /*unused*/  /*unused*/     /*unused*/
+/github/workspace/engine/Core/Application.cpp:75:67: error: 2.0f is a magic number; consider replacing it with a named constant [cppcoreguidelines-avoid-magic-numbers,-warnings-as-errors]
+   auto returnPos = (projectedPosition + glm::vec2(1.0f, 1.0f)) / 2.0f;
+                                                                  ^
+/github/workspace/engine/Core/Application.cpp:75:67: error: 2.0f is a magic number; consider replacing it with a named constant [readability-magic-numbers,-warnings-as-errors]
+/github/workspace/engine/Core/Application.cpp:80:14: error: do not access members of unions; use (boost::)variant instead [cppcoreguidelines-pro-type-union-access,-warnings-as-errors]
+   returnPos.x *= windowSize.x;
+             ^
+/github/workspace/engine/Core/Application.cpp:80:30: error: do not access members of unions; use (boost::)variant instead [cppcoreguidelines-pro-type-union-access,-warnings-as-errors]
+   returnPos.x *= windowSize.x;
+                             ^
+/github/workspace/engine/Core/Application.cpp:81:14: error: do not access members of unions; use (boost::)variant instead [cppcoreguidelines-pro-type-union-access,-warnings-as-errors]
+   returnPos.y *= -windowSize.y;
+             ^
+/github/workspace/engine/Core/Application.cpp:81:31: error: do not access members of unions; use (boost::)variant instead [cppcoreguidelines-pro-type-union-access,-warnings-as-errors]
+   returnPos.y *= -windowSize.y;
+                              ^
+/github/workspace/engine/Core/Application.cpp:82:14: error: do not access members of unions; use (boost::)variant instead [cppcoreguidelines-pro-type-union-access,-warnings-as-errors]
+   returnPos.y += windowSize.y;
+             ^
+/github/workspace/engine/Core/Application.cpp:82:30: error: do not access members of unions; use (boost::)variant instead [cppcoreguidelines-pro-type-union-access,-warnings-as-errors]
+   returnPos.y += windowSize.y;
+                             ^
