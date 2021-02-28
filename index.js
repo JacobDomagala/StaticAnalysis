@@ -4,7 +4,6 @@ var fs = require("fs");
 
 async function main() {
   try {
-    //const result_in = core.getInput('compile_result');
     await create_or_update_comment(await find_comment_id(), process_compile_output());
   } catch (error) {
     core.setFailed(error.message);
@@ -13,66 +12,69 @@ async function main() {
 
 main();
 
-function check_for_exclude_dir(line, prefix, exclude_dir) {
-   if(exclude_dir.length == 0) {
-     return true;
-   }
 
-   // substring(1) is here to skip file delimiter it can be either / or \
-   return line.replace(prefix, "").substring(1).indexOf(exclude_dir) != 0;
+// Switch from '\' to '/' so it makes comparing directories universal
+function make_dir_universal(line){
+  return line.split("\\").join("/");
 }
 
-function check_if_valid_line(compiler, line){
-  var error_word = "error:";
-  var warning_word = "warning:";
+// Returns true if 'line' doesn't start with excluded directory. Return false otherwise
+function check_for_exclude_dir(line, exclude_dir) {
+  return (exclude_dir.length == 0) || (line.indexOf(exclude_dir) != 0);
+}
 
-  if(compiler == "MSVC"){
-    error_word = "error C";
-    warning_word = "warning C"
-  }
+// Checks whether 'line' is warning/error line
+function check_if_valid_line(compiler, line){
+  const error_word = compiler != "MSVC" ? "error:" : "error C";
+  const warning_word = compiler != "MSVC" ? "warning:" : "warning C";
 
   return line.indexOf(warning_word) != -1 || line.indexOf(error_word) != -1;
 }
 
-function get_line_info(compiler, line) {
-  var end_file_char = ":";
-  var file_line_end_char = ":";
+// Return type of the issue present in 'line'
+function get_issue_type(compiler, line){
+  // This function is called after check_if_valid_line, so it's guaranteed that
+  // 'line' is warning or error description
+  const warning_word = compiler != "MSVC" ? "warning:" : "warning C";
 
-  if(compiler == "MSVC"){
-    end_file_char = "(";
-    file_line_end_char = ",";
-  }
+  return line.indexOf(warning_word) != -1 ? "warning" : "error";
+}
+
+function get_line_info(compiler, line) {
+  const end_file_char = compiler != "MSVC" ? ":" : "(";
+  const file_line_end_char = compiler != "MSVC" ? ":" : ",";
 
   file_path_end_idx = line.indexOf(end_file_char);
   const file_name_offset = file_path_end_idx + 1;
   file_line_start = line.substring(file_name_offset, file_name_offset + line.substring(file_name_offset).indexOf(file_line_end_char));
   file_line_end = (parseInt(file_line_start) + parseInt(core.getInput("num_lines_to_display"))).toString();
-  file_path = line.substring(0, file_path_end_idx).split("\\").join("/");
+  file_path = line.substring(0, file_path_end_idx);
 
-  return [file_path, file_line_start, file_line_end];
+  return [file_path, file_line_start, file_line_end, get_issue_type(compiler, line)];
 }
 
 function process_compile_output() {
   compile_result = fs.readFileSync(core.getInput('compile_result_file')).toString('utf-8');
-  console.log(`compile result = ${compile_result}`);
-  const prefix =  core.getInput('work_dir');
-  const exclude_dir = core.getInput('exclude_dir');
+  const prefix_dir =  make_dir_universal(core.getInput('work_dir'));
+  const exclude_dir = make_dir_universal(core.getInput('exclude_dir'));
   const compiler = core.getInput('compiler');
 
   const splitLines = str => str.split(/\r?\n/);
   var matchingStrings = [];
   arrayOfLines = splitLines(compile_result);
   arrayOfLines.forEach(line => {
-    var idx = line.indexOf(prefix);
+    line = make_dir_universal(line);
+    var idx = line.indexOf(prefix_dir);
 
-    // Only consider lines that start with 'prefix'
-    if (idx == 0 && check_for_exclude_dir(line, prefix, exclude_dir) && check_if_valid_line(compiler, line)) {
-      str = line.replace(prefix, "");
+    // Only consider lines that start with 'prefix_dir'
+    if (idx == 0 && check_for_exclude_dir(line, exclude_dir) && check_if_valid_line(compiler, line)) {
+      line = line.replace(prefix_dir, "");
 
-      const [file_path, file_line_start, file_line_end] = get_line_info(compiler, str);
+      const [file_path, file_line_start, file_line_end, type] = get_line_info(compiler, line);
 
       // warning/error description
-      description = "\n```diff\n" + `-Line: ${file_line_start} ` + str.substring(str.indexOf(" ")) + "\n```\n";
+      const color_mark = type == "error" ? "-" : "!";
+      description = "\n```diff\n" + `${color_mark}Line: ${file_line_start} ` + line.substring(line.indexOf(" ")) + "\n```\n";
 
       // Concatinate both modified path to file and the description
       var link_with_description = `\nhttps://github.com/${github.context.issue.owner}/${github.context.issue.repo}` +

@@ -1,8 +1,6 @@
 name: 'Post warnings/errors as PR comment'
 description: 'GitHub action that parses the compile output and will create PR comment with warnings/errors listed'
 inputs:
-  compile_result:
-    description: 'String which contains compilation output with warnings/errors'
   compile_result_file:
     description: 'File which contains compilation result'
     required: true
@@ -19,7 +17,7 @@ inputs:
     required: true
     default: ${{ github.workspace }}
   exclude_dir:
-    description: 'Ignore the warnings/errors from this DIR'
+    description: 'Full path to the directory that should be ignored'
   pull_request_number:
     description: 'Github Pull Request number'
     required: true
@@ -32,6 +30,9 @@ inputs:
   num_lines_to_display:
     description: 'Number of lines for code snippet which will be displayed for each error/warning'
     default: 5
+  debug_output:
+    description: 'Use this input to generate debug prints'
+    default: false
 
 runs:
   using: 'node12'
