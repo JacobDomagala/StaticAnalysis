@@ -28,9 +28,31 @@ for line in cppcheck_content:
         file_line_start = int(line[:line.index(':')])
 
         file_line_end = file_line_start + 5
-        description = f"```diff !Line: {file_line_start} - {line[line.index(' ')+1:]} ```"
+        description = f"\n```diff\n !Line: {file_line_start} - {line[line.index(' ')+1:]}```\n"
         cppcheck_comment += f'\nhttps://github.com/{REPO_NAME}/blob/{SHA}/{file_path}#L{file_line_start}-L{file_line_end} {description} </br>\n'
 
+clang_tidy_comment = ''
+for line in clang_tidy_content:
+    print(f'Parsing clang-tidy Line: \n {line}')
+    print(f'With clang-tidy prefix={cppcheck_prefix}')
+    if line.startswith(cppcheck_prefix):
+        line = line.replace(cppcheck_prefix, "")
+        file_path_end_idx = line.index(':')
+        file_path = line[:file_path_end_idx]
 
-print(f"Final result: {cppcheck_comment}")
+        line = line[file_path_end_idx+1:]
+        file_line_start = int(line[:line.index(':')])
+
+        file_line_end = file_line_start + 5
+        description = f"\n```diff\n !Line: {file_line_start} - {line[line.index(' ')+1:]}```\n"
+        clang_tidy_comment += f'\nhttps://github.com/{REPO_NAME}/blob/{SHA}/{file_path}#L{file_line_start}-L{file_line_end} {description} </br>\n'
+
+
+full_comment_body = f'<b><h2> COMMENT_TITLE </h2></b> </br>'\
+    f'<details> <summary> <b>CPPCHECK</b> </summary> </br>'\
+    f'{cppcheck_comment} </br>'\
+    f'<details> <summary> <b>CLANG-TIDY</b> </summary> </br>'\
+    f'{clang_tidy_comment} </br>'
+
+print(f"Final result: {full_comment_body}")
 
