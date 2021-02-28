@@ -1,85 +1,41 @@
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 import argparse
 from github import Github
 import os
 
-# Get file name from user
+# Get cppcheck and clang-tidy files
 parser = argparse.ArgumentParser()
-parser.add_argument('-o', '--output', help='Output file name', required=True)
-graph_file_name = parser.parse_args().output
+parser.add_argument('-cc', '--cppcheck', help='Output file name for cppcheck', required=True)
+parser.add_argument('-ct', '--clangtidy', help='Output file name for clang-tidy', required=True)
+cppcheck_file_name = parser.parse_args().cppcheck
+clangtidy_file_name = parser.parse_args().clangtidy
 
 # Input variables from Github action
 GITHUB_TOKEN = os.getenv('INPUT_GITHUB_TOKEN')
 REPO_NAME = os.getenv('INPUT_REPO')
-WORKFLOW_NAME = os.getenv('INPUT_WORKFLOW')
-BRANCH_NAME = os.getenv('INPUT_BRANCH')
-REQUESTED_N_LAST_BUILDS = int(os.getenv('INPUT_NUM_LAST_BUILD'))
-GRAPH_TITLE = os.getenv('INPUT_TITLE', '')
-X_LABEL = os.getenv('INPUT_X_LABEL')
-Y_LABEL = os.getenv('INPUT_Y_LABEL')
-GRAPH_WIDTH = float(os.getenv('INPUT_GRAPH_WIDTH'))
-GRAPH_HEIGHT = float(os.getenv('INPUT_GRAPH_HEIGHT'))
+PR_NUM = int(os.getenv('INPUT_PR_NUM'))
+COMMENT_TITLE = os.getenv('INPUT_COMMENT_TITLE')
 
-print(f'Repo={REPO_NAME} Workflow={WORKFLOW_NAME}')
+print(f'Repo={REPO_NAME} pr_num={PR_NUM} comment_title={COMMENT_TITLE}')
 
 g = Github(GITHUB_TOKEN)
 repo = g.get_repo(REPO_NAME)
-workflow = repo.get_workflow(id_or_name=WORKFLOW_NAME)
+pr = repo.get_pull(PR_NUM)
 
-# Data to be plotted
-timings = []
-run_nums = []
-dates = []
+comments = pr.get_issue_comments()
+found_id = -1
+comment_to_edit = None
+for comment in comments:
+    print(f'Comment with ID={comment.id} user={comment.user} name={comment.user.login} body={comment.body}')
+    if (comment.user.login == 'github-actions[bot]') and (COMMENT_TITLE in comment.body):
+        print(f'Found Comment! with ID={comment.id} body={comment.body}')
+        found_id = comment.id
+        comment_to_edit = comment
+        break
 
-workflow_runs = workflow.get_runs(status="success", branch=BRANCH_NAME)
+if found_id != -1:
+    print(f'Editing existing comment!')
+    comment_to_edit.edit(body = f"{COMMENT_TITLE} Body after edit")
+else:
+    print(f'Adding new comment!')
+    pr.create_issue_comment(body = f"{COMMENT_TITLE} new body")
 
-print(f'workflow_runs.totalCount={workflow_runs.totalCount} and requested_last_runs={REQUESTED_N_LAST_BUILDS}')
-
-last_n_runs = min(REQUESTED_N_LAST_BUILDS, workflow_runs.totalCount)
-
-print(f'last_n_runs={last_n_runs}')
-
-for run in workflow_runs[:last_n_runs]:
-    run_timing = run.timing()
-    print(f"run_number:{run.run_number} created at:{run.created_at} took:{run_timing.run_duration_ms}ms")
-
-    # Convert ms to min
-    timings.append(run_timing.run_duration_ms / 60000.0)
-    dates.append(run.created_at)
-    run_nums.append(run.run_number)
-
-#dates = matplotlib.dates.date2num(run_nums)
-#matplotlib.pyplot.plot_date(dates, values)
-
-SMALL_SIZE = 15
-MEDIUM_SIZE = 25
-BIGGER_SIZE = 35
-
-plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
-plt.rc('axes', titlesize=BIGGER_SIZE)    # fontsize of the axes title
-plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
-plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
-plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
-plt.rc('font', family='serif')           # font family
-
-# plot
-plt.style.use('seaborn')
-
-fig, (ax1, ax2) = plt.subplots(figsize=(GRAPH_WIDTH, GRAPH_HEIGHT), nrows=2, ncols=1)
-
-
-#plt.plot_date(dates, timings, color='b')
-ax1.plot(dates, timings, color='b')
-ax2.plot(run_nums, timings, color='b')
-#plt.plot(run_nums, timings, color='b')
-
-#plt.gcf().autofmt_xdate()
-
-plt.title(GRAPH_TITLE)
-plt.xlabel(X_LABEL)
-plt.ylabel(Y_LABEL)
-
-plt.savefig(graph_file_name)
