@@ -1,1 +1,0 @@
-/github/workspace/engine/Common/Utils.cpp:173:11: style: Consider using std::accumulate algorithm instead of a raw loop. [useStlAlgorithm]
