@@ -1,6 +1,6 @@
 FROM ubuntu:20.04
 
-ARG CXX=clang++
+ENV CXX=clang++
 ARG DEBIAN_FRONTEND=noninteractive
 
 COPY entrypoint.sh /
