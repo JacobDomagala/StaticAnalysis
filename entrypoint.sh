@@ -4,7 +4,7 @@ set -x
 
 cd "$GITHUB_WORKSPACE"
 
-export CXX=gcc-9
+export CXX=clang++
 
 mkdir build && cd build
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
