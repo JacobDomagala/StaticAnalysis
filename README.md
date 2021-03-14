@@ -4,6 +4,13 @@ GitHub action for CMake based C++ project, that runs cppcheck and clang-tidy, an
 
 Note that it's possible that the amount of issues detected can make the comment's body to be greater than the GitHub's character limit per PR comment (which is 65536). In that case, the created comment will contain only the isues found to that point and the information that the limit of characters was reached.
 
+In order for this action to work properly, your project has to be CMake based and also include ```.clang-tidy``` file in your root directory.
+
+The CPPCHECK will run with the following flags: </br>
+```--enable=all --suppress=missingInclude --inline-suppr --inconclusive```
+
+and clang-tidy will look for the ```.clang-tidy``` file in your repository.
+
 ## Workflow example
 
 ```yml

@@ -15,8 +15,4 @@ else
     run-clang-tidy "^((?!$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR).)*$" > clang_tidy.txt
 fi
 
-
-# cat cppcheck.txt
-# cat clang_tidy.txt
-
 python3 /run_static_analysis.py -cc cppcheck.txt -ct clang_tidy.txt
