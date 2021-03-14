@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:20.04
 
 ARG CXX=clang++
 ARG DEBIAN_FRONTEND=noninteractive
