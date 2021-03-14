@@ -1,4 +1,4 @@
-# static-analysis-action
+# Static Analysis
 
 GitHub action for CMake based C++ project, that runs cppcheck and clang-tidy, and creates comment for PR with any issues found. Created comment will contain code snippets with the issue description. When this action is run for the first time, the comment with the initial result will be created for current Pull Request. Consecutive runs will edit this comment with updated status.
 
@@ -23,11 +23,9 @@ jobs:
 
 ## Inputs
 
-Following inputs can be used to customize the graph
-
 | Name                    |Required| Description                        | Default value |
 |-------------------------|--------|------------------------------------|---------------|
 | `github_token`          | TRUE   | Github token used for Github API requests | ${{ github.token }} |
 | `pr_num`                | TRUE   | Pull request number for which the comment will be created | ${{ github.event.pull_request.number }} |
-| `comment_title`         | TRUE   | Title for comment with the raport. This should be an unique name | Static analysis result |
-| `exclude_dir`           | FALSE  | Directory which should be excluded from the raport | <empty> |
+| `comment_title`         | TRUE   | Title for comment with the raport. This should be an unique name | `Static analysis result` |
+| `exclude_dir`           | FALSE  | Directory which should be excluded from the raport | `empty` |
