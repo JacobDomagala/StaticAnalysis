@@ -7,23 +7,19 @@ inputs:
     required: true
     default: ${{ github.token }}
   pr_num:
-    description: 'Pull request number'
+    description: 'Pull request number for which the comment will be created'
     default: ${{ github.event.pull_request.number }}
     required: true
   repo:
     description: 'Repository name'
     default: ${{ github.repository }}
     required: true
-  work_dir:
-    description: 'GitHub Working directory'
-    required: true
-    default: ${{ github.workspace }}
-  exclude_dir:
-    description: 'Full path to directory which should be excluded'
   comment_title:
-    description: 'Unique title for comment'
+    description: 'Title for comment with the raport. This should be an unique name'
     default: Static analysis result
     required: true
+  exclude_dir:
+    description: 'Directory which should be excluded from the raport'
 
 runs:
   using: "docker"
