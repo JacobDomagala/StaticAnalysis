@@ -3,17 +3,17 @@
 GitHub action for CMake based C++ project, that runs cppcheck and clang-tidy, and creates comment for PR with any issues found. Created comment will contain code snippets with the issue description. When this action is run for the first time, the comment with the initial result will be created for current Pull Request. Consecutive runs will edit this comment with updated status.
 
 
-Note that it's possible that the amount of issues detected can make the comment's body to be greater than the GitHub's character limit per PR comment (which is 65536). In that case, the created comment will contain only the isues found to that point and the information that the limit of characters was reached.
+Note that it's possible that the amount of issues detected can make the comment's body to be greater than the GitHub's character limit per PR comment (which is 65536). In that case, the created comment will contain only the isues found up to that point, and the information that the limit of characters was reached.
 
 
-In order for this action to work properly, your project has to be CMake based and also include ```.clang-tidy``` file in your root directory. If your projects requires some additional packages to be installed, you can use `apt_pckgs` and/or `init_script` input variables to install them (see the **Workflow example** or **Inputs** sections below)
+In order for this action to work properly, your project has to be CMake based and also include ```.clang-tidy``` file in your root directory. If your project requires some additional packages to be installed, you can use `apt_pckgs` and/or `init_script` input variables to install them (see the **Workflow example** or **Inputs** sections below)
 
 
-The **CPPCHECK** will run with the following default flags: </br>
+- **CPPCHECK** will run with the following default flags: </br>
 ```--enable=all --suppress=missingInclude --inline-suppr --inconclusive```
 You can use `cppcheck_args` input to set your flags.
 
-**clang-tidy** will look for the ```.clang-tidy``` file in your repository.
+- **clang-tidy** will look for the ```.clang-tidy``` file in your repository.
 
 ## Workflow example
 
