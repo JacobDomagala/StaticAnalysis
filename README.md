@@ -1,6 +1,6 @@
 # Static Analysis
 
-GitHub action for CMake based C++ project, that runs cppcheck and clang-tidy, and creates comment for PR with any issues found. Created comment will contain code snippets with the issue description. When this action is run for the first time, the comment with the initial result will be created for current Pull Request. Consecutive runs will edit this comment with updated status.
+GitHub action for CMake based C++ project, that runs [Cppcheck](http://cppcheck.sourceforge.net/) and [clang-tidy](https://clang.llvm.org/extra/clang-tidy/), and creates comment for PR with any issues found. Created comment will contain code snippets with the issue description. When this action is run for the first time, the comment with the initial result will be created for current Pull Request. Consecutive runs will edit this comment with updated status.
 
 
 Note that it's possible that the amount of issues detected can make the comment's body to be greater than the GitHub's character limit per PR comment (which is 65536). In that case, the created comment will contain only the isues found up to that point, and the information that the limit of characters was reached.
@@ -9,7 +9,7 @@ Note that it's possible that the amount of issues detected can make the comment'
 In order for this action to work properly, your project has to be CMake based and also include ```.clang-tidy``` file in your root directory. If your project requires some additional packages to be installed, you can use `apt_pckgs` and/or `init_script` input variables to install them (see the **Workflow example** or **Inputs** sections below)
 
 
-- **CPPCHECK** will run with the following default flags: </br>
+- **Cppcheck** will run with the following default flags: </br>
 ```--enable=all --suppress=missingInclude --inline-suppr --inconclusive```
 You can use `cppcheck_args` input to set your flags.
 
@@ -56,7 +56,7 @@ jobs:
 | `exclude_dir`           | FALSE  | Directory which should be excluded from the raport | `<empty>` |
 | `apt_pckgs`             | FALSE  | Additional (comma separated) packages that need to be installed in order for project to compile | `<empty>` |
 | `init_script`           | FALSE  | Optional shell script that will be run before running CMake command. This should be used, when the project requires some environmental set-up beforehand. | `<empty>` |
-| `cppcheck_args`         | TRUE   | CPPCHECK (space separated) arguments that will be used |`--enable=all --suppress=missingInclude --inline-suppr --inconclusive`|
+| `cppcheck_args`         | TRUE   | Cppcheck (space separated) arguments that will be used |`--enable=all --suppress=missingInclude --inline-suppr --inconclusive`|
 
 
 
