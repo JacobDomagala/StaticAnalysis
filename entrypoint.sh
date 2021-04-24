@@ -5,11 +5,15 @@ set -x
 if [ -n "$INPUT_APT_PCKGS" ]; then
     for i in ${INPUT_APT_PCKGS//,/ }
     do
+        apt-get update
         apt-get install -y "$i"
     done
 fi
 
-cd "$GITHUB_WORKSPACE" || exit
+if [ -n "$INPUT_INIT_SCRIPT" ]; then
+    chmod +x "$INPUT_INIT_SCRIPT"
+    bash $INPUT_INIT_SCRIPT
+fi
 
 mkdir build && cd build || exit
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..

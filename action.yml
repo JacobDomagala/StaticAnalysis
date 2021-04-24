@@ -22,6 +22,11 @@ inputs:
     description: 'Directory which should be excluded from the raport'
   apt_pckgs:
     description: 'Additional (comma separated) packages that need to be installed in order for project to compile'
+  init_script:
+    description: |
+      'Optional shell script that will be run before running CMake command.'
+      'This should be used, when the project requires some environmental set-up beforehand'
+      'Note. `apt_pckgs` will run before this script, just in case you need some packages installed'
 
 runs:
   using: "docker"
