@@ -31,9 +31,9 @@ def create_comment_for_output(tool_output, prefix):
             line = line[file_path_end_idx+1:]
             file_line_start = int(line[:line.index(':')])
             file_line_end = file_line_start + 5
-            description = f"\n```diff\n!Line: {file_line_start} - {line[line.index(' ')+1:]}```\n"
+            description = f"\n```diff\n!Line: {file_line_start} - {line[line.index(' ')+1:]}``` \n"
 
-            new_line = f'\nhttps://github.com/{REPO_NAME}/blob/{SHA}/{file_path}#L{file_line_start}-L{file_line_end} {description} </br>\n'
+            new_line = f'\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}/{file_path}#L{file_line_start}-L{file_line_end} {description} <br>\n'
             if check_for_char_limit(new_line):
                 output_string += new_line
                 current_comment_length += len(new_line)
@@ -63,11 +63,11 @@ line_prefix = f'{WORK_DIR}'
 cppcheck_comment = create_comment_for_output(cppcheck_content, line_prefix)
 clang_tidy_comment = create_comment_for_output(clang_tidy_content, line_prefix)
 
-full_comment_body = f'<b><h2> {COMMENT_TITLE} </h2></b> </br>'\
-    f'<details> <summary> <b>CPPCHECK</b> </summary> </br>'\
-    f'{cppcheck_comment} </details></br>'\
-    f'<details> <summary> <b>CLANG-TIDY</b> </summary> </br>'\
-    f'{clang_tidy_comment} </details></br>\n'
+full_comment_body = f'<b><h2> {COMMENT_TITLE} </h2></b> <br>'\
+    f'<details> <summary> <b>CPPCHECK</b> </summary> <br>'\
+    f'{cppcheck_comment} </details><br>'\
+    f'<details> <summary> <b>CLANG-TIDY</b> </summary> <br>'\
+    f'{clang_tidy_comment} </details><br>\n'
 
 if current_comment_length == COMMENT_MAX_SIZE:
     full_comment_body += f'\n```diff\n{MAX_CHAR_COUNT_REACHED}\n```'

@@ -9,8 +9,9 @@ Note that it's possible that the amount of issues detected can make the comment'
 In order for this action to work properly, your project has to be CMake based and also include ```.clang-tidy``` file in your root directory. If your projects requires some additional packages to be installed, you can use `apt_pckgs` and/or `init_script` input variables to install them (see the **Workflow example** or **Inputs** sections below)
 
 
-The **CPPCHECK** will run with the following flags: </br>
+The **CPPCHECK** will run with the following default flags: </br>
 ```--enable=all --suppress=missingInclude --inline-suppr --inconclusive```
+You can use `cppcheck_args` input to set your flags.
 
 **clang-tidy** will look for the ```.clang-tidy``` file in your repository.
 
@@ -55,6 +56,7 @@ jobs:
 | `exclude_dir`           | FALSE  | Directory which should be excluded from the raport | `<empty>` |
 | `apt_pckgs`             | FALSE  | Additional (comma separated) packages that need to be installed in order for project to compile | `<empty>` |
 | `init_script`           | FALSE  | Optional shell script that will be run before running CMake command. This should be used, when the project requires some environmental set-up beforehand. | `<empty>` |
+| `cppcheck_args`         | TRUE   | CPPCHECK (space separated) arguments that will be used |`--enable=all --suppress=missingInclude --inline-suppr --inconclusive`|
 
 
 
