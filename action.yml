@@ -20,6 +20,8 @@ inputs:
     required: true
   exclude_dir:
     description: 'Directory which should be excluded from the raport'
+  apt_pckgs:
+    description: 'Additional (comma separated) packages that need to be installed in order for project to compile'
 
 runs:
   using: "docker"
