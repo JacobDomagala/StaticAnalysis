@@ -30,15 +30,15 @@ jobs:
 ## Inputs
 
 | Name                    |Required| Description                        | Default value |
-|-------------------------|--------|------------------------------------|---------------|
+|-------------------------|--------|------------------------------------|:---------------:|
 | `compile_result_file`   | TRUE   | File which contains compilation result | `empty` |
-| `compiler`              | TRUE   | Which compiler was used to produce the output. MSVC/GNU/CLANG | GNU |
-| `token`                 | TRUE   | GITHUB_TOKEN or a repo scoped PAT | ${{ github.token }} |
-| `work_dir`              | TRUE   | Action work directory | ${{ github.workspace }} |
-| `exclude_dir`           | FALSE  | Full path to the directory that should be ignored | `empty` |
-| `pull_request_number`   | TRUE   | Github Pull Request number | ${{ github.event.pull_request.number }} |
-| `comment_title`         | TRUE   | Comment title that will be displayed on top of the comment. Used also to determine whether comment already exists and should be edited or not | COMPILE RESULT |
-| `num_lines_to_display`  | FALSE  |Number of lines for code snippet which will be displayed for each error/warning | 5 |
+| `compiler`              | TRUE   | Which compiler was used to produce the output. MSVC/GNU/CLANG | `GNU` |
+| `token`                 | TRUE   | GITHUB_TOKEN or a repo scoped PAT | `${{github.token}}` |
+| `work_dir`              | TRUE   | Action work directory | `${{github.workspace}}` |
+| `exclude_dir`           | FALSE  | Full path to the directory that should be ignored | `<empty>` |
+| `pull_request_number`   | TRUE   | Github Pull Request number | `${{github.event.pull_request.number}}` |
+| `comment_title`         | TRUE   | Comment title that will be displayed on top of the comment. Used also to determine whether comment already exists and should be edited or not | `COMPILE RESULT` |
+| `num_lines_to_display`  | FALSE  |Number of lines for code snippet which will be displayed for each error/warning | `5` |
 
 
 
