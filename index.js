@@ -47,6 +47,14 @@ function get_line_info(compiler, line) {
   file_path_end_idx = line.indexOf(end_file_char);
   const file_name_offset = file_path_end_idx + 1;
   file_line_start = line.substring(file_name_offset, file_name_offset + line.substring(file_name_offset).indexOf(file_line_end_char));
+
+  // Special case for MSVC
+  if(isNaN(parseInt(file_line_start))){
+    if(compiler == "MSVC"){
+      file_line_start = line.substring(file_name_offset, file_name_offset + line.substring(file_name_offset).indexOf(")"));
+    }
+  }
+
   file_line_end = (parseInt(file_line_start) + parseInt(core.getInput("num_lines_to_display"))).toString();
   file_path = line.substring(0, file_path_end_idx);
 
