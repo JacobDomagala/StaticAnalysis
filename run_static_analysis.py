@@ -18,10 +18,11 @@ COMMENT_MAX_SIZE = 65000
 current_comment_length = 0
 
 def is_part_of_pr_changes(file_path, issue_file_line, files_changed_in_pr):
+    if ONLY_PR_CHANGES == "false":
+        return True
 
     file_name = file_path[file_path.rfind('/')+1:]
     print(f"Looking for issue found in file={file_name} ...")
-    print(f"files changed in pr -> {files_changed_in_pr}")
     for file, (status, lines_changed_for_file) in files_changed_in_pr.items():
         print(f"Changed file by this PR {file} with status {status} and changed lines {lines_changed_for_file}")
         if file == file_name:
@@ -56,7 +57,6 @@ def get_lines_changed_from_patch(patch):
 
             num_lines = int(line[idx_beg + 1 : idx_beg + idx_end])
 
-            # print(f"Line begin={line_begin} Line end={line_begin + num_lines}")
             lines_changed.append((line_begin, line_begin + num_lines))
 
     return lines_changed
@@ -71,17 +71,8 @@ def setup_changed_files():
     print(f"Changed files {num_changed_files}")
     files = pull_request.get_files()
     for file in files:
-        # additions
-        # blob_url
-        # changes
-        # contents_url
-        # deletions
-        # filename
-        # patch
-        # previous_filename
-        # raw_url
-        # sha
-        # status
+        # additions # blob_url # changes # contents_url # deletions # filename
+        # patch # previous_filename # raw_url # sha # status
         # print(f"File: additions={file.additions} blob_url={file.blob_url} changes={file.changes} contents_url={file.contents_url}"\
         #     f"deletions={file.deletions} filename={file.filename} patch={file.patch} previous_filename={file.previous_filename}"\
         #     f"raw_url={file.raw_url} sha={file.sha} status={file.status} ")
@@ -110,7 +101,7 @@ def create_comment_for_output(tool_output, prefix, files_changed_in_pr):
             file_line_end = file_line_start + 5
             description = f"\n```diff\n!Line: {file_line_start} - {line[line.index(' ')+1:]}``` \n"
 
-            new_line = f'\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}/{file_path}#L{file_line_start}-L{file_line_end} {description} <br>\n'
+            new_line = f'\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}{file_path}#L{file_line_start}-L{file_line_end} {description} <br>\n'
 
             if is_part_of_pr_changes(file_path, file_line_start, files_changed_in_pr):
                 if check_for_char_limit(new_line):
