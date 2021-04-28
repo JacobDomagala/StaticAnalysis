@@ -17,8 +17,22 @@ MAX_CHAR_COUNT_REACHED = '!Maximum character count per GitHub comment has been r
 COMMENT_MAX_SIZE = 65000
 current_comment_length = 0
 
-def is_part_of_pr_changes(file_path, file_line_start, file_line_end):
-    return True
+def is_part_of_pr_changes(file_path, issue_file_line, files_changed_in_pr):
+
+    file_name = file_path[file_path.rfind('/')+1:]
+    print(f"Looking for issue found in file={file_name} ...")
+    print(f"files changed in pr -> {files_changed_in_pr}")
+    for file, (status, lines_changed_for_file) in files_changed_in_pr.items():
+        print(f"Changed file by this PR {file} with status {status} and changed lines {lines_changed_for_file}")
+        if file == file_name:
+            if status == "added":
+                return True
+
+            for (start, end) in lines_changed_for_file:
+                if issue_file_line >= start and issue_file_line <= end:
+                    return True
+
+    return False
 
 def get_lines_changed_from_patch(patch):
     lines_changed = []
@@ -42,7 +56,7 @@ def get_lines_changed_from_patch(patch):
 
             num_lines = int(line[idx_beg + 1 : idx_beg + idx_end])
 
-            print(f"Line begin={line_begin} Line end={line_begin + num_lines}")
+            # print(f"Line begin={line_begin} Line end={line_begin + num_lines}")
             lines_changed.append((line_begin, line_begin + num_lines))
 
     return lines_changed
@@ -68,18 +82,20 @@ def setup_changed_files():
         # raw_url
         # sha
         # status
-        print(f"File: additions={file.additions} blob_url={file.blob_url} changes={file.changes} contents_url={file.contents_url}"\
-            f"deletions={file.deletions} filename={file.filename} patch={file.patch} previous_filename={file.previous_filename}"\
-            f"raw_url={file.raw_url} sha={file.sha} status={file.status} ")
+        # print(f"File: additions={file.additions} blob_url={file.blob_url} changes={file.changes} contents_url={file.contents_url}"\
+        #     f"deletions={file.deletions} filename={file.filename} patch={file.patch} previous_filename={file.previous_filename}"\
+        #     f"raw_url={file.raw_url} sha={file.sha} status={file.status} ")
 
         lines_changed_for_file = get_lines_changed_from_patch(file.patch)
         files_changed[file.filename] = (file.status, lines_changed_for_file)
+
+    return files_changed
 
 def check_for_char_limit(incoming_line):
     global current_comment_length
     return (current_comment_length + len(incoming_line)) <= COMMENT_MAX_SIZE
 
-def create_comment_for_output(tool_output, prefix):
+def create_comment_for_output(tool_output, prefix, files_changed_in_pr):
     issues_found = 0
     global current_comment_length
     output_string = ''
@@ -96,7 +112,7 @@ def create_comment_for_output(tool_output, prefix):
 
             new_line = f'\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}/{file_path}#L{file_line_start}-L{file_line_end} {description} <br>\n'
 
-            if is_part_of_pr_changes(file_path, file_line_start, file_line_end):
+            if is_part_of_pr_changes(file_path, file_line_start, files_changed_in_pr):
                 if check_for_char_limit(new_line):
                     output_string += new_line
                     current_comment_length += len(new_line)
@@ -106,7 +122,7 @@ def create_comment_for_output(tool_output, prefix):
 
     return output_string, issues_found
 
-def read_files_and_parse_results():
+def read_files_and_parse_results(files_changed_in_pr):
     # Get cppcheck and clang-tidy files
     parser = argparse.ArgumentParser()
     parser.add_argument('-cc', '--cppcheck', help='Output file name for cppcheck', required=True)
@@ -124,8 +140,8 @@ def read_files_and_parse_results():
 
     line_prefix = f'{WORK_DIR}'
 
-    cppcheck_comment, cppcheck_issues_found = create_comment_for_output(cppcheck_content, line_prefix)
-    clang_tidy_comment, clang_tidy_issues_found = create_comment_for_output(clang_tidy_content, line_prefix)
+    cppcheck_comment, cppcheck_issues_found = create_comment_for_output(cppcheck_content, line_prefix, files_changed_in_pr)
+    clang_tidy_comment, clang_tidy_issues_found = create_comment_for_output(clang_tidy_content, line_prefix, files_changed_in_pr)
 
     return cppcheck_comment, clang_tidy_comment, cppcheck_issues_found, clang_tidy_issues_found
 
@@ -175,7 +191,7 @@ def create_or_edit_comment(comment_body):
 
 
 if __name__ == "__main__":
-    setup_changed_files()
-    cppcheck_comment, clang_tidy_comment, cppcheck_issues_found, clang_tidy_issues_found = read_files_and_parse_results()
+    files_changed_in_pr = setup_changed_files()
+    cppcheck_comment, clang_tidy_comment, cppcheck_issues_found, clang_tidy_issues_found = read_files_and_parse_results(files_changed_in_pr)
     comment_body = preapre_comment_body(cppcheck_comment, clang_tidy_comment, cppcheck_issues_found, clang_tidy_issues_found)
     create_or_edit_comment(comment_body)
