@@ -20,6 +20,29 @@ current_comment_length = 0
 def is_part_of_pr_changes(file_path, file_line_start, file_line_end):
     return True
 
+def setup_changed_files():
+    g = Github(GITHUB_TOKEN)
+    repo = g.get_repo(REPO_NAME)
+    pull_request = repo.get_pull(PR_NUM)
+    num_changed_files = pull_request.changed_files
+    print(f"Changed files {num_changed_files}")
+    files = pull_request.get_files()
+    for file in files:
+        # additions
+        # blob_url
+        # changes
+        # contents_url
+        # deletions
+        # filename
+        # patch
+        # previous_filename
+        # raw_url
+        # sha
+        # status
+        print(f"File: additions={file.additions} blob_url={file.blob_url} changes={file.changes} contents_url={file.contents_url}"\
+            f"deletions={file.deletions} filename={file.filename} patch={file.patch} previous_filename={file.previous_filename}"\
+            f"raw_url={file.raw_url} sha={file.sha} status={file.status} ")
+
 def check_for_char_limit(incoming_line):
     global current_comment_length
     return (current_comment_length + len(incoming_line)) <= COMMENT_MAX_SIZE
@@ -120,6 +143,7 @@ def create_or_edit_comment(comment_body):
 
 
 if __name__ == "__main__":
+    setup_changed_files()
     cppcheck_comment, clang_tidy_comment, cppcheck_issues_found, clang_tidy_issues_found = read_files_and_parse_results()
     comment_body = preapre_comment_body(cppcheck_comment, clang_tidy_comment, cppcheck_issues_found, clang_tidy_issues_found)
     create_or_edit_comment(comment_body)
