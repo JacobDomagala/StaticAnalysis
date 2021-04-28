@@ -1,6 +1,11 @@
 #!/bin/bash
 
-set -x
+set -xeu
+
+if [ "$INPUT_PR_NUM" == "null" ]; then
+  echo "Pull request number input is not present! This action can only run on Pull Requests!"
+  exit 0
+fi
 
 if [ -n "$INPUT_APT_PCKGS" ]; then
     for i in ${INPUT_APT_PCKGS//,/ }
