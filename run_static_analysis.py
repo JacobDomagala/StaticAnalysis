@@ -63,11 +63,21 @@ line_prefix = f'{WORK_DIR}'
 cppcheck_comment = create_comment_for_output(cppcheck_content, line_prefix)
 clang_tidy_comment = create_comment_for_output(clang_tidy_content, line_prefix)
 
-full_comment_body = f'<b><h2> {COMMENT_TITLE} </h2></b> <br>'\
-    f'<details> <summary> <b>CPPCHECK</b> </summary> <br>'\
-    f'{cppcheck_comment} </details><br>'\
-    f'<details> <summary> <b>CLANG-TIDY</b> </summary> <br>'\
+full_comment_body = f'<b><h2> {COMMENT_TITLE} </h2></b> <br>'
+
+if len(cppcheck_comment) > 0:
+    full_comment_body +=f'<details> <summary> <b> :red_circle: CPPCHECK</b> </summary> <br>'\
+    f'{cppcheck_comment} </details><br>'
+else:
+    full_comment_body += f'\n\n### :white_check_mark: Cppcheck found no issues!'
+
+full_comment_body += "\n *** \n"
+
+if len(clang_tidy_comment) > 0:
+    full_comment_body += f'<details> <summary> <b> :red_circle: CLANG-TIDY</b> </summary> <br>'\
     f'{clang_tidy_comment} </details><br>\n'
+else:
+    full_comment_body += f'\n\n### :white_check_mark: clang-tidy found no issues!'
 
 if current_comment_length == COMMENT_MAX_SIZE:
     full_comment_body += f'\n```diff\n{MAX_CHAR_COUNT_REACHED}\n```'
