@@ -21,10 +21,12 @@ def check_for_char_limit(incoming_line):
     return (current_comment_length + len(incoming_line)) <= COMMENT_MAX_SIZE
 
 def create_comment_for_output(tool_output, prefix):
+    issues_found = 0
     global current_comment_length
     output_string = ''
     for line in tool_output:
         if line.startswith(prefix):
+            issues_found += 1
             line = line.replace(prefix, "")
             file_path_end_idx = line.index(':')
             file_path = line[:file_path_end_idx]
@@ -39,9 +41,9 @@ def create_comment_for_output(tool_output, prefix):
                 current_comment_length += len(new_line)
             else:
                 current_comment_length = COMMENT_MAX_SIZE
-                return output_string
+                return output_string, issues_found
 
-    return output_string
+    return output_string, issues_found
 
 # Get cppcheck and clang-tidy files
 parser = argparse.ArgumentParser()
@@ -60,21 +62,21 @@ with open(clangtidy_file_name, 'r') as file:
 
 line_prefix = f'{WORK_DIR}'
 
-cppcheck_comment = create_comment_for_output(cppcheck_content, line_prefix)
-clang_tidy_comment = create_comment_for_output(clang_tidy_content, line_prefix)
+cppcheck_comment, cppcheck_issues_found = create_comment_for_output(cppcheck_content, line_prefix)
+clang_tidy_comment, clang_tidy_issues_found = create_comment_for_output(clang_tidy_content, line_prefix)
 
 full_comment_body = f'<b><h2> {COMMENT_TITLE} </h2></b> <br>'
 
 if len(cppcheck_comment) > 0:
-    full_comment_body +=f'<details> <summary> <b> :red_circle: CPPCHECK</b> </summary> <br>'\
-    f'{cppcheck_comment} </details><br>'
+    full_comment_body +=f'<details> <summary> <b> :red_circle: Cppcheck found {cppcheck_issues_found} issues! Click here to see details. </b> </summary> <br>'\
+    f'{cppcheck_comment} </details>'
 else:
     full_comment_body += f'\n\n### :white_check_mark: Cppcheck found no issues!'
 
-full_comment_body += "\n *** \n"
+full_comment_body += "\n\n *** \n"
 
 if len(clang_tidy_comment) > 0:
-    full_comment_body += f'<details> <summary> <b> :red_circle: CLANG-TIDY</b> </summary> <br>'\
+    full_comment_body += f'<details> <summary> <b> :red_circle: clang-tidy found {clang_tidy_issues_found} issues! Click here to see details. </b> </summary> <br>'\
     f'{clang_tidy_comment} </details><br>\n'
 else:
     full_comment_body += f'\n\n### :white_check_mark: clang-tidy found no issues!'
