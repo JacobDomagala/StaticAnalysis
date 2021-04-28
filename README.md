@@ -23,7 +23,7 @@ name: Static analysis
 on: [pull_request]
 
 jobs:
-  static analysis:
+  static_analysis:
     runs-on: ubuntu-latest
 
     steps:
@@ -57,6 +57,7 @@ jobs:
 | `apt_pckgs`             | FALSE  | Additional (comma separated) packages that need to be installed in order for project to compile | `<empty>` |
 | `init_script`           | FALSE  | Optional shell script that will be run before running CMake command. This should be used, when the project requires some environmental set-up beforehand. | `<empty>` |
 | `cppcheck_args`         | TRUE   | Cppcheck (space separated) arguments that will be used |`--enable=all --suppress=missingInclude --inline-suppr --inconclusive`|
+| `report_pr_changes_only`| FALSE  | Only post the issues found within the changes introduced in this Pull Request |`false`|
 
 
 

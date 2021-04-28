@@ -30,6 +30,9 @@ inputs:
   cppcheck_args:
     description: 'CPPCHECK (space separated) arguments that will be used'
     default: --enable=all --suppress=missingInclude --inline-suppr --inconclusive
+  report_pr_changes_only:
+    description: 'Only post the issues found within the changes introduced in this Pull Request'
+    default: false
 
 runs:
   using: "docker"

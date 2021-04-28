@@ -9,12 +9,16 @@ WORK_DIR = os.getenv('GITHUB_WORKSPACE')
 REPO_NAME = os.getenv('INPUT_REPO')
 SHA = os.getenv('GITHUB_SHA')
 COMMENT_TITLE = os.getenv('INPUT_COMMENT_TITLE')
+ONLY_PR_CHANGES = os.getenv('INPUT_REPORD_PR_CHANGES_ONLY')
 
 # Max characters per comment - 65536
 # Make some room for HTML tags and error message
 MAX_CHAR_COUNT_REACHED = '!Maximum character count per GitHub comment has been reached! Not all warnings/errors has been parsed!'
 COMMENT_MAX_SIZE = 65000
 current_comment_length = 0
+
+def is_part_of_pr_changes(file_path, file_line_start, file_line_end):
+    return True
 
 def check_for_char_limit(incoming_line):
     global current_comment_length
@@ -36,12 +40,14 @@ def create_comment_for_output(tool_output, prefix):
             description = f"\n```diff\n!Line: {file_line_start} - {line[line.index(' ')+1:]}``` \n"
 
             new_line = f'\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}/{file_path}#L{file_line_start}-L{file_line_end} {description} <br>\n'
-            if check_for_char_limit(new_line):
-                output_string += new_line
-                current_comment_length += len(new_line)
-            else:
-                current_comment_length = COMMENT_MAX_SIZE
-                return output_string, issues_found
+
+            if is_part_of_pr_changes(file_path, file_line_start, file_line_end):
+                if check_for_char_limit(new_line):
+                    output_string += new_line
+                    current_comment_length += len(new_line)
+                else:
+                    current_comment_length = COMMENT_MAX_SIZE
+                    return output_string, issues_found
 
     return output_string, issues_found
 
