@@ -25,10 +25,10 @@ cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
 
 if [ -z "$INPUT_EXCLUDE_DIR" ]; then
     cppcheck --project=compile_commands.json $INPUT_CPPCHECK_ARGS --output-file=cppcheck.txt
-    run-clang-tidy >(tee "clang_tidy.txt")
+    run-clang-tidy.py >(tee "clang_tidy.txt")
 else
     cppcheck --project=compile_commands.json $INPUT_CPPCHECK_ARGS --output-file=cppcheck.txt  -i"$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR"
-    run-clang-tidy "^((?!$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR).)*$" > clang_tidy.txt
+    run-clang-tidy.py "^((?!$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR).)*$" > clang_tidy.txt
 fi
 
 python3 /run_static_analysis.py -cc cppcheck.txt -ct clang_tidy.txt

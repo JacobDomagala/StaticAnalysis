@@ -41,8 +41,13 @@ jobs:
     - name: Run static analysis
       uses: JacobDomagala/StaticAnalysis@master
       with:
+        # Exclude any issues found in ${Project_root_dir}/lib
         exclude_dir: lib
+
+        # Additional apt packages that need to be installed before running Cmake
         apt_pckgs: software-properties-common
+
+        # Additional script that will be run (sourced) AFTER 'apt_pckgs' and before running Cmake
         init_script: init_script.sh
 ```
 
