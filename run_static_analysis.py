@@ -45,63 +45,75 @@ def create_comment_for_output(tool_output, prefix):
 
     return output_string, issues_found
 
-# Get cppcheck and clang-tidy files
-parser = argparse.ArgumentParser()
-parser.add_argument('-cc', '--cppcheck', help='Output file name for cppcheck', required=True)
-parser.add_argument('-ct', '--clangtidy', help='Output file name for clang-tidy', required=True)
-cppcheck_file_name = parser.parse_args().cppcheck
-clangtidy_file_name = parser.parse_args().clangtidy
+def read_files_and_parse_results():
+    # Get cppcheck and clang-tidy files
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-cc', '--cppcheck', help='Output file name for cppcheck', required=True)
+    parser.add_argument('-ct', '--clangtidy', help='Output file name for clang-tidy', required=True)
+    cppcheck_file_name = parser.parse_args().cppcheck
+    clangtidy_file_name = parser.parse_args().clangtidy
 
-cppcheck_content = ''
-with open(cppcheck_file_name, 'r') as file:
-    cppcheck_content = file.readlines()
+    cppcheck_content = ''
+    with open(cppcheck_file_name, 'r') as file:
+        cppcheck_content = file.readlines()
 
-clang_tidy_content = ''
-with open(clangtidy_file_name, 'r') as file:
-    clang_tidy_content = file.readlines()
+    clang_tidy_content = ''
+    with open(clangtidy_file_name, 'r') as file:
+        clang_tidy_content = file.readlines()
 
-line_prefix = f'{WORK_DIR}'
+    line_prefix = f'{WORK_DIR}'
 
-cppcheck_comment, cppcheck_issues_found = create_comment_for_output(cppcheck_content, line_prefix)
-clang_tidy_comment, clang_tidy_issues_found = create_comment_for_output(clang_tidy_content, line_prefix)
+    cppcheck_comment, cppcheck_issues_found = create_comment_for_output(cppcheck_content, line_prefix)
+    clang_tidy_comment, clang_tidy_issues_found = create_comment_for_output(clang_tidy_content, line_prefix)
 
-full_comment_body = f'## <p align="center"><b> {COMMENT_TITLE} </b></p> \n\n'
+    return cppcheck_comment, clang_tidy_comment, cppcheck_issues_found, clang_tidy_issues_found
 
-if cppcheck_issues_found > 0 or clang_tidy_issues_found > 0:
-    if len(cppcheck_comment) > 0:
-        full_comment_body +=f'<details> <summary> <b> :red_circle: Cppcheck found'\
-        f' {cppcheck_issues_found} {"issues" if cppcheck_issues_found > 1 else "issue"}! Click here to see details. </b> </summary> <br>'\
-        f'{cppcheck_comment} </details>'
+def preapre_comment_body(cppcheck_comment, clang_tidy_comment, cppcheck_issues_found, clang_tidy_issues_found):
+    full_comment_body = f'## <p align="center"><b> :zap: {COMMENT_TITLE} :zap: </b></p> \n\n'
 
-    full_comment_body += "\n\n *** \n"
+    if cppcheck_issues_found > 0 or clang_tidy_issues_found > 0:
+        if len(cppcheck_comment) > 0:
+            full_comment_body +=f'<details> <summary> <b> :red_circle: Cppcheck found'\
+            f' {cppcheck_issues_found} {"issues" if cppcheck_issues_found > 1 else "issue"}! Click here to see details. </b> </summary> <br>'\
+            f'{cppcheck_comment} </details>'
 
-    if len(clang_tidy_comment) > 0:
-        full_comment_body += f'<details> <summary> <b> :red_circle: clang-tidy found'\
-        f' {clang_tidy_issues_found} {"issues" if cppcheck_issues_found > 1 else "issue"}! Click here to see details. </b> </summary> <br>'\
-        f'{clang_tidy_comment} </details><br>\n'
-else:
-    full_comment_body += f'\n\n## <p align="center"><b> :white_check_mark: No issues found! </b></p>'
+        full_comment_body += "\n\n *** \n"
 
-if current_comment_length == COMMENT_MAX_SIZE:
-    full_comment_body += f'\n```diff\n{MAX_CHAR_COUNT_REACHED}\n```'
+        if len(clang_tidy_comment) > 0:
+            full_comment_body += f'<details> <summary> <b> :red_circle: clang-tidy found'\
+            f' {clang_tidy_issues_found} {"issues" if cppcheck_issues_found > 1 else "issue"}! Click here to see details. </b> </summary> <br>'\
+            f'{clang_tidy_comment} </details><br>\n'
+    else:
+        full_comment_body += f'\n\n## <p align="center"><b> :white_check_mark: No issues found! </b></p>'
 
-print(f'Repo={REPO_NAME} pr_num={PR_NUM} comment_title={COMMENT_TITLE}')
+    if current_comment_length == COMMENT_MAX_SIZE:
+        full_comment_body += f'\n```diff\n{MAX_CHAR_COUNT_REACHED}\n```'
 
-g = Github(GITHUB_TOKEN)
-repo = g.get_repo(REPO_NAME)
-pr = repo.get_pull(PR_NUM)
+    print(f'Repo={REPO_NAME} pr_num={PR_NUM} comment_title={COMMENT_TITLE}')
 
-comments = pr.get_issue_comments()
-found_id = -1
-comment_to_edit = None
-for comment in comments:
-    if (comment.user.login == 'github-actions[bot]') and (COMMENT_TITLE in comment.body):
-        found_id = comment.id
-        comment_to_edit = comment
-        break
+    return full_comment_body
 
-if found_id != -1:
-    comment_to_edit.edit(body = full_comment_body)
-else:
-    pr.create_issue_comment(body = full_comment_body)
+def create_or_edit_comment(comment_body):
+    g = Github(GITHUB_TOKEN)
+    repo = g.get_repo(REPO_NAME)
+    pr = repo.get_pull(PR_NUM)
 
+    comments = pr.get_issue_comments()
+    found_id = -1
+    comment_to_edit = None
+    for comment in comments:
+        if (comment.user.login == 'github-actions[bot]') and (COMMENT_TITLE in comment.body):
+            found_id = comment.id
+            comment_to_edit = comment
+            break
+
+    if found_id != -1:
+        comment_to_edit.edit(body = comment_body)
+    else:
+        pr.create_issue_comment(body = comment_body)
+
+
+if __name__ == "__main__":
+    cppcheck_comment, clang_tidy_comment, cppcheck_issues_found, clang_tidy_issues_found = read_files_and_parse_results()
+    comment_body = preapre_comment_body(cppcheck_comment, clang_tidy_comment, cppcheck_issues_found, clang_tidy_issues_found)
+    create_or_edit_comment(comment_body)
