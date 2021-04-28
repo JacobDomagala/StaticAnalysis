@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -xeu
+set -x
 
 if [ "$INPUT_PR_NUM" == "null" ]; then
   echo "Pull request number input is not present! This action can only run on Pull Requests!"

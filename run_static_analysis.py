@@ -77,8 +77,9 @@ def setup_changed_files():
         #     f"deletions={file.deletions} filename={file.filename} patch={file.patch} previous_filename={file.previous_filename}"\
         #     f"raw_url={file.raw_url} sha={file.sha} status={file.status} ")
 
-        lines_changed_for_file = get_lines_changed_from_patch(file.patch)
-        files_changed[file.filename] = (file.status, lines_changed_for_file)
+        if file.patch is not None:
+            lines_changed_for_file = get_lines_changed_from_patch(file.patch)
+            files_changed[file.filename] = (file.status, lines_changed_for_file)
 
     return files_changed
 
@@ -92,7 +93,6 @@ def create_comment_for_output(tool_output, prefix, files_changed_in_pr):
     output_string = ''
     for line in tool_output:
         if line.startswith(prefix):
-            issues_found += 1
             line = line.replace(prefix, "")
             file_path_end_idx = line.index(':')
             file_path = line[:file_path_end_idx]
@@ -107,6 +107,7 @@ def create_comment_for_output(tool_output, prefix, files_changed_in_pr):
                 if check_for_char_limit(new_line):
                     output_string += new_line
                     current_comment_length += len(new_line)
+                    issues_found += 1
                 else:
                     current_comment_length = COMMENT_MAX_SIZE
                     return output_string, issues_found
@@ -136,10 +137,13 @@ def read_files_and_parse_results(files_changed_in_pr):
 
     return cppcheck_comment, clang_tidy_comment, cppcheck_issues_found, clang_tidy_issues_found
 
-def preapre_comment_body(cppcheck_comment, clang_tidy_comment, cppcheck_issues_found, clang_tidy_issues_found):
-    full_comment_body = f'## <p align="center"><b> :zap: {COMMENT_TITLE} :zap: </b></p> \n\n'
+def prepare_comment_body(cppcheck_comment, clang_tidy_comment, cppcheck_issues_found, clang_tidy_issues_found):
 
-    if cppcheck_issues_found > 0 or clang_tidy_issues_found > 0:
+    if cppcheck_issues_found == 0 and clang_tidy_issues_found == 0:
+        full_comment_body = f'## <p align="center"><b> :white_check_mark: {COMMENT_TITLE} - no issues found! :white_check_mark: </b></p>'
+    else:
+        full_comment_body = f'## <p align="center"><b> :zap: {COMMENT_TITLE} :zap: </b></p> \n\n'
+
         if len(cppcheck_comment) > 0:
             full_comment_body +=f'<details> <summary> <b> :red_circle: Cppcheck found'\
             f' {cppcheck_issues_found} {"issues" if cppcheck_issues_found > 1 else "issue"}! Click here to see details. </b> </summary> <br>'\
@@ -151,8 +155,6 @@ def preapre_comment_body(cppcheck_comment, clang_tidy_comment, cppcheck_issues_f
             full_comment_body += f'<details> <summary> <b> :red_circle: clang-tidy found'\
             f' {clang_tidy_issues_found} {"issues" if cppcheck_issues_found > 1 else "issue"}! Click here to see details. </b> </summary> <br>'\
             f'{clang_tidy_comment} </details><br>\n'
-    else:
-        full_comment_body += f'\n\n## <p align="center"><b> :white_check_mark: No issues found! </b></p>'
 
     if current_comment_length == COMMENT_MAX_SIZE:
         full_comment_body += f'\n```diff\n{MAX_CHAR_COUNT_REACHED}\n```'
@@ -184,5 +186,5 @@ def create_or_edit_comment(comment_body):
 if __name__ == "__main__":
     files_changed_in_pr = setup_changed_files()
     cppcheck_comment, clang_tidy_comment, cppcheck_issues_found, clang_tidy_issues_found = read_files_and_parse_results(files_changed_in_pr)
-    comment_body = preapre_comment_body(cppcheck_comment, clang_tidy_comment, cppcheck_issues_found, clang_tidy_issues_found)
+    comment_body = prepare_comment_body(cppcheck_comment, clang_tidy_comment, cppcheck_issues_found, clang_tidy_issues_found)
     create_or_edit_comment(comment_body)
