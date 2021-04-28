@@ -65,21 +65,22 @@ line_prefix = f'{WORK_DIR}'
 cppcheck_comment, cppcheck_issues_found = create_comment_for_output(cppcheck_content, line_prefix)
 clang_tidy_comment, clang_tidy_issues_found = create_comment_for_output(clang_tidy_content, line_prefix)
 
-full_comment_body = f'<b><h2> {COMMENT_TITLE} </h2></b> <br>'
+full_comment_body = f'## <p align="center"><b> {COMMENT_TITLE} </b></p> \n\n'
 
-if len(cppcheck_comment) > 0:
-    full_comment_body +=f'<details> <summary> <b> :red_circle: Cppcheck found {cppcheck_issues_found} issues! Click here to see details. </b> </summary> <br>'\
-    f'{cppcheck_comment} </details>'
+if cppcheck_issues_found > 0 or clang_tidy_issues_found > 0:
+    if len(cppcheck_comment) > 0:
+        full_comment_body +=f'<details> <summary> <b> :red_circle: Cppcheck found'\
+        f' {cppcheck_issues_found} {"issues" if cppcheck_issues_found > 1 else "issue"}! Click here to see details. </b> </summary> <br>'\
+        f'{cppcheck_comment} </details>'
+
+    full_comment_body += "\n\n *** \n"
+
+    if len(clang_tidy_comment) > 0:
+        full_comment_body += f'<details> <summary> <b> :red_circle: clang-tidy found'\
+        f' {clang_tidy_issues_found} {"issues" if cppcheck_issues_found > 1 else "issue"}! Click here to see details. </b> </summary> <br>'\
+        f'{clang_tidy_comment} </details><br>\n'
 else:
-    full_comment_body += f'\n\n### :white_check_mark: Cppcheck found no issues!'
-
-full_comment_body += "\n\n *** \n"
-
-if len(clang_tidy_comment) > 0:
-    full_comment_body += f'<details> <summary> <b> :red_circle: clang-tidy found {clang_tidy_issues_found} issues! Click here to see details. </b> </summary> <br>'\
-    f'{clang_tidy_comment} </details><br>\n'
-else:
-    full_comment_body += f'\n\n### :white_check_mark: clang-tidy found no issues!'
+    full_comment_body += f'\n\n## <p align="center"><b> :white_check_mark: No issues found! </b></p>'
 
 if current_comment_length == COMMENT_MAX_SIZE:
     full_comment_body += f'\n```diff\n{MAX_CHAR_COUNT_REACHED}\n```'
