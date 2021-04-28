@@ -20,7 +20,36 @@ current_comment_length = 0
 def is_part_of_pr_changes(file_path, file_line_start, file_line_end):
     return True
 
+def get_lines_changed_from_patch(patch):
+    lines_changed = []
+    lines = patch.split('\n')
+
+    for line in lines:
+        # Example line @@ -43,6 +48,8 @@
+        # ------------ ^
+        if line.startswith("@@"):
+            # Example line @@ -43,6 +48,8 @@
+            # ----------------------^
+            idx_beg = line.index("+")
+
+            # Example line @@ -43,6 +48,8 @@
+            #                       ^--^
+            idx_end = line[idx_beg:].index(",")
+            line_begin = int(line[idx_beg + 1 : idx_beg + idx_end])
+
+            idx_beg = idx_beg + idx_end
+            idx_end = line[idx_beg + 1 : ].index("@@")
+
+            num_lines = int(line[idx_beg + 1 : idx_beg + idx_end])
+
+            print(f"Line begin={line_begin} Line end={line_begin + num_lines}")
+            lines_changed.append((line_begin, line_begin + num_lines))
+
+    return lines_changed
+
 def setup_changed_files():
+    files_changed = dict()
+
     g = Github(GITHUB_TOKEN)
     repo = g.get_repo(REPO_NAME)
     pull_request = repo.get_pull(PR_NUM)
@@ -42,6 +71,9 @@ def setup_changed_files():
         print(f"File: additions={file.additions} blob_url={file.blob_url} changes={file.changes} contents_url={file.contents_url}"\
             f"deletions={file.deletions} filename={file.filename} patch={file.patch} previous_filename={file.previous_filename}"\
             f"raw_url={file.raw_url} sha={file.sha} status={file.status} ")
+
+        lines_changed_for_file = get_lines_changed_from_patch(file.patch)
+        files_changed[file.filename] = (file.status, lines_changed_for_file)
 
 def check_for_char_limit(incoming_line):
     global current_comment_length
