@@ -21,7 +21,7 @@ inputs:
   exclude_dir:
     description: 'Directory which should be excluded from the raport'
   apt_pckgs:
-    description: 'Additional (comma separated) packages that need to be installed in order for project to compile'
+    description: 'Additional (space separated) packages that need to be installed in order for project to compile'
   init_script:
     description: |
       'Optional shell script that will be run before running CMake command.'

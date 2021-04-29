@@ -45,7 +45,7 @@ jobs:
         exclude_dir: lib
 
         # Additional apt packages that need to be installed before running Cmake
-        apt_pckgs: software-properties-common
+        apt_pckgs: software-properties-common libglu1-mesa-dev freeglut3-dev mesa-common-dev
 
         # Additional script that will be run (sourced) AFTER 'apt_pckgs' and before running Cmake
         init_script: init_script.sh
@@ -59,7 +59,7 @@ jobs:
 | `pr_num`                | TRUE   | Pull request number for which the comment will be created |`${{github.event.pull_request.number}}`|
 | `comment_title`         | TRUE   | Title for comment with the raport. This should be an unique name | `Static analysis result` |
 | `exclude_dir`           | FALSE  | Directory which should be excluded from the raport | `<empty>` |
-| `apt_pckgs`             | FALSE  | Additional (comma separated) packages that need to be installed in order for project to compile | `<empty>` |
+| `apt_pckgs`             | FALSE  | Additional (space separated) packages that need to be installed in order for project to compile | `<empty>` |
 | `init_script`           | FALSE  | Optional shell script that will be run before running CMake command. This should be used, when the project requires some environmental set-up beforehand. | `<empty>` |
 | `cppcheck_args`         | TRUE   | Cppcheck (space separated) arguments that will be used |`--enable=all --suppress=missingInclude --inline-suppr --inconclusive`|
 | `report_pr_changes_only`| FALSE  | Only post the issues found within the changes introduced in this Pull Request. This means that only the issues found within the changed lines will po posted. Any other issues caused by these changes in the repository, won't be reported, so in general you should run static analysis on entire code base  |`false`|

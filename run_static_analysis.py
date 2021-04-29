@@ -9,7 +9,7 @@ WORK_DIR = os.getenv('GITHUB_WORKSPACE')
 REPO_NAME = os.getenv('INPUT_REPO')
 SHA = os.getenv('GITHUB_SHA')
 COMMENT_TITLE = os.getenv('INPUT_COMMENT_TITLE')
-ONLY_PR_CHANGES = os.getenv('INPUT_REPORD_PR_CHANGES_ONLY')
+ONLY_PR_CHANGES = os.getenv('INPUT_REPORT_PR_CHANGES_ONLY')
 
 # Max characters per comment - 65536
 # Make some room for HTML tags and error message
