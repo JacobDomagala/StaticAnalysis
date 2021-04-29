@@ -24,11 +24,13 @@ RUN git clone https://github.com/Kitware/CMake.git && \
 RUN wget 'https://sourceforge.net/projects/cppcheck/files/cppcheck/2.4/cppcheck-2.4.tar.gz/download' && \
     tar xf download && \
     cd cppcheck-2.4 && mkdir build && cd build && \
-    cmake -G "Ninja" .. && ninja install
+    cmake -G "Ninja" .. && ninja install && \
+    rm -rf *
 
 RUN git clone https://github.com/llvm/llvm-project.git && \
     cd llvm-project && \
     mkdir build && \
     cd build && \
     cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;" ../llvm && \
-    ninja install-clang-tidy
+    ninja install-clang-tidy && \
+    rm -rf *
