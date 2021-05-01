@@ -15,6 +15,9 @@ You can use `cppcheck_args` input to set your flags.
 
 - **clang-tidy** will look for the ```.clang-tidy``` file in your repository.
 
+## Output example
+![output](https://github.com/JacobDomagala/StaticAnalysis/wiki/output_example.png)
+
 ## Workflow example
 
 ```yml

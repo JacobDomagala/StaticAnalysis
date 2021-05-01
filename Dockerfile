@@ -1,4 +1,4 @@
-FROM jdomagala/static_analysis:clang-tidy-11
+FROM jdomagala/static_analysis:latest
 
 COPY entrypoint.sh /
 RUN chmod +x /entrypoint.sh
