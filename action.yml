@@ -21,7 +21,7 @@ inputs:
   exclude_dir:
     description: 'Directory which should be excluded from the raport'
   apt_pckgs:
-    description: 'Additional (comma separated) packages that need to be installed in order for project to compile'
+    description: 'Additional (space separated) packages that need to be installed in order for project to compile'
   init_script:
     description: |
       'Optional shell script that will be run before running CMake command.'
@@ -30,6 +30,9 @@ inputs:
   cppcheck_args:
     description: 'CPPCHECK (space separated) arguments that will be used'
     default: --enable=all --suppress=missingInclude --inline-suppr --inconclusive
+  report_pr_changes_only:
+    description: 'Only post the issues found within the changes introduced in this Pull Request'
+    default: false
 
 runs:
   using: "docker"

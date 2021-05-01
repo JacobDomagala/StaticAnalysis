@@ -1,10 +1,34 @@
-FROM ubuntu:20.04
+FROM ubuntu:20.04 as base
 
 ENV CXX=clang++
-ARG DEBIAN_FRONTEND=noninteractive
+ENV CC=clang
 
-RUN apt-get update && apt-get install -y python3 python3-pip git xorg-dev\
-    build-essential clang-11 lldb-11 lld-11 libc++-11-dev cppcheck llvm-dev clang-tidy
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y python3 python3-pip git \
+    build-essential clang-11 clang-tidy-11 wget libssl-dev ninja-build && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 RUN pip3 install PyGithub
 
-RUN git clone https://github.com/Kitware/CMake.git && cd CMake && ./bootstrap && make && make install
+RUN ln -s \
+    "$(which clang++-11)" \
+    /usr/bin/clang++
+
+RUN ln -s \
+    "$(which clang-11)" \
+    /usr/bin/clang
+
+RUN ln -s \
+    /usr/bin/python3 \
+    /usr/bin/python
+
+RUN git clone https://github.com/Kitware/CMake.git && \
+    cd CMake && ./bootstrap && \
+    make -j4 && make install
+
+RUN wget 'https://sourceforge.net/projects/cppcheck/files/cppcheck/2.4/cppcheck-2.4.tar.gz/download' && \
+    tar xf download && \
+    cd cppcheck-2.4 && mkdir build && cd build && \
+    cmake -G "Ninja" .. && ninja install
+
