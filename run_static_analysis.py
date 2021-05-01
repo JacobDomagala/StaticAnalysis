@@ -87,6 +87,10 @@ def check_for_char_limit(incoming_line):
     global current_comment_length
     return (current_comment_length + len(incoming_line)) <= COMMENT_MAX_SIZE
 
+def get_file_line_end(file, file_line_start):
+    num_lines = sum(1 for line in open(WORK_DIR + file))
+    return min(file_line_start + 5, num_lines)
+
 def create_comment_for_output(tool_output, prefix, files_changed_in_pr):
     issues_found = 0
     global current_comment_length
@@ -98,7 +102,7 @@ def create_comment_for_output(tool_output, prefix, files_changed_in_pr):
             file_path = line[:file_path_end_idx]
             line = line[file_path_end_idx+1:]
             file_line_start = int(line[:line.index(':')])
-            file_line_end = file_line_start + 5
+            file_line_end = get_file_line_end(file_path, file_line_start)
             description = f"\n```diff\n!Line: {file_line_start} - {line[line.index(' ')+1:]}``` \n"
 
             new_line = f'\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}{file_path}#L{file_line_start}-L{file_line_end} {description} <br>\n'
