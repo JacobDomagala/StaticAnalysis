@@ -66,6 +66,7 @@ jobs:
 | `init_script`           | FALSE  | Optional shell script that will be run before running CMake command. This should be used, when the project requires some environmental set-up beforehand. | `<empty>` |
 | `cppcheck_args`         | TRUE   | Cppcheck (space separated) arguments that will be used |`--enable=all --suppress=missingInclude --inline-suppr --inconclusive`|
 | `report_pr_changes_only`| FALSE  | Only post the issues found within the changes introduced in this Pull Request. This means that only the issues found within the changed lines will po posted. Any other issues caused by these changes in the repository, won't be reported, so in general you should run static analysis on entire code base  |`false`|
+| `cmake_args`            | FALSE  | Additional CMake arguments |`<empty>`|
 
 
 

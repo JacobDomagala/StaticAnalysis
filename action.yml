@@ -33,6 +33,8 @@ inputs:
   report_pr_changes_only:
     description: 'Only post the issues found within the changes introduced in this Pull Request'
     default: false
+  cmake_args:
+    description: 'Additional CMake arguments'
 
 runs:
   using: "docker"

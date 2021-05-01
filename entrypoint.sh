@@ -17,13 +17,13 @@ if [ -n "$INPUT_INIT_SCRIPT" ]; then
 fi
 
 mkdir build && cd build || exit
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "$INPUT_CMAKE_ARGS" ..
 
 if [ -z "$INPUT_EXCLUDE_DIR" ]; then
-    cppcheck --project=compile_commands.json $INPUT_CPPCHECK_ARGS --output-file=cppcheck.txt
+    eval cppcheck --project=compile_commands.json "$INPUT_CPPCHECK_ARGS" --output-file=cppcheck.txt
     run-clang-tidy-11 >(tee "clang_tidy.txt")
 else
-    cppcheck --project=compile_commands.json $INPUT_CPPCHECK_ARGS --output-file=cppcheck.txt  -i"$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR"
+    eval cppcheck --project=compile_commands.json "$INPUT_CPPCHECK_ARGS" --output-file=cppcheck.txt  -i"$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR"
     run-clang-tidy-11 "^((?!$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR).)*$" > clang_tidy.txt
 fi
 
