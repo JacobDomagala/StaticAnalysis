@@ -2,6 +2,9 @@
 
 GitHub action parses the build output for C/C++ based application and creates comment for PR with any issues found. Created comment will contain code snippets with the issue description. When this action is run for the first time, the comment with the initial result will be created for current Pull Request. Consecutive runs will edit this comment with updated status.
 
+## Output example
+![output](https://github.com/JacobDomagala/CompileResult/wiki/example_output.png)
+
 ## Workflow example
 
 ```yml
@@ -13,18 +16,23 @@ jobs:
   Compile:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup
+      shell: bash
+      run: cmake -E make_directory ${{runner.workspace}}/build
     - name: Build
       working-directory: ${{runner.workspace}}/build
       shell: bash
       run: |
-        cmake --build . --config $BUILD_TYPE  2> >(tee "output.txt")
+        cmake $GITHUB_WORKSPACE
+        cmake --build . 2> >(tee "output.txt")
     - name: Post PR comment for warnings/errors
-      if: ${{ always() }}
+      if: always()
       uses: JacobDomagala/CompileResult@master
       with:
         comment_title: UBUNTU COMPILE RESULT
         compile_result_file: ${{runner.workspace}}/build/output.txt
-        exclude_dir: ${{github.workspace}}/dependencies
 ```
 
 ## Inputs
