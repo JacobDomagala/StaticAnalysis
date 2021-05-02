@@ -81,6 +81,8 @@ function process_compile_output() {
   const prefix_dir =  make_dir_universal(core.getInput('work_dir'));
   const exclude_dir = make_dir_universal(core.getInput('exclude_dir'));
   const compiler = core.getInput('compiler');
+  var num_warnings = 0;
+  var num_errors = 0;
 
   const splitLines = str => str.split(/\r?\n/);
   var matchingStrings = [];
@@ -97,6 +99,7 @@ function process_compile_output() {
 
       // warning/error description
       const color_mark = type == "error" ? "-" : "!";
+      type == "error" ? num_errors++ : num_warnings++;
       description = "\n```diff\n" + `${color_mark}Line: ${file_line_start} ` + line.substring(line.indexOf(" ")) + "\n```\n";
 
       // Concatinate both modified path to file and the description
@@ -108,9 +111,10 @@ function process_compile_output() {
   });
 
   if (matchingStrings.length == 0) {
-    return `<b> ${core.getInput("comment_title")} - SUCCESS! </b>`
+    return `<p align="center"><b> :white_check_mark: ${core.getInput("comment_title")} - SUCCESS! :white_check_mark: </b></p>`
   }else{
-    return `<details> <summary> <b> ${core.getInput("comment_title")} </b> </summary>\r\n${matchingStrings.join('\n')} </details>`;
+    return `<details> <summary> <b> ${core.getInput("comment_title")} - \
+    :warning: Warnings( ${num_warnings} ) :x: Errors( ${num_errors} ) </b> </summary>\r\n${matchingStrings.join('\n')} </details>`;
   }
 
 }
