@@ -2,6 +2,9 @@
 
 GitHub action parses the build output for C/C++ based application and creates comment for PR with any issues found. Created comment will contain code snippets with the issue description. When this action is run for the first time, the comment with the initial result will be created for current Pull Request. Consecutive runs will edit this comment with updated status.
 
+## Output example
+![output](https://github.com/JacobDomagala/CompileResult/wiki/example_output.png)
+
 ## Workflow example
 
 ```yml
