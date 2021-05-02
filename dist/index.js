@@ -47,6 +47,14 @@ function get_issue_type(compiler, line){
   return line.indexOf(warning_word) != -1 ? "warning" : "error";
 }
 
+function get_line_end(file_path, line_start) {
+  work_dir = process.env.GITHUB_WORKSPACE;
+  file = fs.readFileSync(work_dir + file_path).toString('utf-8');
+  num_lines = (file.split(/\r?\n/)).length - 1;
+
+  return Math.min(num_lines, line_start + parseInt(core.getInput("num_lines_to_display"))).toString();
+}
+
 function get_line_info(compiler, line) {
   const end_file_char = compiler != "MSVC" ? ":" : "(";
   const file_line_end_char = compiler != "MSVC" ? ":" : ",";
@@ -62,8 +70,8 @@ function get_line_info(compiler, line) {
     }
   }
 
-  file_line_end = (parseInt(file_line_start) + parseInt(core.getInput("num_lines_to_display"))).toString();
   file_path = line.substring(0, file_path_end_idx);
+  file_line_end = get_line_end(file_path, file_line_start);
 
   return [file_path, file_line_start, file_line_end, get_issue_type(compiler, line)];
 }
