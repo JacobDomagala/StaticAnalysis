@@ -157,7 +157,7 @@ def prepare_comment_body(cppcheck_comment, clang_tidy_comment, cppcheck_issues_f
 
         if len(clang_tidy_comment) > 0:
             full_comment_body += f'<details> <summary> <b> :red_circle: clang-tidy found'\
-            f' {clang_tidy_issues_found} {"issues" if cppcheck_issues_found > 1 else "issue"}! Click here to see details. </b> </summary> <br>'\
+            f' {clang_tidy_issues_found} {"issues" if clang_tidy_issues_found > 1 else "issue"}! Click here to see details. </b> </summary> <br>'\
             f'{clang_tidy_comment} </details><br>\n'
 
     if current_comment_length == COMMENT_MAX_SIZE:
