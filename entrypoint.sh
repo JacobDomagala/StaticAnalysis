@@ -13,7 +13,8 @@ fi
 
 if [ -n "$INPUT_INIT_SCRIPT" ]; then
     chmod +x "$INPUT_INIT_SCRIPT"
-    source $INPUT_INIT_SCRIPT
+    # shellcheck source=/dev/null
+    source "$INPUT_INIT_SCRIPT"
 fi
 
 mkdir build && cd build || exit
