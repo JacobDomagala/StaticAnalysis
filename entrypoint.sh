@@ -8,7 +8,7 @@ if [ "$INPUT_PR_NUM" == "null" ]; then
 fi
 
 if [ -n "$INPUT_APT_PCKGS" ]; then
-    apt-get update && apt-get install -y "$INPUT_APT_PCKGS"
+    apt-get update && eval apt-get install -y "$INPUT_APT_PCKGS"
 fi
 
 if [ -n "$INPUT_INIT_SCRIPT" ]; then
