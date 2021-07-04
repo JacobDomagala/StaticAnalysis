@@ -156,6 +156,9 @@ def read_files_and_parse_results(files_changed_in_pr):
         clang_tidy_content = file.readlines()
 
     line_prefix = f"{WORK_DIR}"
+    print(f"Cppcheck result: \n {cppcheck_content} \n")
+    print(f"clang-tidy result: \n {clang_tidy_content} \n")
+    print(f"line_prefix: {line_prefix} \n")
 
     cppcheck_comment, cppcheck_issues_found = create_comment_for_output(
         cppcheck_content, line_prefix, files_changed_in_pr
