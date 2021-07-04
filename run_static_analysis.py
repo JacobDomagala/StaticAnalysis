@@ -57,13 +57,20 @@ def get_lines_changed_from_patch(patch):
 
             # Example line @@ -43,6 +48,8 @@
             #                       ^--^
-            idx_end = line[idx_beg:].index(",")
-            line_begin = int(line[idx_beg + 1 : idx_beg + idx_end])
+            try:
+                idx_end = line[idx_beg:].index(",")
+                line_begin = int(line[idx_beg + 1 : idx_beg + idx_end])
 
-            idx_beg = idx_beg + idx_end
-            idx_end = line[idx_beg + 1 :].index("@@")
+                idx_beg = idx_beg + idx_end
+                idx_end = line[idx_beg + 1 :].index("@@")
 
-            num_lines = int(line[idx_beg + 1 : idx_beg + idx_end])
+                num_lines = int(line[idx_beg + 1 : idx_beg + idx_end])
+            except ValueError:
+                # Special case for single line files
+                # such as @@ -0,0 +1 @@
+                idx_end = line[idx_beg:].index(" ")
+                line_begin = int(line[idx_beg + 1 : idx_beg + idx_end])
+                num_lines = 0
 
             lines_changed.append((line_begin, line_begin + num_lines))
 
@@ -149,6 +156,9 @@ def read_files_and_parse_results(files_changed_in_pr):
         clang_tidy_content = file.readlines()
 
     line_prefix = f"{WORK_DIR}"
+    print(f"Cppcheck result: \n {cppcheck_content} \n")
+    print(f"clang-tidy result: \n {clang_tidy_content} \n")
+    print(f"line_prefix: {line_prefix} \n")
 
     cppcheck_comment, cppcheck_issues_found = create_comment_for_output(
         cppcheck_content, line_prefix, files_changed_in_pr
@@ -183,7 +193,7 @@ def prepare_comment_body(
             full_comment_body += (
                 f"<details> <summary> <b> :red_circle: Cppcheck found "
                 f"{cppcheck_issues_found} {'issues' if cppcheck_issues_found > 1 else 'issue'}!"
-                "Click here to see details. </b> </summary> <br>"
+                " Click here to see details. </b> </summary> <br>"
                 f"{cppcheck_comment} </details>"
             )
 
@@ -191,7 +201,7 @@ def prepare_comment_body(
 
         if len(clang_tidy_comment) > 0:
             full_comment_body += (
-                f"<details> <summary> <b> :red_circle: clang-tidy found"
+                f"<details> <summary> <b> :red_circle: clang-tidy found "
                 f"{clang_tidy_issues_found} {'issues' if clang_tidy_issues_found > 1 else 'issue'}!"
                 " Click here to see details. </b> </summary> <br>"
                 f"{clang_tidy_comment} </details><br>\n"
