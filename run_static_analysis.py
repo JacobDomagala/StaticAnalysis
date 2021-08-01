@@ -99,6 +99,12 @@ def check_for_char_limit(incoming_line):
     return (CURRENT_COMMENT_LENGTH + len(incoming_line)) <= COMMENT_MAX_SIZE
 
 
+def is_excluded_dir(line):
+    # In future this could be multiple different directories
+    excluded_dir = f"{WORK_DIR}/{os.getenv('INPUT_EXCLUDE_DIR')}"
+    return line.startswith(excluded_dir)
+
+
 def get_file_line_end(file, file_line_start):
     num_lines = sum(1 for line in open(WORK_DIR + file))
     return min(file_line_start + 5, num_lines)
@@ -109,7 +115,7 @@ def create_comment_for_output(tool_output, prefix, files_changed_in_pr):
     global CURRENT_COMMENT_LENGTH
     output_string = ""
     for line in tool_output:
-        if line.startswith(prefix):
+        if line.startswith(prefix) and not is_excluded_dir(line):
             line = line.replace(prefix, "")
             file_path_end_idx = line.index(":")
             file_path = line[:file_path_end_idx]

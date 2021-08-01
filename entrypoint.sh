@@ -3,8 +3,8 @@
 set -x
 
 if [ "$INPUT_PR_NUM" == "null" ]; then
-  echo "Pull request number input is not present! This action can only run on Pull Requests!"
-  exit 0
+    echo "Pull request number input is not present! This action can only run on Pull Requests!"
+    exit 0
 fi
 
 if [ -n "$INPUT_APT_PCKGS" ]; then
@@ -24,10 +24,11 @@ files_to_check=$(python3 /get_files_to_check.py -exclude="$INPUT_EXCLUDE_DIR" -j
 
 if [ -z "$INPUT_EXCLUDE_DIR" ]; then
     eval cppcheck --project=compile_commands.json "$INPUT_CPPCHECK_ARGS" --output-file=cppcheck.txt
-    eval clang-tidy-12 "$INPUT_CLANG_TIDY_ARGS" -p "$(pwd)" "$files_to_check" -- > "clang_tidy.txt"
 else
     eval cppcheck --project=compile_commands.json "$INPUT_CPPCHECK_ARGS" --output-file=cppcheck.txt -i"$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR"
-    eval clang-tidy-12 "$INPUT_CLANG_TIDY_ARGS" -p "$(pwd)" "$files_to_check" -- > "clang_tidy.txt"
 fi
+
+# Excludes for clang-tidy are handled in python script
+eval clang-tidy-12 "$INPUT_CLANG_TIDY_ARGS" -p "$(pwd)" "$files_to_check" -- >"clang_tidy.txt"
 
 python3 /run_static_analysis.py -cc cppcheck.txt -ct clang_tidy.txt
