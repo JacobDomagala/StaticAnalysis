@@ -102,9 +102,14 @@ def check_for_char_limit(incoming_line):
 
 def is_excluded_dir(line):
     # In future this could be multiple different directories
-    excluded_dir = f"{WORK_DIR}/{os.getenv('INPUT_EXCLUDE_DIR')}"
+    exclude_dir = os.getenv('INPUT_EXCLUDE_DIR')
+    if not exclude_dir:
+        return False
+
+    excluded_dir = f"{WORK_DIR}/{exclude_dir}"
     if VERBOSE:
         print(f"{line} and {excluded_dir} with result {line.startswith(excluded_dir)}")
+
     return line.startswith(excluded_dir)
 
 
