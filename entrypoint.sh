@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -x
-
 export TERM=xterm-color
 
 print_to_console=${INPUT_FORCE_CONSOLE_PRINT}

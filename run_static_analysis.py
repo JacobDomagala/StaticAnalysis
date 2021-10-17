@@ -1,7 +1,7 @@
 import argparse
 import os
 from github import Github
-
+import sys
 
 # Input variables from Github action
 GITHUB_TOKEN = os.getenv("INPUT_GITHUB_TOKEN")
@@ -126,6 +126,7 @@ def create_comment_for_output(tool_output, prefix, files_changed_in_pr, output_t
             # In case where we only output to console, skip the next part
             if output_to_console:
                 output_string += f"\n{line}"
+                issues_found += 1
                 continue
 
             line = line.replace(prefix, "")
@@ -195,9 +196,13 @@ def read_files_and_parse_results():
         clang_tidy_content, line_prefix, files_changed_in_pr, output_to_console
     )
 
-    if output_to_console:
-        print(f"cppcheck results: {cppcheck_comment}")
-        print(f"clang-tidy results: {clang_tidy_comment}")
+    if output_to_console and (cppcheck_issues_found or clang_tidy_issues_found):
+        print("##[error] Issues found!\n")
+        if cppcheck_issues_found:
+            print(f"\u001b[31m cppcheck results: {cppcheck_comment}")
+
+        if clang_tidy_issues_found:
+            print(f"clang-tidy results: {clang_tidy_comment}")
 
     return (
         cppcheck_comment,
@@ -287,3 +292,5 @@ if __name__ == "__main__":
             clang_tidy_issues_found_in,
         )
         create_or_edit_comment(comment_body_in)
+
+    sys.exit(cppcheck_issues_found_in + clang_tidy_issues_found_in)
