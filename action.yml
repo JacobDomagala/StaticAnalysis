@@ -38,6 +38,9 @@ inputs:
     default: false
   cmake_args:
     description: 'Additional CMake arguments'
+  force_console_print:
+    description: 'Output the action result to console, instead of creating the comment'
+    default: false
 
 runs:
   using: "docker"

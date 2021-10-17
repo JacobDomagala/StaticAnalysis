@@ -2,9 +2,15 @@
 
 set -x
 
-if [ "$INPUT_PR_NUM" == "null" ]; then
-    echo "Pull request number input is not present! This action can only run on Pull Requests!"
-    exit 0
+print_to_console=${INPUT_FORCE_CONSOLE_PRINT}
+
+if [ -n "$INPUT_FORCE_CONSOLE_PRINT"]; then
+    echo "The 'force_console_print' option is enabled. Printing output to console."
+elif [ -z "$INPUT_PR_NUM" ]; then
+    echo "Pull request number input is not present. Printing output to console."
+    print_to_console=true
+else
+    echo "Pull request numer is ${INPUT_PR_NUM}"
 fi
 
 if [ -n "$INPUT_APT_PCKGS" ]; then
