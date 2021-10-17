@@ -41,6 +41,9 @@ inputs:
   force_console_print:
     description: 'Output the action result to console, instead of creating the comment'
     default: false
+  verbose:
+    description: 'Verbose output. Used for debugging'
+    default: false
 
 runs:
   using: "docker"
