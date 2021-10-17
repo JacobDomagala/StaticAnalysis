@@ -4,7 +4,7 @@ set -x
 
 print_to_console=${INPUT_FORCE_CONSOLE_PRINT}
 
-if [ -n "$INPUT_FORCE_CONSOLE_PRINT"]; then
+if [ $print_to_console = true ]; then
     echo "The 'force_console_print' option is enabled. Printing output to console."
 elif [ -z "$INPUT_PR_NUM" ]; then
     echo "Pull request number input is not present. Printing output to console."
@@ -37,4 +37,4 @@ fi
 # Excludes for clang-tidy are handled in python script
 eval clang-tidy-12 "$INPUT_CLANG_TIDY_ARGS" -p "$(pwd)" "$files_to_check" -- >"clang_tidy.txt"
 
-python3 /run_static_analysis.py -cc cppcheck.txt -ct clang_tidy.txt
+python3 /run_static_analysis.py -cc cppcheck.txt -ct clang_tidy.txt -o $print_to_console

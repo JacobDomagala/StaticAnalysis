@@ -11,6 +11,7 @@ REPO_NAME = os.getenv("INPUT_REPO")
 SHA = os.getenv("GITHUB_SHA")
 COMMENT_TITLE = os.getenv("INPUT_COMMENT_TITLE")
 ONLY_PR_CHANGES = os.getenv("INPUT_REPORT_PR_CHANGES_ONLY")
+VERBOSE = os.getenv("INPUT_VERBOSE", 'False').lower() in ('true', 'True')
 
 # Max characters per comment - 65536
 # Make some room for HTML tags and error message
@@ -102,6 +103,8 @@ def check_for_char_limit(incoming_line):
 def is_excluded_dir(line):
     # In future this could be multiple different directories
     excluded_dir = f"{WORK_DIR}/{os.getenv('INPUT_EXCLUDE_DIR')}"
+    if VERBOSE:
+        print(f"{line} and {excluded_dir} with result {line.startswith(excluded_dir)}")
     return line.startswith(excluded_dir)
 
 
@@ -109,13 +112,17 @@ def get_file_line_end(file, file_line_start):
     num_lines = sum(1 for line in open(WORK_DIR + file))
     return min(file_line_start + 5, num_lines)
 
-
-def create_comment_for_output(tool_output, prefix, files_changed_in_pr):
+def create_comment_for_output(tool_output, prefix, files_changed_in_pr, output_to_console):
     issues_found = 0
     global CURRENT_COMMENT_LENGTH
     output_string = ""
     for line in tool_output:
         if line.startswith(prefix) and not is_excluded_dir(line):
+            # In case where we only output to console, skip the next part
+            if output_to_console:
+                print(line)
+                continue
+
             line = line.replace(prefix, "")
             file_path_end_idx = line.index(":")
             file_path = line[:file_path_end_idx]
@@ -141,7 +148,7 @@ def create_comment_for_output(tool_output, prefix, files_changed_in_pr):
     return output_string, issues_found
 
 
-def read_files_and_parse_results(files_changed_in_pr):
+def read_files_and_parse_results():
     # Get cppcheck and clang-tidy files
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -150,8 +157,12 @@ def read_files_and_parse_results(files_changed_in_pr):
     parser.add_argument(
         "-ct", "--clangtidy", help="Output file name for clang-tidy", required=True
     )
+    parser.add_argument(
+        "-o", "--output_to_console", help="Whether to output the result to console", required=True
+    )
     cppcheck_file_name = parser.parse_args().cppcheck
     clangtidy_file_name = parser.parse_args().clangtidy
+    output_to_console = parser.parse_args().output_to_console == "true"
 
     cppcheck_content = ""
     with open(cppcheck_file_name, "r") as file:
@@ -162,15 +173,21 @@ def read_files_and_parse_results(files_changed_in_pr):
         clang_tidy_content = file.readlines()
 
     line_prefix = f"{WORK_DIR}"
-    print(f"Cppcheck result: \n {cppcheck_content} \n")
-    print(f"clang-tidy result: \n {clang_tidy_content} \n")
-    print(f"line_prefix: {line_prefix} \n")
+    if VERBOSE:
+        print(f"Cppcheck result: \n {cppcheck_content} \n")
+        print(f"clang-tidy result: \n {clang_tidy_content} \n")
+        print(f"line_prefix: {line_prefix} \n")
+
+
+    files_changed_in_pr = dict()
+    if not output_to_console:
+        files_changed_in_pr = setup_changed_files()
 
     cppcheck_comment, cppcheck_issues_found = create_comment_for_output(
-        cppcheck_content, line_prefix, files_changed_in_pr
+        cppcheck_content, line_prefix, files_changed_in_pr, output_to_console
     )
     clang_tidy_comment, clang_tidy_issues_found = create_comment_for_output(
-        clang_tidy_content, line_prefix, files_changed_in_pr
+        clang_tidy_content, line_prefix, files_changed_in_pr, output_to_console
     )
 
     return (
@@ -178,6 +195,7 @@ def read_files_and_parse_results(files_changed_in_pr):
         clang_tidy_comment,
         cppcheck_issues_found,
         clang_tidy_issues_found,
+        output_to_console,
     )
 
 
@@ -244,18 +262,19 @@ def create_or_edit_comment(comment_body):
 
 
 if __name__ == "__main__":
-    files_changed_in_pr_in = setup_changed_files()
     (
         cppcheck_comment_in,
         clang_tidy_comment_in,
         cppcheck_issues_found_in,
         clang_tidy_issues_found_in,
-    ) = read_files_and_parse_results(files_changed_in_pr_in)
+        output_to_console_in,
+    ) = read_files_and_parse_results()
 
-    comment_body_in = prepare_comment_body(
-        cppcheck_comment_in,
-        clang_tidy_comment_in,
-        cppcheck_issues_found_in,
-        clang_tidy_issues_found_in,
-    )
-    create_or_edit_comment(comment_body_in)
+    if not output_to_console_in:
+        comment_body_in = prepare_comment_body(
+            cppcheck_comment_in,
+            clang_tidy_comment_in,
+            cppcheck_issues_found_in,
+            clang_tidy_issues_found_in,
+        )
+        create_or_edit_comment(comment_body_in)
