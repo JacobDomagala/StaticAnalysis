@@ -125,7 +125,7 @@ def create_comment_for_output(tool_output, prefix, files_changed_in_pr, output_t
         if line.startswith(prefix) and not is_excluded_dir(line):
             # In case where we only output to console, skip the next part
             if output_to_console:
-                print(line)
+                output_string += f"\n{line}"
                 continue
 
             line = line.replace(prefix, "")
@@ -194,6 +194,10 @@ def read_files_and_parse_results():
     clang_tidy_comment, clang_tidy_issues_found = create_comment_for_output(
         clang_tidy_content, line_prefix, files_changed_in_pr, output_to_console
     )
+
+    if output_to_console:
+        print(f"cppcheck results: {cppcheck_comment}")
+        print(f"clang-tidy results: {clang_tidy_comment}")
 
     return (
         cppcheck_comment,

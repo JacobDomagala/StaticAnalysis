@@ -2,6 +2,8 @@
 
 set -x
 
+export TERM=xterm-color
+
 print_to_console=${INPUT_FORCE_CONSOLE_PRINT}
 
 if [ $print_to_console = true ]; then
