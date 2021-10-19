@@ -1,7 +1,7 @@
 import argparse
 import os
-from github import Github
 import sys
+from github import Github
 
 # Input variables from Github action
 GITHUB_TOKEN = os.getenv("INPUT_GITHUB_TOKEN")
@@ -11,7 +11,7 @@ REPO_NAME = os.getenv("INPUT_REPO")
 SHA = os.getenv("GITHUB_SHA")
 COMMENT_TITLE = os.getenv("INPUT_COMMENT_TITLE")
 ONLY_PR_CHANGES = os.getenv("INPUT_REPORT_PR_CHANGES_ONLY")
-VERBOSE = os.getenv("INPUT_VERBOSE", 'False').lower() in ('true', 'True')
+VERBOSE = os.getenv("INPUT_VERBOSE", "False").lower() in ("true", "True")
 
 # Max characters per comment - 65536
 # Make some room for HTML tags and error message
@@ -102,7 +102,7 @@ def check_for_char_limit(incoming_line):
 
 def is_excluded_dir(line):
     # In future this could be multiple different directories
-    exclude_dir = os.getenv('INPUT_EXCLUDE_DIR')
+    exclude_dir = os.getenv("INPUT_EXCLUDE_DIR")
     if not exclude_dir:
         return False
 
@@ -117,7 +117,10 @@ def get_file_line_end(file, file_line_start):
     num_lines = sum(1 for line in open(WORK_DIR + file))
     return min(file_line_start + 5, num_lines)
 
-def create_comment_for_output(tool_output, prefix, files_changed_in_pr, output_to_console):
+
+def create_comment_for_output(
+    tool_output, prefix, files_changed_in_pr, output_to_console
+):
     issues_found = 0
     global CURRENT_COMMENT_LENGTH
     output_string = ""
@@ -164,7 +167,10 @@ def read_files_and_parse_results():
         "-ct", "--clangtidy", help="Output file name for clang-tidy", required=True
     )
     parser.add_argument(
-        "-o", "--output_to_console", help="Whether to output the result to console", required=True
+        "-o",
+        "--output_to_console",
+        help="Whether to output the result to console",
+        required=True,
     )
     cppcheck_file_name = parser.parse_args().cppcheck
     clangtidy_file_name = parser.parse_args().clangtidy
@@ -183,7 +189,6 @@ def read_files_and_parse_results():
         print(f"Cppcheck result: \n {cppcheck_content} \n")
         print(f"clang-tidy result: \n {clang_tidy_content} \n")
         print(f"line_prefix: {line_prefix} \n")
-
 
     files_changed_in_pr = dict()
     if not output_to_console:
