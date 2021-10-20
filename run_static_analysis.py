@@ -203,11 +203,13 @@ def read_files_and_parse_results():
 
     if output_to_console and (cppcheck_issues_found or clang_tidy_issues_found):
         print("##[error] Issues found!\n")
+        error_color = "\u001b[31m"
+
         if cppcheck_issues_found:
-            print(f"\u001b[31m cppcheck results: {cppcheck_comment}")
+            print(f"{error_color}cppcheck results: {cppcheck_comment}")
 
         if clang_tidy_issues_found:
-            print(f"clang-tidy results: {clang_tidy_comment}")
+            print(f"{error_color}clang-tidy results: {clang_tidy_comment}")
 
     return (
         cppcheck_comment,
