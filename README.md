@@ -1,13 +1,8 @@
 # Static Analysis
 
-GitHub action for CMake based C++ project, that runs [Cppcheck](http://cppcheck.sourceforge.net/) and [clang-tidy](https://clang.llvm.org/extra/clang-tidy/), and creates comment for PR with any issues found. Created comment will contain code snippets with the issue description. When this action is run for the first time, the comment with the initial result will be created for current Pull Request. Consecutive runs will edit this comment with updated status.
-
-
-Note that it's possible that the amount of issues detected can make the comment's body to be greater than the GitHub's character limit per PR comment (which is 65536). In that case, the created comment will contain only the isues found up to that point, and the information that the limit of characters was reached.
-
+GitHub action for CMake based C++ project, that runs [cppcheck](http://cppcheck.sourceforge.net/) and [clang-tidy](https://clang.llvm.org/extra/clang-tidy/). This action works both no push and on pull requests.
 
 In order for this action to work properly, your project has to be CMake based and also include ```.clang-tidy``` file in your root directory. If your project requires some additional packages to be installed, you can use `apt_pckgs` and/or `init_script` input variables to install them (see the **Workflow example** or **Inputs** sections below)
-
 
 - **Cppcheck** will run with the following default flags: </br>
 ```--enable=all --suppress=missingInclude --inline-suppr --inconclusive```
@@ -15,14 +10,28 @@ You can use `cppcheck_args` input to set your flags.
 
 - **clang-tidy** will look for the ```.clang-tidy``` file in your repository.
 
-## Output example
+## Pull Request comment
+
+Created comment will contain code snippets with the issue description. When this action is run for the first time, the comment with the initial result will be created for current Pull Request. Consecutive runs will edit this comment with updated status.
+
+Note that it's possible that the amount of issues detected can make the comment's body to be greater than the GitHub's character limit per PR comment (which is 65536). In that case, the created comment will contain only the isues found up to that point, and the information that the limit of characters was reached.
+
+### Output example
 ![output](https://github.com/JacobDomagala/StaticAnalysis/wiki/output_example.png)
+
+## Non Pull Request
+
+For non Pull Requests, the output will be printed to GitHub's output console. This behaviour can also be forced via `force_console_print` input.
+
+### Output example
+![output](https://github.com/JacobDomagala/StaticAnalysis/wiki/console_output_example.png)
 
 ## Workflow example
 
 ```yml
 name: Static analysis
 
+# This example runs on per PR basis. This can be changed to also work on push
 on: [pull_request]
 
 jobs:
@@ -58,9 +67,9 @@ jobs:
 
 | Name                    |Required| Description                        | Default value |
 |-------------------------|--------|------------------------------------|:---------------:|
-| `github_token`          | TRUE   | Github token used for Github API requests |`${{github.token}}`|
-| `pr_num`                | TRUE   | Pull request number for which the comment will be created |`${{github.event.pull_request.number}}`|
-| `comment_title`         | TRUE   | Title for comment with the raport. This should be an unique name | `Static analysis result` |
+| `github_token`          | FALSE  | Github token used for Github API requests |`${{github.token}}`|
+| `pr_num`                | FALSE  | Pull request number for which the comment will be created |`${{github.event.pull_request.number}}`|
+| `comment_title`         | FALSE  | Title for comment with the raport. This should be an unique name | `Static analysis result` |
 | `exclude_dir`           | FALSE  | Directory which should be excluded from the raport | `<empty>` |
 | `apt_pckgs`             | FALSE  | Additional (space separated) packages that need to be installed in order for project to compile | `<empty>` |
 | `init_script`           | FALSE  | Optional shell script that will be run before running CMake command. This should be used, when the project requires some environmental set-up beforehand. | `<empty>` |
@@ -68,6 +77,7 @@ jobs:
 | `clang_tidy_args`       | FALSE  | clang-tidy (space separated) arguments that will be used |`<empty>`|
 | `report_pr_changes_only`| FALSE  | Only post the issues found within the changes introduced in this Pull Request. This means that only the issues found within the changed lines will po posted. Any other issues caused by these changes in the repository, won't be reported, so in general you should run static analysis on entire code base  |`false`|
 | `cmake_args`            | FALSE  | Additional CMake arguments |`<empty>`|
+| `force_console_print`   | FALSE  | Output the action result to console, instead of creating the comment |`false`|
 
 
 
