@@ -11,7 +11,7 @@ REPO_NAME = os.getenv("INPUT_REPO")
 SHA = os.getenv("GITHUB_SHA")
 COMMENT_TITLE = os.getenv("INPUT_COMMENT_TITLE")
 ONLY_PR_CHANGES = os.getenv("INPUT_REPORT_PR_CHANGES_ONLY")
-VERBOSE = os.getenv("INPUT_VERBOSE", "False").lower() in ("true", "True")
+VERBOSE = os.getenv("INPUT_VERBOSE", "False").lower() == "true"
 
 # Max characters per comment - 65536
 # Make some room for HTML tags and error message
