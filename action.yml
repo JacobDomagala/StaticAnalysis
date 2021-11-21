@@ -11,6 +11,14 @@ inputs:
   repo:
     description: 'Repository name'
     default: ${{ github.repository }}
+  pr_repo:
+    description: 'Head repository'
+    default: ${{ github.event.pull_request.head.repo.full_name }}
+  pr_sha:
+    description: 'Commit SHA'
+    default: ${{ github.event.pull_request.head.ref }}
+  root_dir:
+    description: 'Directory where (forked) repository resides'
   comment_title:
     description: 'Title for comment with the raport. This should be an unique name'
     default: Static analysis result

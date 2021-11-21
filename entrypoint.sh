@@ -23,10 +23,26 @@ if [ -n "$INPUT_INIT_SCRIPT" ]; then
     source "$INPUT_INIT_SCRIPT"
 fi
 
+echo  "Root dir = ${INPUT_ROOT_DIR} Repo = ${INPUT_PR_REPO}  SHA = ${INPUT_PR_SHA} "
+
+if [ -n "$INPUT_PR_REPO" ]; then
+    git clone "https://www.github.com/$INPUT_PR_REPO" pr_tree
+    cd pr_tree || exit
+    git checkout "$INPUT_PR_SHA"
+fi
+
+# If this Action is run from forked repository
+# if [ -n "$INPUT_ROOT_DIR" ]; then
+#     cd "$INPUT_ROOT_DIR" || exit
+# fi
+
 mkdir build && cd build || exit
+
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "$INPUT_CMAKE_ARGS" ..
 
 files_to_check=$(python3 /get_files_to_check.py -exclude="$INPUT_EXCLUDE_DIR" -json="compile_commands.json")
+
+echo "Files to check = $files_to_check"
 
 if [ -z "$INPUT_EXCLUDE_DIR" ]; then
     eval cppcheck --project=compile_commands.json "$INPUT_CPPCHECK_ARGS" --output-file=cppcheck.txt
