@@ -23,18 +23,17 @@ if [ -n "$INPUT_INIT_SCRIPT" ]; then
     source "$INPUT_INIT_SCRIPT"
 fi
 
-echo  "Root dir = ${INPUT_ROOT_DIR} Repo = ${INPUT_PR_REPO}  SHA = ${INPUT_PR_SHA} "
+echo  "Root dir = ${INPUT_ROOT_DIR} Repo = ${INPUT_PR_REPO}  SHA = ${INPUT_PR_HEAD} event name = ${GITHUB_EVENT_NAME}"
 
+use_extra_directorty=false
+
+# This is useful when running this Action from fork (together with [pull_request_target])
 if [ -n "$INPUT_PR_REPO" ]; then
     git clone "https://www.github.com/$INPUT_PR_REPO" pr_tree
     cd pr_tree || exit
-    git checkout "$INPUT_PR_SHA"
+    git checkout "$INPUT_PR_HEAD"
+    use_extra_directorty=true
 fi
-
-# If this Action is run from forked repository
-# if [ -n "$INPUT_ROOT_DIR" ]; then
-#     cd "$INPUT_ROOT_DIR" || exit
-# fi
 
 mkdir build && cd build || exit
 
@@ -53,4 +52,4 @@ fi
 # Excludes for clang-tidy are handled in python script
 eval clang-tidy-12 "$INPUT_CLANG_TIDY_ARGS" -p "$(pwd)" "$files_to_check" -- >"clang_tidy.txt"
 
-python3 /run_static_analysis.py -cc cppcheck.txt -ct clang_tidy.txt -o $print_to_console
+python3 /run_static_analysis.py -cc cppcheck.txt -ct clang_tidy.txt -o $print_to_console -fk $use_extra_directorty

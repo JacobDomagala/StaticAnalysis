@@ -12,10 +12,10 @@ inputs:
     description: 'Repository name'
     default: ${{ github.repository }}
   pr_repo:
-    description: 'Head repository'
+    description: 'Head repository (This is useful when using Action with [pull_request_target])'
     default: ${{ github.event.pull_request.head.repo.full_name }}
-  pr_sha:
-    description: 'Commit SHA'
+  pr_head:
+    description: 'Head (branch) for PR (same as `pr_repo` input, useful with [pull_request_target]'
     default: ${{ github.event.pull_request.head.ref }}
   root_dir:
     description: 'Directory where (forked) repository resides'

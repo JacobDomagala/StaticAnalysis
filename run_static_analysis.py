@@ -6,7 +6,7 @@ from github import Github
 # Input variables from Github action
 GITHUB_TOKEN = os.getenv("INPUT_GITHUB_TOKEN")
 PR_NUM = os.getenv("INPUT_PR_NUM")
-WORK_DIR = f'{os.getenv("GITHUB_WORKSPACE")}/{os.getenv("INPUT_ROOT_DIR")}'
+WORK_DIR = f'{os.getenv("GITHUB_WORKSPACE")}'
 REPO_NAME = os.getenv("INPUT_REPO")
 SHA = os.getenv("GITHUB_SHA")
 COMMENT_TITLE = os.getenv("INPUT_COMMENT_TITLE")
@@ -172,6 +172,23 @@ def read_files_and_parse_results():
         help="Whether to output the result to console",
         required=True,
     )
+    parser.add_argument(
+        "-",
+        "--fork_repository",
+        help="Whether the actual code is in 'pr_tree' directory",
+        required=True,
+    )
+
+    if parser.parse_args().fork_repository == "true":
+        global WORK_DIR
+        global REPO_NAME
+
+        # Currently it's hardcoded, not sure if it should be input/variable
+        WORK_DIR += "/pr_tree"
+
+        # Make sure to use Head repository
+        REPO_NAME = os.getenv("INPUT_PR_REPO")
+
     cppcheck_file_name = parser.parse_args().cppcheck
     clangtidy_file_name = parser.parse_args().clangtidy
     output_to_console = parser.parse_args().output_to_console == "true"
