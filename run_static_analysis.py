@@ -173,7 +173,7 @@ def read_files_and_parse_results():
         required=True,
     )
     parser.add_argument(
-        "-",
+        "-fk",
         "--fork_repository",
         help="Whether the actual code is in 'pr_tree' directory",
         required=True,

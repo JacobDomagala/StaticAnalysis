@@ -2,6 +2,12 @@
 
 export TERM=xterm-color
 
+debug_print() {
+    if [ "$INPUT_VERBOSE" = "true" ]; then
+        echo "$1"
+    fi
+}
+
 print_to_console=${INPUT_FORCE_CONSOLE_PRINT}
 
 if [ $print_to_console = true ]; then
@@ -10,7 +16,7 @@ elif [ -z "$INPUT_PR_NUM" ]; then
     echo "Pull request number input is not present. Printing output to console."
     print_to_console=true
 else
-    echo "Pull request numer is ${INPUT_PR_NUM}"
+    debug_print "Pull request numer is ${INPUT_PR_NUM}"
 fi
 
 if [ -n "$INPUT_APT_PCKGS" ]; then
@@ -23,12 +29,13 @@ if [ -n "$INPUT_INIT_SCRIPT" ]; then
     source "$INPUT_INIT_SCRIPT"
 fi
 
-echo  "Root dir = ${INPUT_ROOT_DIR} Repo = ${INPUT_PR_REPO}  SHA = ${INPUT_PR_HEAD} event name = ${GITHUB_EVENT_NAME}"
+debug_print "Root dir = ${INPUT_ROOT_DIR} Repo = ${INPUT_PR_REPO}  SHA = ${INPUT_PR_HEAD} event name = ${GITHUB_EVENT_NAME}"
+
 
 use_extra_directorty=false
 
 # This is useful when running this Action from fork (together with [pull_request_target])
-if [ -n "$INPUT_PR_REPO" ]; then
+if [ "$GITHUB_EVENT_NAME" = "pull_request_target" ] && [ -n "$INPUT_PR_REPO" ]; then
     git clone "https://www.github.com/$INPUT_PR_REPO" pr_tree
     cd pr_tree || exit
     git checkout "$INPUT_PR_HEAD"
@@ -41,7 +48,7 @@ cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "$INPUT_CMAKE_ARGS" ..
 
 files_to_check=$(python3 /get_files_to_check.py -exclude="$INPUT_EXCLUDE_DIR" -json="compile_commands.json")
 
-echo "Files to check = $files_to_check"
+debug_print "Files to check = $files_to_check"
 
 if [ -z "$INPUT_EXCLUDE_DIR" ]; then
     eval cppcheck --project=compile_commands.json "$INPUT_CPPCHECK_ARGS" --output-file=cppcheck.txt
