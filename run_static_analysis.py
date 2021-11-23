@@ -8,6 +8,7 @@ GITHUB_TOKEN = os.getenv("INPUT_GITHUB_TOKEN")
 PR_NUM = os.getenv("INPUT_PR_NUM")
 WORK_DIR = f'{os.getenv("GITHUB_WORKSPACE")}'
 REPO_NAME = os.getenv("INPUT_REPO")
+TARGET_REPO_NAME = os.getenv("INPUT_REPO")
 SHA = os.getenv("GITHUB_SHA")
 COMMENT_TITLE = os.getenv("INPUT_COMMENT_TITLE")
 ONLY_PR_CHANGES = os.getenv("INPUT_REPORT_PR_CHANGES_ONLY")
@@ -82,7 +83,7 @@ def setup_changed_files():
     files_changed = dict()
 
     github = Github(GITHUB_TOKEN)
-    repo = github.get_repo(REPO_NAME)
+    repo = github.get_repo(TARGET_REPO_NAME)
     pull_request = repo.get_pull(int(PR_NUM))
     num_changed_files = pull_request.changed_files
     print(f"Changed files {num_changed_files}")
@@ -279,7 +280,7 @@ def prepare_comment_body(
 
 def create_or_edit_comment(comment_body):
     github = Github(GITHUB_TOKEN)
-    repo = github.get_repo(REPO_NAME)
+    repo = github.get_repo(TARGET_REPO_NAME)
     pull_request = repo.get_pull(int(PR_NUM))
 
     comments = pull_request.get_issue_comments()
