@@ -31,7 +31,7 @@ For non Pull Requests, the output will be printed to GitHub's output console. Th
 ```yml
 name: Static analysis
 
-# This example runs on per PR basis. This can be changed to also work on push
+# This example runs on per PR basis. This can be changed to also work on push or pull_request_target
 on: [pull_request]
 
 jobs:

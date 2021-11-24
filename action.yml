@@ -17,8 +17,6 @@ inputs:
   pr_head:
     description: 'Head (branch) for PR (same as `pr_repo` input, useful with [pull_request_target]'
     default: ${{ github.event.pull_request.head.ref }}
-  root_dir:
-    description: 'Directory where (forked) repository resides'
   comment_title:
     description: 'Title for comment with the raport. This should be an unique name'
     default: Static analysis result
