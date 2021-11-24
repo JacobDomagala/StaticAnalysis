@@ -29,17 +29,21 @@ if [ -n "$INPUT_INIT_SCRIPT" ]; then
     source "$INPUT_INIT_SCRIPT"
 fi
 
-debug_print "Root dir = ${INPUT_ROOT_DIR} Repo = ${INPUT_PR_REPO}  SHA = ${INPUT_PR_HEAD} event name = ${GITHUB_EVENT_NAME}"
-
+debug_print "Repo = ${INPUT_PR_REPO}  SHA = ${INPUT_PR_HEAD} event name = ${GITHUB_EVENT_NAME}"
 
 use_extra_directorty=false
 
 # This is useful when running this Action from fork (together with [pull_request_target])
 if [ "$GITHUB_EVENT_NAME" = "pull_request_target" ] && [ -n "$INPUT_PR_REPO" ]; then
+    debug_print "Running in [pull_request_target] event! Cloning the Head repo ..."
     git clone "https://www.github.com/$INPUT_PR_REPO" pr_tree
     cd pr_tree || exit
     git checkout "$INPUT_PR_HEAD"
     use_extra_directorty=true
+
+    # Override commit SHA, in order to get the correct code snippet
+    NEW_GITHUB_SHA=$(git rev-parse HEAD)
+    export GITHUB_SHA=$NEW_GITHUB_SHA
 fi
 
 mkdir build && cd build || exit
