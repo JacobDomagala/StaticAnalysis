@@ -122,6 +122,13 @@ def get_file_line_end(file, file_line_start):
 def create_comment_for_output(
     tool_output, prefix, files_changed_in_pr, output_to_console
 ):
+    # Move this outside this function, since it's called twice (?)
+    github = Github(GITHUB_TOKEN)
+    repo = github.get_repo(TARGET_REPO_NAME)
+    pull_request = repo.get_pull(int(PR_NUM))
+    commits = pull_request.get_commits()
+    lastcommit = commits[commits.totalCount -1]
+
     issues_found = 0
     global CURRENT_COMMENT_LENGTH
     output_string = ""
@@ -145,6 +152,9 @@ def create_comment_for_output(
                 f"\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}{file_path}"
                 f"#L{file_line_start}-L{file_line_end} {description} <br>\n"
             )
+
+            print(f"pull_request.create_review_comment({description}, {lastcommit}, {file_path}, {file_line_start})")
+            pull_request.create_review_comment(description, lastcommit, file_path[1:], file_line_start)
 
             if is_part_of_pr_changes(file_path, file_line_start, files_changed_in_pr):
                 if check_for_char_limit(new_line):
