@@ -23,15 +23,18 @@ MAX_CHAR_COUNT_REACHED = (
 COMMENT_MAX_SIZE = 65000
 CURRENT_COMMENT_LENGTH = 0
 
+def debug_print(message):
+    if VERBOSE:
+        print(message)
 
 def is_part_of_pr_changes(file_path, issue_file_line, files_changed_in_pr):
     if ONLY_PR_CHANGES == "false":
         return True
 
     file_name = file_path[file_path.rfind("/") + 1 :]
-    print(f"Looking for issue found in file={file_name} ...")
+    debug_print(f"Looking for issue found in file={file_name} ...")
     for file, (status, lines_changed_for_file) in files_changed_in_pr.items():
-        print(
+        debug_print(
             f"Changed file by this PR {file} with status {status} and changed lines {lines_changed_for_file}"
         )
         if file == file_name:
@@ -86,7 +89,7 @@ def setup_changed_files():
     repo = github.get_repo(TARGET_REPO_NAME)
     pull_request = repo.get_pull(int(PR_NUM))
     num_changed_files = pull_request.changed_files
-    print(f"Changed files {num_changed_files}")
+    debug_print(f"Changed files {num_changed_files}")
     files = pull_request.get_files()
     for file in files:
         if file.patch is not None:
@@ -109,7 +112,7 @@ def is_excluded_dir(line):
 
     excluded_dir = f"{WORK_DIR}/{exclude_dir}"
     if VERBOSE:
-        print(f"{line} and {excluded_dir} with result {line.startswith(excluded_dir)}")
+        debug_print(f"{line} and {excluded_dir} with result {line.startswith(excluded_dir)}")
 
     return line.startswith(excluded_dir)
 
@@ -152,9 +155,6 @@ def create_comment_for_output(
                 f"\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}{file_path}"
                 f"#L{file_line_start}-L{file_line_end} {description} <br>\n"
             )
-
-            print(f"pull_request.create_review_comment({description}, {lastcommit}, {file_path}, {file_line_start})")
-            pull_request.create_review_comment(description, lastcommit, file_path[1:], file_line_start)
 
             if is_part_of_pr_changes(file_path, file_line_start, files_changed_in_pr):
                 if check_for_char_limit(new_line):
@@ -213,10 +213,10 @@ def read_files_and_parse_results():
         clang_tidy_content = file.readlines()
 
     line_prefix = f"{WORK_DIR}"
-    if VERBOSE:
-        print(f"Cppcheck result: \n {cppcheck_content} \n")
-        print(f"clang-tidy result: \n {clang_tidy_content} \n")
-        print(f"line_prefix: {line_prefix} \n")
+
+    debug_print(f"Cppcheck result: \n {cppcheck_content} \n"
+        f"clang-tidy result: \n {clang_tidy_content} \n"
+        f"line_prefix: {line_prefix} \n")
 
     files_changed_in_pr = dict()
     if not output_to_console:
@@ -283,7 +283,7 @@ def prepare_comment_body(
     if CURRENT_COMMENT_LENGTH == COMMENT_MAX_SIZE:
         full_comment_body += f"\n```diff\n{MAX_CHAR_COUNT_REACHED}\n```"
 
-    print(f"Repo={REPO_NAME} pr_num={PR_NUM} comment_title={COMMENT_TITLE}")
+    debug_print(f"Repo={REPO_NAME} pr_num={PR_NUM} comment_title={COMMENT_TITLE}")
 
     return full_comment_body
 
