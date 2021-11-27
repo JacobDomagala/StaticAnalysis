@@ -13,6 +13,7 @@ SHA = os.getenv("GITHUB_SHA")
 COMMENT_TITLE = os.getenv("INPUT_COMMENT_TITLE")
 ONLY_PR_CHANGES = os.getenv("INPUT_REPORT_PR_CHANGES_ONLY")
 VERBOSE = os.getenv("INPUT_VERBOSE", "False").lower() == "true"
+FILES_WITH_ISSUES = dict()
 
 # Max characters per comment - 65536
 # Make some room for HTML tags and error message
@@ -23,9 +24,11 @@ MAX_CHAR_COUNT_REACHED = (
 COMMENT_MAX_SIZE = 65000
 CURRENT_COMMENT_LENGTH = 0
 
+
 def debug_print(message):
     if VERBOSE:
         print(message)
+
 
 def is_part_of_pr_changes(file_path, issue_file_line, files_changed_in_pr):
     if ONLY_PR_CHANGES == "false":
@@ -112,7 +115,9 @@ def is_excluded_dir(line):
 
     excluded_dir = f"{WORK_DIR}/{exclude_dir}"
     if VERBOSE:
-        debug_print(f"{line} and {excluded_dir} with result {line.startswith(excluded_dir)}")
+        debug_print(
+            f"{line} and {excluded_dir} with result {line.startswith(excluded_dir)}"
+        )
 
     return line.startswith(excluded_dir)
 
@@ -125,15 +130,9 @@ def get_file_line_end(file, file_line_start):
 def create_comment_for_output(
     tool_output, prefix, files_changed_in_pr, output_to_console
 ):
-    # Move this outside this function, since it's called twice (?)
-    github = Github(GITHUB_TOKEN)
-    repo = github.get_repo(TARGET_REPO_NAME)
-    pull_request = repo.get_pull(int(PR_NUM))
-    commits = pull_request.get_commits()
-    lastcommit = commits[commits.totalCount -1]
-
     issues_found = 0
     global CURRENT_COMMENT_LENGTH
+    global FILES_WITH_ISSUES
     output_string = ""
     for line in tool_output:
         if line.startswith(prefix) and not is_excluded_dir(line):
@@ -151,10 +150,34 @@ def create_comment_for_output(
             file_line_end = get_file_line_end(file_path, file_line_start)
             description = f"\n```diff\n!Line: {file_line_start} - {line[line.index(' ')+1:]}``` \n"
 
-            new_line = (
-                f"\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}{file_path}"
-                f"#L{file_line_start}-L{file_line_end} {description} <br>\n"
-            )
+            if TARGET_REPO_NAME != REPO_NAME:
+
+                if file_path not in FILES_WITH_ISSUES:
+                    with open(f"../{file_path}") as file:
+                        lines = file.readlines()
+                        FILES_WITH_ISSUES[file_path] = lines
+
+                modified_content = FILES_WITH_ISSUES[file_path][
+                    file_line_start - 1 : file_line_end - 1
+                ]
+                modified_content[0] = modified_content[0][:-1] + " <---- HERE\n"
+                file_content = "".join(modified_content)
+
+                file_url = f"https://github.com/{REPO_NAME}/blob/{SHA}{file_path}#L{file_line_start}"
+                new_line = (
+                    "\n\n------"
+                    f"\n\n <b><i>Issue found in file</b></i> [{REPO_NAME + file_path}]({file_url})\n"
+                    f"```cpp\n"
+                    f"{file_content}"
+                    f"\n``` \n"
+                    f"{description} <br>\n"
+                )
+
+            else:
+                new_line = (
+                    f"\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}{file_path}"
+                    f"#L{file_line_start}-L{file_line_end} {description} <br>\n"
+                )
 
             if is_part_of_pr_changes(file_path, file_line_start, files_changed_in_pr):
                 if check_for_char_limit(new_line):
@@ -214,9 +237,11 @@ def read_files_and_parse_results():
 
     line_prefix = f"{WORK_DIR}"
 
-    debug_print(f"Cppcheck result: \n {cppcheck_content} \n"
+    debug_print(
+        f"Cppcheck result: \n {cppcheck_content} \n"
         f"clang-tidy result: \n {clang_tidy_content} \n"
-        f"line_prefix: {line_prefix} \n")
+        f"line_prefix: {line_prefix} \n"
+    )
 
     files_changed_in_pr = dict()
     if not output_to_console:
