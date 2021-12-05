@@ -1,6 +1,8 @@
 #!/bin/bash
 # shellcheck disable=SC2155
 
+set -e
+
 export TERM=xterm-color
 
 debug_print() {
