@@ -214,11 +214,7 @@ def read_files_and_parse_results():
     )
 
     if parser.parse_args().fork_repository == "true":
-        global WORK_DIR
         global REPO_NAME
-
-        # Currently it's hardcoded, not sure if it should be input/variable
-        WORK_DIR += "/pr_tree"
 
         # Make sure to use Head repository
         REPO_NAME = os.getenv("INPUT_PR_REPO")

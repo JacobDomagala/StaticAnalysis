@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2155
 
 export TERM=xterm-color
 
@@ -44,6 +45,8 @@ if [ "$GITHUB_EVENT_NAME" = "pull_request_target" ] && [ -n "$INPUT_PR_REPO" ]; 
     # Override commit SHA, in order to get the correct code snippet
     NEW_GITHUB_SHA=$(git rev-parse HEAD)
     export GITHUB_SHA=$NEW_GITHUB_SHA
+
+    export GITHUB_WORKSPACE=$(pwd)
 fi
 
 mkdir build && cd build || exit
