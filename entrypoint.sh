@@ -7,7 +7,10 @@ export TERM=xterm-color
 
 debug_print() {
     if [ "$INPUT_VERBOSE" = "true" ]; then
-        echo -e "\u001b[32m $1"
+        IFS=$'\n' read -ra ADDR <<< "$1"
+        for i in "${ADDR[@]}"; do
+            echo -e "\u001b[32m $i"
+        done
     fi
 }
 
@@ -58,7 +61,8 @@ cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "$INPUT_CMAKE_ARGS" ..
 files_to_check=$(python3 /get_files_to_check.py -exclude="$INPUT_EXCLUDE_DIR" -json="compile_commands.json")
 
 debug_print "Files to check = $files_to_check"
-debug_print "INPUT_CPPCHECK_ARGS = $INPUT_CPPCHECK_ARGS \n INPUT_CLANG_TIDY_ARGS = $INPUT_CLANG_TIDY_ARGS"
+debug_print "INPUT_CPPCHECK_ARGS = $INPUT_CPPCHECK_ARGS"
+debug_print "INPUT_CLANG_TIDY_ARGS = $INPUT_CLANG_TIDY_ARGS"
 
 if [ -z "$INPUT_EXCLUDE_DIR" ]; then
     debug_print "Running cppcheck --project=compile_commands.json $INPUT_CPPCHECK_ARGS --output-file=cppcheck.txt ..."

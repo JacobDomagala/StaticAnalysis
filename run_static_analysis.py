@@ -27,7 +27,9 @@ CURRENT_COMMENT_LENGTH = 0
 
 def debug_print(message):
     if VERBOSE:
-        print(message)
+        lines = message.split("\n")
+        for line in lines:
+            print(f"\033[96m {line}")
 
 
 def is_part_of_pr_changes(file_path, issue_file_line, files_changed_in_pr):
