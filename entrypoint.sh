@@ -7,7 +7,7 @@ export TERM=xterm-color
 
 debug_print() {
     if [ "$INPUT_VERBOSE" = "true" ]; then
-        echo "$1"
+        echo -e "\u001b[32m $1"
     fi
 }
 
@@ -16,10 +16,10 @@ print_to_console=${INPUT_FORCE_CONSOLE_PRINT}
 if [ $print_to_console = true ]; then
     echo "The 'force_console_print' option is enabled. Printing output to console."
 elif [ -z "$INPUT_PR_NUM" ]; then
-    echo "Pull request number input is not present. Printing output to console."
+    echo "Pull request number input (pr_num) is not present. Printing output to console."
     print_to_console=true
 else
-    debug_print "Pull request numer is ${INPUT_PR_NUM}"
+    debug_print "Pull request number: ${INPUT_PR_NUM}"
 fi
 
 if [ -n "$INPUT_APT_PCKGS" ]; then
@@ -58,6 +58,7 @@ cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "$INPUT_CMAKE_ARGS" ..
 files_to_check=$(python3 /get_files_to_check.py -exclude="$INPUT_EXCLUDE_DIR" -json="compile_commands.json")
 
 debug_print "Files to check = $files_to_check"
+debug_print "INPUT_CPPCHECK_ARGS = $INPUT_CPPCHECK_ARGS \n INPUT_CLANG_TIDY_ARGS = $INPUT_CLANG_TIDY_ARGS"
 
 if [ -z "$INPUT_EXCLUDE_DIR" ]; then
     debug_print "Running cppcheck --project=compile_commands.json $INPUT_CPPCHECK_ARGS --output-file=cppcheck.txt ..."
