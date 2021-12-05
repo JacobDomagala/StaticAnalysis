@@ -55,12 +55,15 @@ files_to_check=$(python3 /get_files_to_check.py -exclude="$INPUT_EXCLUDE_DIR" -j
 debug_print "Files to check = $files_to_check"
 
 if [ -z "$INPUT_EXCLUDE_DIR" ]; then
+    debug_print "Running cppcheck --project=compile_commands.json $INPUT_CPPCHECK_ARGS --output-file=cppcheck.txt ..."
     eval cppcheck --project=compile_commands.json "$INPUT_CPPCHECK_ARGS" --output-file=cppcheck.txt
 else
+    debug_print "Running cppcheck --project=compile_commands.json $INPUT_CPPCHECK_ARGS --output-file=cppcheck.txt -i$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR ..."
     eval cppcheck --project=compile_commands.json "$INPUT_CPPCHECK_ARGS" --output-file=cppcheck.txt -i"$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR"
 fi
 
 # Excludes for clang-tidy are handled in python script
+debug_print "Running clang-tidy-12 $INPUT_CLANG_TIDY_ARGS -p $(pwd) $files_to_check -- > clang_tidy.txt"
 eval clang-tidy-12 "$INPUT_CLANG_TIDY_ARGS" -p "$(pwd)" "$files_to_check" -- >"clang_tidy.txt"
 
 python3 /run_static_analysis.py -cc cppcheck.txt -ct clang_tidy.txt -o $print_to_console -fk $use_extra_directorty

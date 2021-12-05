@@ -1,10 +1,10 @@
 # Static Analysis
 
-GitHub action for CMake based C++ project, that runs [cppcheck](http://cppcheck.sourceforge.net/) and [clang-tidy](https://clang.llvm.org/extra/clang-tidy/). This action works both no push and on pull requests.
+GitHub action for CMake based C++ project, that runs [cppcheck](http://cppcheck.sourceforge.net/) and [clang-tidy](https://clang.llvm.org/extra/clang-tidy/). This action works on both push and pull requests.
 
 In order for this action to work properly, your project has to be CMake based and also include ```.clang-tidy``` file in your root directory. If your project requires some additional packages to be installed, you can use `apt_pckgs` and/or `init_script` input variables to install them (see the **Workflow example** or **Inputs** sections below)
 
-- **Cppcheck** will run with the following default flags: </br>
+- **cppcheck** will run with the following default flags: </br>
 ```--enable=all --suppress=missingInclude --inline-suppr --inconclusive```
 You can use `cppcheck_args` input to set your flags.
 
@@ -31,8 +31,19 @@ For non Pull Requests, the output will be printed to GitHub's output console. Th
 ```yml
 name: Static analysis
 
-# This example runs on per PR basis. This can be changed to also work on push or pull_request_target
-on: [pull_request]
+on:
+  # Will run on push when merging to 'branches'. The output will be shown in the console
+  push:
+    branches:
+      - develop
+      - master
+      - main
+
+  # 'pull_request_target' allows this Action to also run on forked repositories
+  # The output will be shown in PR comments (unless the 'force_console_print' flag is used)
+  pull_request_target:
+    branches:
+      - "*"
 
 jobs:
   static_analysis:

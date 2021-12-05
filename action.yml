@@ -30,7 +30,7 @@ inputs:
       'This should be used, when the project requires some environmental set-up beforehand'
       'Note. `apt_pckgs` will run before this script, just in case you need some packages installed'
   cppcheck_args:
-    description: 'Cppcheck (space separated) arguments that will be used'
+    description: 'cppcheck (space separated) arguments that will be used'
     default: --enable=all --suppress=missingInclude --inline-suppr --inconclusive
   clang_tidy_args:
     description: 'clang-tidy (space separated) arguments that will be used'

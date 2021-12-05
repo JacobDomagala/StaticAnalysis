@@ -238,7 +238,7 @@ def read_files_and_parse_results():
     line_prefix = f"{WORK_DIR}"
 
     debug_print(
-        f"Cppcheck result: \n {cppcheck_content} \n"
+        f"cppcheck result: \n {cppcheck_content} \n"
         f"clang-tidy result: \n {clang_tidy_content} \n"
         f"line_prefix: {line_prefix} \n"
     )
@@ -289,7 +289,7 @@ def prepare_comment_body(
 
         if len(cppcheck_comment) > 0:
             full_comment_body += (
-                f"<details> <summary> <b> :red_circle: Cppcheck found "
+                f"<details> <summary> <b> :red_circle: cppcheck found "
                 f"{cppcheck_issues_found} {'issues' if cppcheck_issues_found > 1 else 'issue'}!"
                 " Click here to see details. </b> </summary> <br>"
                 f"{cppcheck_comment} </details>"
