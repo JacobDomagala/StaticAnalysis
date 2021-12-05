@@ -33,7 +33,7 @@ inputs:
     description: 'cppcheck (space separated) arguments that will be used'
     default: --enable=all --suppress=missingInclude --inline-suppr --inconclusive
   clang_tidy_args:
-    description: 'clang-tidy (space separated) arguments that will be used'
+    description: 'clang-tidy arguments that will be used (example: -checks="*,fuchsia-*,google-*,zircon-*"'
   report_pr_changes_only:
     description: 'Only post the issues found within the changes introduced in this Pull Request'
     default: false
