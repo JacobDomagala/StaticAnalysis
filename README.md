@@ -2,7 +2,7 @@
 
 GitHub action for CMake based C++ project, that runs [cppcheck](http://cppcheck.sourceforge.net/) and [clang-tidy](https://clang.llvm.org/extra/clang-tidy/). This action works on both push and pull requests.
 
-In order for this action to work properly, your project has to be CMake based and it's also recomennded to use ```.clang-tidy``` file, which should be located in your root directory. If your project requires some additional packages to be installed, you can use `apt_pckgs` and/or `init_script` input variables to install them (see the **Workflow example** or **Inputs** sections below)
+In order for this action to work properly, your project has to be CMake based and it's also recomennded to use ```.clang-tidy``` file, which should be located in your root directory. If your project requires some additional packages to be installed, you can use `apt_pckgs` and/or `init_script` input variables to install them (see the **Workflow example** or **Inputs** sections below). Also, if your repository should allow contribiutions from forks, then it's required to use this Action with `pull_request_target` trigger event, otherwise the GitHub API won't allow to create PR comments.
 
 - **cppcheck** will run with the following default flags: </br>
 ```--enable=all --suppress=missingInclude --inline-suppr --inconclusive```
