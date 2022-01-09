@@ -6,12 +6,14 @@ from github import Github
 # Input variables from Github action
 GITHUB_TOKEN = os.getenv("INPUT_GITHUB_TOKEN")
 PR_NUM = os.getenv("INPUT_PR_NUM")
-WORK_DIR = os.getenv("GITHUB_WORKSPACE")
+WORK_DIR = f'{os.getenv("GITHUB_WORKSPACE")}'
 REPO_NAME = os.getenv("INPUT_REPO")
+TARGET_REPO_NAME = os.getenv("INPUT_REPO")
 SHA = os.getenv("GITHUB_SHA")
 COMMENT_TITLE = os.getenv("INPUT_COMMENT_TITLE")
 ONLY_PR_CHANGES = os.getenv("INPUT_REPORT_PR_CHANGES_ONLY")
 VERBOSE = os.getenv("INPUT_VERBOSE", "False").lower() == "true"
+FILES_WITH_ISSUES = dict()
 
 # Max characters per comment - 65536
 # Make some room for HTML tags and error message
@@ -23,14 +25,21 @@ COMMENT_MAX_SIZE = 65000
 CURRENT_COMMENT_LENGTH = 0
 
 
+def debug_print(message):
+    if VERBOSE:
+        lines = message.split("\n")
+        for line in lines:
+            print(f"\033[96m {line}")
+
+
 def is_part_of_pr_changes(file_path, issue_file_line, files_changed_in_pr):
     if ONLY_PR_CHANGES == "false":
         return True
 
     file_name = file_path[file_path.rfind("/") + 1 :]
-    print(f"Looking for issue found in file={file_name} ...")
+    debug_print(f"Looking for issue found in file={file_name} ...")
     for file, (status, lines_changed_for_file) in files_changed_in_pr.items():
-        print(
+        debug_print(
             f"Changed file by this PR {file} with status {status} and changed lines {lines_changed_for_file}"
         )
         if file == file_name:
@@ -82,10 +91,10 @@ def setup_changed_files():
     files_changed = dict()
 
     github = Github(GITHUB_TOKEN)
-    repo = github.get_repo(REPO_NAME)
+    repo = github.get_repo(TARGET_REPO_NAME)
     pull_request = repo.get_pull(int(PR_NUM))
     num_changed_files = pull_request.changed_files
-    print(f"Changed files {num_changed_files}")
+    debug_print(f"Changed files {num_changed_files}")
     files = pull_request.get_files()
     for file in files:
         if file.patch is not None:
@@ -108,7 +117,9 @@ def is_excluded_dir(line):
 
     excluded_dir = f"{WORK_DIR}/{exclude_dir}"
     if VERBOSE:
-        print(f"{line} and {excluded_dir} with result {line.startswith(excluded_dir)}")
+        debug_print(
+            f"{line} and {excluded_dir} with result {line.startswith(excluded_dir)}"
+        )
 
     return line.startswith(excluded_dir)
 
@@ -123,6 +134,7 @@ def create_comment_for_output(
 ):
     issues_found = 0
     global CURRENT_COMMENT_LENGTH
+    global FILES_WITH_ISSUES
     output_string = ""
     for line in tool_output:
         if line.startswith(prefix) and not is_excluded_dir(line):
@@ -140,10 +152,34 @@ def create_comment_for_output(
             file_line_end = get_file_line_end(file_path, file_line_start)
             description = f"\n```diff\n!Line: {file_line_start} - {line[line.index(' ')+1:]}``` \n"
 
-            new_line = (
-                f"\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}{file_path}"
-                f"#L{file_line_start}-L{file_line_end} {description} <br>\n"
-            )
+            if TARGET_REPO_NAME != REPO_NAME:
+
+                if file_path not in FILES_WITH_ISSUES:
+                    with open(f"../{file_path}") as file:
+                        lines = file.readlines()
+                        FILES_WITH_ISSUES[file_path] = lines
+
+                modified_content = FILES_WITH_ISSUES[file_path][
+                    file_line_start - 1 : file_line_end - 1
+                ]
+                modified_content[0] = modified_content[0][:-1] + " <---- HERE\n"
+                file_content = "".join(modified_content)
+
+                file_url = f"https://github.com/{REPO_NAME}/blob/{SHA}{file_path}#L{file_line_start}"
+                new_line = (
+                    "\n\n------"
+                    f"\n\n <b><i>Issue found in file</b></i> [{REPO_NAME + file_path}]({file_url})\n"
+                    f"```cpp\n"
+                    f"{file_content}"
+                    f"\n``` \n"
+                    f"{description} <br>\n"
+                )
+
+            else:
+                new_line = (
+                    f"\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}{file_path}"
+                    f"#L{file_line_start}-L{file_line_end} {description} <br>\n"
+                )
 
             if is_part_of_pr_changes(file_path, file_line_start, files_changed_in_pr):
                 if check_for_char_limit(new_line):
@@ -172,6 +208,19 @@ def read_files_and_parse_results():
         help="Whether to output the result to console",
         required=True,
     )
+    parser.add_argument(
+        "-fk",
+        "--fork_repository",
+        help="Whether the actual code is in 'pr_tree' directory",
+        required=True,
+    )
+
+    if parser.parse_args().fork_repository == "true":
+        global REPO_NAME
+
+        # Make sure to use Head repository
+        REPO_NAME = os.getenv("INPUT_PR_REPO")
+
     cppcheck_file_name = parser.parse_args().cppcheck
     clangtidy_file_name = parser.parse_args().clangtidy
     output_to_console = parser.parse_args().output_to_console == "true"
@@ -185,10 +234,12 @@ def read_files_and_parse_results():
         clang_tidy_content = file.readlines()
 
     line_prefix = f"{WORK_DIR}"
-    if VERBOSE:
-        print(f"Cppcheck result: \n {cppcheck_content} \n")
-        print(f"clang-tidy result: \n {clang_tidy_content} \n")
-        print(f"line_prefix: {line_prefix} \n")
+
+    debug_print(
+        f"cppcheck result: \n {cppcheck_content} \n"
+        f"clang-tidy result: \n {clang_tidy_content} \n"
+        f"line_prefix: {line_prefix} \n"
+    )
 
     files_changed_in_pr = dict()
     if not output_to_console:
@@ -236,7 +287,7 @@ def prepare_comment_body(
 
         if len(cppcheck_comment) > 0:
             full_comment_body += (
-                f"<details> <summary> <b> :red_circle: Cppcheck found "
+                f"<details> <summary> <b> :red_circle: cppcheck found "
                 f"{cppcheck_issues_found} {'issues' if cppcheck_issues_found > 1 else 'issue'}!"
                 " Click here to see details. </b> </summary> <br>"
                 f"{cppcheck_comment} </details>"
@@ -255,14 +306,14 @@ def prepare_comment_body(
     if CURRENT_COMMENT_LENGTH == COMMENT_MAX_SIZE:
         full_comment_body += f"\n```diff\n{MAX_CHAR_COUNT_REACHED}\n```"
 
-    print(f"Repo={REPO_NAME} pr_num={PR_NUM} comment_title={COMMENT_TITLE}")
+    debug_print(f"Repo={REPO_NAME} pr_num={PR_NUM} comment_title={COMMENT_TITLE}")
 
     return full_comment_body
 
 
 def create_or_edit_comment(comment_body):
     github = Github(GITHUB_TOKEN)
-    repo = github.get_repo(REPO_NAME)
+    repo = github.get_repo(TARGET_REPO_NAME)
     pull_request = repo.get_pull(int(PR_NUM))
 
     comments = pull_request.get_issue_comments()

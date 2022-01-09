@@ -11,6 +11,12 @@ inputs:
   repo:
     description: 'Repository name'
     default: ${{ github.repository }}
+  pr_repo:
+    description: 'Head repository (This is useful when using Action with [pull_request_target])'
+    default: ${{ github.event.pull_request.head.repo.full_name }}
+  pr_head:
+    description: 'Head (branch) for PR (same as `pr_repo` input, useful with [pull_request_target]'
+    default: ${{ github.event.pull_request.head.ref }}
   comment_title:
     description: 'Title for comment with the raport. This should be an unique name'
     default: Static analysis result
@@ -24,11 +30,10 @@ inputs:
       'This should be used, when the project requires some environmental set-up beforehand'
       'Note. `apt_pckgs` will run before this script, just in case you need some packages installed'
   cppcheck_args:
-    description: 'Cppcheck (space separated) arguments that will be used'
+    description: 'cppcheck (space separated) arguments that will be used'
     default: --enable=all --suppress=missingInclude --inline-suppr --inconclusive
   clang_tidy_args:
-    description: 'clang-tidy (space separated) arguments that will be used'
-    default: ""
+    description: 'clang-tidy arguments that will be used (example: -checks="*,fuchsia-*,google-*,zircon-*"'
   report_pr_changes_only:
     description: 'Only post the issues found within the changes introduced in this Pull Request'
     default: false
