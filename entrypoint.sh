@@ -37,7 +37,7 @@ fi
 
 debug_print "Repo = ${INPUT_PR_REPO}  SHA = ${INPUT_PR_HEAD} event name = ${GITHUB_EVENT_NAME}"
 
-use_extra_directorty=false
+use_extra_directory=false
 
 # This is useful when running this Action from fork (together with [pull_request_target])
 if [ "$GITHUB_EVENT_NAME" = "pull_request_target" ] && [ -n "$INPUT_PR_REPO" ]; then
@@ -45,7 +45,7 @@ if [ "$GITHUB_EVENT_NAME" = "pull_request_target" ] && [ -n "$INPUT_PR_REPO" ]; 
     git clone "https://www.github.com/$INPUT_PR_REPO" pr_tree
     cd pr_tree || exit
     git checkout "$INPUT_PR_HEAD"
-    use_extra_directorty=true
+    use_extra_directory=true
 
     # Override commit SHA, in order to get the correct code snippet
     NEW_GITHUB_SHA=$(git rev-parse HEAD)
@@ -76,4 +76,4 @@ fi
 debug_print "Running clang-tidy-12 $INPUT_CLANG_TIDY_ARGS -p $(pwd) $files_to_check -- > clang_tidy.txt"
 eval clang-tidy-12 "$INPUT_CLANG_TIDY_ARGS" -p "$(pwd)" "$files_to_check" -- >"clang_tidy.txt"
 
-python3 /run_static_analysis.py -cc cppcheck.txt -ct clang_tidy.txt -o $print_to_console -fk $use_extra_directorty
+python3 /run_static_analysis.py -cc cppcheck.txt -ct clang_tidy.txt -o $print_to_console -fk $use_extra_directory
