@@ -35,7 +35,7 @@ if [ -n "$INPUT_INIT_SCRIPT" ]; then
     source "$INPUT_INIT_SCRIPT"
 fi
 
-debug_print "Repo = ${INPUT_PR_REPO}  SHA = ${INPUT_PR_HEAD} event name = ${GITHUB_EVENT_NAME}"
+debug_print "Repo = ${INPUT_PR_REPO}  PR_HEAD = ${INPUT_PR_HEAD} event name = ${GITHUB_EVENT_NAME}"
 
 use_extra_directory=false
 
