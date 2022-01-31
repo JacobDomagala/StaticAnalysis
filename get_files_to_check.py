@@ -16,5 +16,4 @@ with open(file_name, "r") as f:
         for p in data
         if not CHECK_FOR_PREFIX or not p["file"].startswith(exclude_prefix)
     ]
-    for p in file_list:
-        print(p)
+    print(" ".join(file_list))
