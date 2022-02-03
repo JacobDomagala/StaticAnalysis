@@ -2,11 +2,13 @@ import argparse
 from pathlib import Path
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-exclude", help="Exclude prefix", required=False, default="")
+parser.add_argument("-exclude", help="Exclude prefix", required=False)
 parser.add_argument("-dir", help="Current directory", required=True)
 
 directory = parser.parse_args().dir
-exclude_prefixes = [parser.parse_args().exclude, f"{directory}/build"]
+exclude_prefixes = [f"{directory}/build"]
+if parser.parse_args().exclude:
+    exclude_prefixes.append(str(parser.parse_args().exclude))
 supported_extensions = [".h", ".hpp", ".hcc", ".c", ".cc", ".cpp", ".cxx"]
 
 for path in Path(directory).rglob("*.*"):
