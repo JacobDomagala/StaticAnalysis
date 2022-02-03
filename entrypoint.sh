@@ -73,7 +73,7 @@ else
 fi
 
 # Excludes for clang-tidy are handled in python script
-debug_print "Running clang-tidy-12 $INPUT_CLANG_TIDY_ARGS -p $(pwd) $files_to_check -- > clang_tidy.txt"
-eval clang-tidy-12 "$INPUT_CLANG_TIDY_ARGS" -p "$(pwd)" "$files_to_check" -- >"clang_tidy.txt" || true
+debug_print "Running clang-tidy-12 $INPUT_CLANG_TIDY_ARGS -p $(pwd) $files_to_check >>clang_tidy.txt 2>&1"
+eval clang-tidy-12 "$INPUT_CLANG_TIDY_ARGS" -p "$(pwd)" "$files_to_check" >>clang_tidy.txt 2>&1 || true
 
 python3 /run_static_analysis.py -cc cppcheck.txt -ct clang_tidy.txt -o $print_to_console -fk $use_extra_directory
