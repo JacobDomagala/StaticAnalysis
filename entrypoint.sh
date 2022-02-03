@@ -58,7 +58,11 @@ mkdir build && cd build || exit
 
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "$INPUT_CMAKE_ARGS" ..
 
-files_to_check=$(python3 /get_files_to_check.py -exclude="$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR" -dir="$GITHUB_WORKSPACE")
+if [ -z "$INPUT_EXCLUDE_DIR" ]; then
+    files_to_check=$(python3 /get_files_to_check.py -exclude="$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR" -dir="$GITHUB_WORKSPACE")
+else
+    files_to_check=$(python3 /get_files_to_check.py -dir="$GITHUB_WORKSPACE")
+fi
 
 debug_print "Files to check = $files_to_check"
 debug_print "INPUT_CPPCHECK_ARGS = $INPUT_CPPCHECK_ARGS"
