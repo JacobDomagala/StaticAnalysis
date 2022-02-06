@@ -1,19 +1,22 @@
-import json
 import argparse
+from pathlib import Path
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-exclude", help="Exclude prefix", required=False, default="")
-parser.add_argument("-json", help="Compile commands file", required=True)
+parser.add_argument("-exclude", help="Exclude prefix", required=False)
+parser.add_argument("-dir", help="Current directory", required=True)
 
-file_name = parser.parse_args().json
-exclude_prefix = parser.parse_args().exclude
-CHECK_FOR_PREFIX = len(exclude_prefix) > 0
+directory = parser.parse_args().dir
+exclude_prefixes = [f"{directory}/build"]
+if parser.parse_args().exclude:
+    exclude_prefixes.append(str(parser.parse_args().exclude))
+supported_extensions = (".h", ".hpp", ".hcc", ".c", ".cc", ".cpp", ".cxx")
+all_files = []
 
-with open(file_name, "r") as f:
-    data = json.load(f)
-    file_list = [
-        p["file"]
-        for p in data
-        if not CHECK_FOR_PREFIX or not p["file"].startswith(exclude_prefix)
-    ]
-    print(" ".join(file_list))
+for path in Path(directory).rglob("*.*"):
+    PATH = str(path.resolve())
+    if PATH.endswith(supported_extensions) and not PATH.startswith(
+        tuple(exclude_prefixes)
+    ):
+        all_files.append(PATH)
+
+print(" ".join(all_files))
