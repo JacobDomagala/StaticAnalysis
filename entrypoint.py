@@ -38,8 +38,8 @@ else:
     print(f"Pull request number: {PR_NUM}")
 
 if APT_PCKGS is not None:
-    subprocess.run(["apt-get", "update"])
-    subprocess.run(["apt-get", "install", "-y", APT_PCKGS])
+    subprocess.run(["apt-get", "update"], check=False)
+    subprocess.run(["apt-get", "install", "-y", APT_PCKGS], check=False)
 
 debug_print(f"Repo = {PR_REPO}  PR_HEAD = {PR_HEAD} event name = {GITHUB_EVENT_NAME}")
 
@@ -49,9 +49,9 @@ USE_EXTRA_DIRECTORY = False
 if (GITHUB_EVENT_NAME == "pull_request_target") and (PR_REPO is not None):
     USE_EXTRA_DIRECTORY = True
     debug_print("Running in [pull_request_target] event! Cloning the Head repo ...")
-    subprocess.run(["git", "clone", f"https://www.github.com/{PR_REPO}", "pr_tree"])
+    subprocess.run(["git", "clone", f"https://www.github.com/{PR_REPO}", "pr_tree"], check=False)
     os.chdir("pr_tree")
-    subprocess.run(["git", "checkout", PR_HEAD])
+    subprocess.run(["git", "checkout", PR_HEAD], check=False)
 
     github = Github(GITHUB_TOKEN)
     os.environ["GITHUB_SHA"] = github.get_repo(TARGET_REPO_NAME).get_branch(PR_HEAD).commit.sha
@@ -61,7 +61,7 @@ CURDIR = os.path.realpath(os.path.curdir)
 
 if INIT_SCRIPT is not None:
     os.chmod(INIT_SCRIPT, stat.S_IRUSR | stat.S_IXUSR)
-    subprocess.run(INIT_SCRIPT)
+    subprocess.run(INIT_SCRIPT, check=False)
 
 try:
     os.mkdir("build")
@@ -74,13 +74,13 @@ cmake_command = ["cmake", "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"]
 cmake_command.extend(CMAKE_ARGS)
 cmake_command.append("..")
 debug_print(f"Running {' '.join(cmake_command)}")
-p = subprocess.run(cmake_command)
+p = subprocess.run(cmake_command, check=False)
 
 get_files_command = ["python3", "get_files_to_check.py", f"-dir={CURDIR}"]
 if EXCLUDE_DIR is not None:
     get_files_command.append(f"-exclude={CURDIR}/{EXCLUDE_DIR}")
 debug_print(f"Running {' '.join(get_files_command)}")
-p = subprocess.run(get_files_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+p = subprocess.run(get_files_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
 file_list = p.stdout.decode()
 
 debug_print(f"Files to check = {file_list}")
@@ -94,7 +94,7 @@ if EXCLUDE_DIR is not None:
     cppcheck_command.append(f"-i{CURDIR}/{EXCLUDE_DIR}")
 
 debug_print(f"Running {' '.join(cppcheck_command)}")
-subprocess.run(cppcheck_command)
+subprocess.run(cppcheck_command, check=False)
 
 # Excludes for clang-tidy are handled in python script
 clang_tidy_command = ["clang-tidy", f"-p={CURDIR}"]
@@ -102,7 +102,7 @@ clang_tidy_command.extend(CLANG_TIDY_ARGS)
 clang_tidy_command.extend(file_list)
 
 debug_print(f"Running {' '.join(clang_tidy_command)}")
-p = subprocess.run(clang_tidy_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+p = subprocess.run(clang_tidy_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
 
 with open("clang_tidy.txt", "w") as f:
     f.write(p.stdout.decode())
@@ -113,6 +113,7 @@ p = subprocess.run(["python3", "/run_static_analysis.py",
                     "-cc", "cppcheck.txt", "-ct", "clang_tidy.txt",
                     "-o", str(PRINT_TO_CONSOLE).lower(),
                     "-fk", str(USE_EXTRA_DIRECTORY).lower()],
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    check=False)
 
 sys.exit(p.returncode)
