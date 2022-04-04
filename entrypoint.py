@@ -113,7 +113,7 @@ p = subprocess.run(["python3", "/run_static_analysis.py",
                     "-cc", "cppcheck.txt", "-ct", "clang_tidy.txt",
                     "-o", str(PRINT_TO_CONSOLE).lower(),
                     "-fk", str(USE_EXTRA_DIRECTORY).lower()],
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                    check=False)
+                   stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                   check=False)
 
 sys.exit(p.returncode)
