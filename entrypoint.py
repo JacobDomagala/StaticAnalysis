@@ -1,7 +1,5 @@
 # entrypoint to run StaticAnalysis Action
 
-import argparse
-import json
 import os
 import os.path
 import stat
