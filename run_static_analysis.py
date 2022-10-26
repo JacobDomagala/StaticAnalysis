@@ -150,36 +150,41 @@ def create_comment_for_output(
             line = line[file_path_end_idx + 1 :]
             file_line_start = int(line[: line.index(":")])
             file_line_end = get_file_line_end(file_path, file_line_start)
-            description = f"\n```diff\n!Line: {file_line_start} - {line[line.index(' ')+1:]}``` \n"
+            issue_description = line[line.index(' ')+1:]
+            is_note = issue_description.starts_with("note:")
+            description = f"\n```diff\n!Line: {file_line_start} - {issue_description}``` \n"
 
-            if TARGET_REPO_NAME != REPO_NAME:
+            if not is_note:
+                if TARGET_REPO_NAME != REPO_NAME:
 
-                if file_path not in FILES_WITH_ISSUES:
-                    with open(f"../{file_path}") as file:
-                        lines = file.readlines()
-                        FILES_WITH_ISSUES[file_path] = lines
+                    if file_path not in FILES_WITH_ISSUES:
+                        with open(f"../{file_path}") as file:
+                            lines = file.readlines()
+                            FILES_WITH_ISSUES[file_path] = lines
 
-                modified_content = FILES_WITH_ISSUES[file_path][
-                    file_line_start - 1 : file_line_end - 1
-                ]
-                modified_content[0] = modified_content[0][:-1] + " <---- HERE\n"
-                file_content = "".join(modified_content)
+                    modified_content = FILES_WITH_ISSUES[file_path][
+                        file_line_start - 1 : file_line_end - 1
+                    ]
+                    modified_content[0] = modified_content[0][:-1] + " <---- HERE\n"
+                    file_content = "".join(modified_content)
 
-                file_url = f"https://github.com/{REPO_NAME}/blob/{SHA}{file_path}#L{file_line_start}"
-                new_line = (
-                    "\n\n------"
-                    f"\n\n <b><i>Issue found in file</b></i> [{REPO_NAME + file_path}]({file_url})\n"
-                    f"```cpp\n"
-                    f"{file_content}"
-                    f"\n``` \n"
-                    f"{description} <br>\n"
-                )
+                    file_url = f"https://github.com/{REPO_NAME}/blob/{SHA}{file_path}#L{file_line_start}"
+                    new_line = (
+                        "\n\n------"
+                        f"\n\n <b><i>Issue found in file</b></i> [{REPO_NAME + file_path}]({file_url})\n"
+                        f"```cpp\n"
+                        f"{file_content}"
+                        f"\n``` \n"
+                        f"{description} <br>\n"
+                    )
 
+                else:
+                    new_line = (
+                        f"\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}{file_path}"
+                        f"#L{file_line_start}-L{file_line_end} {description} <br>\n"
+                    )
             else:
-                new_line = (
-                    f"\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}{file_path}"
-                    f"#L{file_line_start}-L{file_line_end} {description} <br>\n"
-                )
+                new_line = description
 
             if is_part_of_pr_changes(file_path, file_line_start, files_changed_in_pr):
                 if check_for_char_limit(new_line):
