@@ -61,11 +61,11 @@ mkdir -p build && cd build || exit
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "$INPUT_CMAKE_ARGS" ..
 
 if [ -z "$INPUT_EXCLUDE_DIR" ]; then
-    files_to_check=$(python3 /get_files_to_check.py -dir="$GITHUB_WORKSPACE")
-    debug_print "Running: files_to_check=python3 /get_files_to_check.py -dir=\"$GITHUB_WORKSPACE\")"
+    files_to_check=$(python3 ./src/get_files_to_check.py -dir="$GITHUB_WORKSPACE")
+    debug_print "Running: files_to_check=python3 ./src/get_files_to_check.py -dir=\"$GITHUB_WORKSPACE\")"
 else
-    files_to_check=$(python3 /get_files_to_check.py -exclude="$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR" -dir="$GITHUB_WORKSPACE")
-    debug_print "Running: files_to_check=python3 /get_files_to_check.py -exclude=\"$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR\" -dir=\"$GITHUB_WORKSPACE\")"
+    files_to_check=$(python3 ./src/get_files_to_check.py -exclude="$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR" -dir="$GITHUB_WORKSPACE")
+    debug_print "Running: files_to_check=python3 ./src/get_files_to_check.py -exclude=\"$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR\" -dir=\"$GITHUB_WORKSPACE\")"
 fi
 
 debug_print "Files to check = $files_to_check"
@@ -84,4 +84,4 @@ fi
 debug_print "Running clang-tidy-14 $INPUT_CLANG_TIDY_ARGS -p $(pwd) $files_to_check >>clang_tidy.txt 2>&1"
 eval clang-tidy-14 "$INPUT_CLANG_TIDY_ARGS" -p "$(pwd)" "$files_to_check" >>clang_tidy.txt 2>&1 || true
 
-python3 /run_static_analysis.py -cc cppcheck.txt -ct clang_tidy.txt -o $print_to_console -fk $use_extra_directory
+python3 ./src/run_static_analysis.py -cc cppcheck.txt -ct clang_tidy.txt -o $print_to_console -fk $use_extra_directory
