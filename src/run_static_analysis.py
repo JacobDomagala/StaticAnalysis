@@ -11,7 +11,7 @@ REPO_NAME = os.getenv("INPUT_REPO")
 TARGET_REPO_NAME = os.getenv("INPUT_REPO")
 SHA = os.getenv("GITHUB_SHA")
 COMMENT_TITLE = os.getenv("INPUT_COMMENT_TITLE")
-ONLY_PR_CHANGES = os.getenv("INPUT_REPORT_PR_CHANGES_ONLY")
+ONLY_PR_CHANGES = os.getenv("INPUT_REPORT_PR_CHANGES_ONLY").lower()
 VERBOSE = os.getenv("INPUT_VERBOSE", "False").lower() == "true"
 FILES_WITH_ISSUES = dict()
 
@@ -116,10 +116,9 @@ def is_excluded_dir(line):
         return False
 
     excluded_dir = f"{WORK_DIR}/{exclude_dir}"
-    if VERBOSE:
-        debug_print(
-            f"{line} and {excluded_dir} with result {line.startswith(excluded_dir)}"
-        )
+    debug_print(
+        f"{line} and {excluded_dir} with result {line.startswith(excluded_dir)}"
+    )
 
     return line.startswith(excluded_dir)
 
@@ -150,9 +149,11 @@ def create_comment_for_output(
             line = line[file_path_end_idx + 1 :]
             file_line_start = int(line[: line.index(":")])
             file_line_end = get_file_line_end(file_path, file_line_start)
-            issue_description = line[line.index(' ')+1:]
-            is_note = issue_description.starts_with("note:")
-            description = f"\n```diff\n!Line: {file_line_start} - {issue_description}``` \n"
+            issue_description = line[line.index(" ") + 1 :]
+            is_note = issue_description.startswith("note:")
+            description = (
+                f"\n```diff\n!Line: {file_line_start} - {issue_description}``` \n"
+            )
 
             if not is_note:
                 if TARGET_REPO_NAME != REPO_NAME:
@@ -190,7 +191,8 @@ def create_comment_for_output(
                 if check_for_char_limit(new_line):
                     output_string += new_line
                     CURRENT_COMMENT_LENGTH += len(new_line)
-                    issues_found += 1
+                    if not is_note:
+                        issues_found += 1
                 else:
                     CURRENT_COMMENT_LENGTH = COMMENT_MAX_SIZE
                     return output_string, issues_found
