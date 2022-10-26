@@ -11,9 +11,9 @@ REPO_NAME = os.getenv("INPUT_REPO")
 TARGET_REPO_NAME = os.getenv("INPUT_REPO")
 SHA = os.getenv("GITHUB_SHA")
 COMMENT_TITLE = os.getenv("INPUT_COMMENT_TITLE")
-ONLY_PR_CHANGES = os.getenv("INPUT_REPORT_PR_CHANGES_ONLY").lower()
+ONLY_PR_CHANGES = os.getenv("INPUT_REPORT_PR_CHANGES_ONLY", "False").lower()
 VERBOSE = os.getenv("INPUT_VERBOSE", "False").lower() == "true"
-FILES_WITH_ISSUES = dict()
+FILES_WITH_ISSUES = {}
 
 # Max characters per comment - 65536
 # Make some room for HTML tags and error message
@@ -88,7 +88,7 @@ def get_lines_changed_from_patch(patch):
 
 
 def setup_changed_files():
-    files_changed = dict()
+    files_changed = {}
 
     github = Github(GITHUB_TOKEN)
     repo = github.get_repo(TARGET_REPO_NAME)
