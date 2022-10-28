@@ -151,9 +151,21 @@ def create_comment_for_output(
             file_line_end = get_file_line_end(file_path, file_line_start)
             issue_description = line[line.index(" ") + 1 :]
             is_note = issue_description.startswith("note:")
-            description = (
-                f"\n```diff\n!Line: {file_line_start} - {issue_description}``` \n"
-            )
+            if not is_note:
+                description = (
+                    f"\n```diff\n!Line: {file_line_start} - {issue_description}``` \n"
+                )
+            else:
+                # Previous line consists of ```diff <content> ```, so remove the closing ```
+                # and append the <content> with Note: ...`
+
+                # 5 here means "``` \n"`
+                num_chars_to_remove = 5
+                output_string = output_string[:-num_chars_to_remove]
+                CURRENT_COMMENT_LENGTH -= num_chars_to_remove
+                description = (
+                    f"\n!Line: {file_line_start} - {issue_description}``` \n"
+                )
 
             if not is_note:
                 if TARGET_REPO_NAME != REPO_NAME:
