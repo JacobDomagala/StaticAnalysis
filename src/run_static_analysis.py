@@ -128,6 +128,24 @@ def get_file_line_end(file, file_line_start):
     return min(file_line_start + 5, num_lines)
 
 
+def generate_description(is_note, file_line_start, issue_description, output_string):
+    global CURRENT_COMMENT_LENGTH
+
+    if not is_note:
+        description = f"\n```diff\n!Line: {file_line_start} - {issue_description}``` \n"
+    else:
+        # Previous line consists of ```diff <content> ```, so remove the closing ```
+        # and append the <content> with Note: ...`
+
+        # 12 here means "``` \n<br>\n"`
+        num_chars_to_remove = 12
+        output_string = output_string[:-num_chars_to_remove]
+        CURRENT_COMMENT_LENGTH -= num_chars_to_remove
+        description = f"\n!Line: {file_line_start} - {issue_description}``` \n"
+
+    return output_string, description
+
+
 def create_comment_for_output(
     tool_output, prefix, files_changed_in_pr, output_to_console
 ):
@@ -151,21 +169,9 @@ def create_comment_for_output(
             file_line_end = get_file_line_end(file_path, file_line_start)
             issue_description = line[line.index(" ") + 1 :]
             is_note = issue_description.startswith("note:")
-            if not is_note:
-                description = (
-                    f"\n```diff\n!Line: {file_line_start} - {issue_description}``` \n"
-                )
-            else:
-                # Previous line consists of ```diff <content> ```, so remove the closing ```
-                # and append the <content> with Note: ...`
-
-                # 12 here means "``` \n<br>\n"`
-                num_chars_to_remove = 12
-                output_string = output_string[:-num_chars_to_remove]
-                CURRENT_COMMENT_LENGTH -= num_chars_to_remove
-                description = (
-                    f"\n!Line: {file_line_start} - {issue_description}``` \n"
-                )
+            output_string, description = generate_description(
+                is_note, file_line_start, issue_description, output_string
+            )
 
             if not is_note:
                 if TARGET_REPO_NAME != REPO_NAME:
