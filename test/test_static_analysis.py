@@ -47,8 +47,8 @@ class TestRunStaticAnalysis(unittest.TestCase):
         repo_name = os.getenv("INPUT_REPO")
         expected = (
             f"\n\nhttps://github.com/{repo_name}/blob/{sha}/DummyFile.cpp#L8-L9 \n"
-            f"```diff\n!Line: 8 - style: Error message\n``` \n <br>"
-            f"\n\n```diff\n!Line: 6 - note: Note message\n``` "
+            f"```diff\n!Line: 8 - style: Error message"
+            f"\n!Line: 6 - note: Note message\n``` "
             f"\n\n\nhttps://github.com/{repo_name}/blob/{sha}/DummyFile.cpp#L3-L8 \n"
             f"```diff\n!Line: 3 - style: Error message\n``` \n <br>\n"
         )

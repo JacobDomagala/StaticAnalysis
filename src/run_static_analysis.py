@@ -159,8 +159,8 @@ def create_comment_for_output(
                 # Previous line consists of ```diff <content> ```, so remove the closing ```
                 # and append the <content> with Note: ...`
 
-                # 5 here means "``` \n"`
-                num_chars_to_remove = 5
+                # 12 here means "``` \n<br>\n"`
+                num_chars_to_remove = 12
                 output_string = output_string[:-num_chars_to_remove]
                 CURRENT_COMMENT_LENGTH -= num_chars_to_remove
                 description = (
