@@ -30,6 +30,9 @@ class TestRunStaticAnalysis(unittest.TestCase):
             "/github/workspace/DummyFile.cpp:6:12: note: Note message\n",
             "    Part of code\n",
             "               ^\n",
+            "/github/workspace/DummyFile.cpp:7:4: note: Another note message\n",
+            "    Part of code\n",
+            "               ^\n",
             "/github/workspace/DummyFile.cpp:3:0: style: Error message\n",
             "    Part of code\n",
             "               ^\n",
@@ -48,7 +51,8 @@ class TestRunStaticAnalysis(unittest.TestCase):
         expected = (
             f"\n\nhttps://github.com/{repo_name}/blob/{sha}/DummyFile.cpp#L8-L9 \n"
             f"```diff\n!Line: 8 - style: Error message"
-            f"\n!Line: 6 - note: Note message\n``` "
+            f"\n!Line: 6 - note: Note message"
+            f"\n!Line: 7 - note: Another note message\n``` "
             f"\n\n\nhttps://github.com/{repo_name}/blob/{sha}/DummyFile.cpp#L3-L8 \n"
             f"```diff\n!Line: 3 - style: Error message\n``` \n <br>\n"
         )

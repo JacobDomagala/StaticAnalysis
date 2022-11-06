@@ -128,17 +128,32 @@ def get_file_line_end(file, file_line_start):
     return min(file_line_start + 5, num_lines)
 
 
-def generate_description(is_note, file_line_start, issue_description, output_string):
+def generate_description(
+    is_note, was_note, file_line_start, issue_description, output_string
+):
+    """Generate description for an issue
+
+    is_note -- is the current issue a Note: or not
+    was_note -- was the previous issue a Note: or not
+    file_line_start -- line to which the issue corresponds
+    issue_description -- the description from cppcheck/clang-tidy
+    output_string -- entire description (can be altered if the current/previous issue is/was Note:)
+    """
     global CURRENT_COMMENT_LENGTH
 
     if not is_note:
         description = f"\n```diff\n!Line: {file_line_start} - {issue_description}``` \n"
     else:
-        # Previous line consists of ```diff <content> ```, so remove the closing ```
-        # and append the <content> with Note: ...`
+        if not was_note:
+            # Previous line consists of ```diff <content> ```, so remove the closing ```
+            # and append the <content> with Note: ...`
 
-        # 12 here means "``` \n<br>\n"`
-        num_chars_to_remove = 12
+            # 12 here means "``` \n<br>\n"`
+            num_chars_to_remove = 12
+        else:
+            # Previous line is Note: so it ends with "``` \n"
+            num_chars_to_remove = 6
+
         output_string = output_string[:-num_chars_to_remove]
         CURRENT_COMMENT_LENGTH -= num_chars_to_remove
         description = f"\n!Line: {file_line_start} - {issue_description}``` \n"
@@ -153,6 +168,7 @@ def create_comment_for_output(
     global CURRENT_COMMENT_LENGTH
     global FILES_WITH_ISSUES
     output_string = ""
+    was_note = False
     for line in tool_output:
         if line.startswith(prefix) and not is_excluded_dir(line):
             # In case where we only output to console, skip the next part
@@ -170,8 +186,10 @@ def create_comment_for_output(
             issue_description = line[line.index(" ") + 1 :]
             is_note = issue_description.startswith("note:")
             output_string, description = generate_description(
-                is_note, file_line_start, issue_description, output_string
+                is_note, was_note, file_line_start, issue_description, output_string
             )
+
+            was_note = is_note
 
             if not is_note:
                 if TARGET_REPO_NAME != REPO_NAME:
