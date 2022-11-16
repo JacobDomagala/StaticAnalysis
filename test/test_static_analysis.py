@@ -15,7 +15,16 @@ os.environ["INPUT_REPORT_PR_CHANGES_ONLY"] = "False"
 os.environ["INPUT_REPO"] = "RepoName"
 os.environ["GITHUB_SHA"] = "1234"
 
-from src import run_static_analysis
+from src import run_static_analysis, get_files_to_check
+
+
+def to_list_and_sort(string_in):
+    # create list (of strings) from space separated string
+    # and then sort it
+    list_out = string_in.split(" ")
+    list_out.sort()
+
+    return list_out
 
 
 class TestRunStaticAnalysis(unittest.TestCase):
@@ -60,6 +69,38 @@ class TestRunStaticAnalysis(unittest.TestCase):
         print(result)
 
         self.assertEqual(result, (expected, 2))
+
+    def test_get_files_to_check(self):
+        pwd = os.path.dirname(os.path.realpath(__file__))
+
+        # Excludes == None
+        expected = [
+            f"{pwd}/utils/DummyFile.cpp",
+            f"{pwd}/utils/DummyFile.hpp",
+            f"{pwd}/utils/exclude_dir_1/ExcludedFile1.hpp",
+            f"{pwd}/utils/exclude_dir_2/ExcludedFile2.hpp",
+        ]
+        result = get_files_to_check.get_files_to_check(f"{pwd}/utils", None)
+
+        self.assertEqual(to_list_and_sort(result), expected)
+
+        # Single exclude_dir
+        expected = [
+            f"{pwd}/utils/DummyFile.cpp",
+            f"{pwd}/utils/DummyFile.hpp",
+            f"{pwd}/utils/exclude_dir_2/ExcludedFile2.hpp",
+        ]
+        result = get_files_to_check.get_files_to_check(
+            f"{pwd}/utils", f"{pwd}/utils/exclude_dir_1"
+        )
+
+        self.assertEqual(to_list_and_sort(result), expected)
+
+        # Multiple exclude_dir
+        expected = [f"{pwd}/utils/DummyFile.cpp", f"{pwd}/utils/DummyFile.hpp"]
+        result = get_files_to_check.get_files_to_check(
+            f"{pwd}/utils", f"{pwd}/exclude_dir_1 {pwd}/exclude_dir_2"
+        )
 
 
 if __name__ == "__main__":
