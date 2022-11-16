@@ -18,13 +18,13 @@ os.environ["GITHUB_SHA"] = "1234"
 from src import run_static_analysis, get_files_to_check
 
 
-def to_list_and_sort(string):
+def to_list_and_sort(string_in):
     # create list (of strings) from space separated string
     # and then sort it
-    list = string.split(" ")
-    list.sort()
+    list_out = string_in.split(" ")
+    list_out.sort()
 
-    return list
+    return list_out
 
 
 class TestRunStaticAnalysis(unittest.TestCase):
