@@ -26,6 +26,7 @@ def to_list_and_sort(string):
 
     return list
 
+
 class TestRunStaticAnalysis(unittest.TestCase):
     """Unit tests for run_static_analysis module"""
 
@@ -73,20 +74,34 @@ class TestRunStaticAnalysis(unittest.TestCase):
         pwd = os.path.dirname(os.path.realpath(__file__))
 
         # Excludes == None
-        expected = [f"{pwd}/utils/DummyFile.cpp", f"{pwd}/utils/DummyFile.hpp", f"{pwd}/utils/exclude_dir_1/ExcludedFile1.hpp", f"{pwd}/utils/exclude_dir_2/ExcludedFile2.hpp"]
+        expected = [
+            f"{pwd}/utils/DummyFile.cpp",
+            f"{pwd}/utils/DummyFile.hpp",
+            f"{pwd}/utils/exclude_dir_1/ExcludedFile1.hpp",
+            f"{pwd}/utils/exclude_dir_2/ExcludedFile2.hpp",
+        ]
         result = get_files_to_check.get_files_to_check(f"{pwd}/utils", None)
 
         self.assertEqual(to_list_and_sort(result), expected)
 
         # Single exclude_dir
-        expected = [f"{pwd}/utils/DummyFile.cpp", f"{pwd}/utils/DummyFile.hpp", f"{pwd}/utils/exclude_dir_2/ExcludedFile2.hpp"]
-        result = get_files_to_check.get_files_to_check(f"{pwd}/utils", f"{pwd}/utils/exclude_dir_1")
+        expected = [
+            f"{pwd}/utils/DummyFile.cpp",
+            f"{pwd}/utils/DummyFile.hpp",
+            f"{pwd}/utils/exclude_dir_2/ExcludedFile2.hpp",
+        ]
+        result = get_files_to_check.get_files_to_check(
+            f"{pwd}/utils", f"{pwd}/utils/exclude_dir_1"
+        )
 
         self.assertEqual(to_list_and_sort(result), expected)
 
         # Multiple exclude_dir
         expected = [f"{pwd}/utils/DummyFile.cpp", f"{pwd}/utils/DummyFile.hpp"]
-        result = get_files_to_check.get_files_to_check(f"{pwd}/utils", f"{pwd}/exclude_dir_1 {pwd}/exclude_dir_2")
+        result = get_files_to_check.get_files_to_check(
+            f"{pwd}/utils", f"{pwd}/exclude_dir_1 {pwd}/exclude_dir_2"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
 
+
 def get_files_to_check(directory, excludes):
     exclude_prefixes = [f"{directory}/build"]
 
@@ -20,6 +21,7 @@ def get_files_to_check(directory, excludes):
             all_files.append(PATH)
 
     return " ".join(all_files)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
