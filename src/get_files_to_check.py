@@ -3,9 +3,12 @@ from pathlib import Path
 
 def get_files_to_check(directory, excludes):
     exclude_prefixes = [f"{directory}/build"]
+
     if excludes != None:
+        excludes = excludes.split(" ")
         for exclude in excludes:
             exclude_prefixes.append(str(exclude))
+
     supported_extensions = (".h", ".hpp", ".hcc", ".c", ".cc", ".cpp", ".cxx")
     all_files = []
 
