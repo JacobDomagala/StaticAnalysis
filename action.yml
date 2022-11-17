@@ -1,5 +1,5 @@
 name: "Run static analysis for C++ project"
-description: "Runs cppcheck and clang-tidy on CMake based project. The result will be added either as PR comment, or as GitHub's output console"
+description: "Runs cppcheck and clang-tidy on CMake based project. The result is PR comment, or output to GitHub's console"
 
 inputs:
   github_token:
