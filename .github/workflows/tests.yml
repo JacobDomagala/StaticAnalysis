@@ -20,3 +20,21 @@ jobs:
       - name: Test with pytest
         run: |
           pytest
+      - name: Test the action
+        shell: bash
+        run: |
+          git config --global user.email ${{ secrets.USER_EMAIL }}
+          git config --global user.name ${{ secrets.USER_NAME }}
+
+          git clone "https://${{secrets.TOKEN}}@github.com/JacobDomagala/TestRepo.git"
+          cd TestRepo
+          python ./switch_sa_branch.py -br="${GITHUB_HEAD_REF}"
+          git add .
+          git commit -m"Update branch name"
+          git push
+
+          git checkout test-static-analysis
+          git commit -as --amend --no-edit
+          git push -f
+
+

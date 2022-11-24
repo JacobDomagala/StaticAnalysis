@@ -27,7 +27,7 @@ RUN git clone https://github.com/Kitware/CMake.git && \
     cd CMake && ./bootstrap && \
     make -j4 && make install
 
-RUN wget 'https://sourceforge.net/projects/cppcheck/files/cppcheck/2.8/cppcheck-2.9.tar.gz/download' && \
+RUN wget 'https://sourceforge.net/projects/cppcheck/files/cppcheck/2.9/cppcheck-2.9.tar.gz/download' && \
     tar xf download && \
     cd cppcheck-2.9 && mkdir build && cd build && \
     cmake -G "Ninja" .. && ninja install
