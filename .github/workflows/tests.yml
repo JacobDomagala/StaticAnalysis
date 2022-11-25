@@ -29,8 +29,7 @@ jobs:
           git clone "https://${{secrets.TOKEN}}@github.com/JacobDomagala/TestRepo.git"
           cd TestRepo
           python ./switch_sa_branch.py -br="${GITHUB_HEAD_REF}"
-          git add .
-          git commit -m"Update branch name"
+          git diff --quiet && git diff --staged --quiet || git commit -am"Update branch name"
           git push
 
           # test PR
@@ -39,7 +38,8 @@ jobs:
           git push -f
 
           # test pull_request_target
-          git clone "https://${{secrets.TOKEN}}github.com/JacobDTest/TestRepo.git"
+          git clone "https://${{secrets.TOKEN}}@github.com/JacobDTest/TestRepo.git"
+          cd TestRepo
           git checkout test-branch-fork
           git commit -as --amend --no-edit
           git push -f
