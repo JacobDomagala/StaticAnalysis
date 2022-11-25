@@ -33,7 +33,14 @@ jobs:
           git commit -m"Update branch name"
           git push
 
+          # test PR
           git checkout test-static-analysis
+          git commit -as --amend --no-edit
+          git push -f
+
+          # test pull_request_target
+          git clone "https://${{secrets.TOKEN}}github.com/JacobDTest/TestRepo.git"
+          git checkout test-branch-fork
           git commit -as --amend --no-edit
           git push -f
 
