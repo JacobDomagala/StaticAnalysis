@@ -1,11 +1,11 @@
-name: Tests
+name: Unit Tests
 
 on:
   pull_request
 
 jobs:
   check:
-    name: Run Tests
+    name: Run Unit Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -20,3 +20,5 @@ jobs:
       - name: Test with pytest
         run: |
           pytest
+
+
