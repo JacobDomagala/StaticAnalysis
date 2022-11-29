@@ -1,3 +1,7 @@
+[![Linter](https://github.com/JacobDomagala/StaticAnalysis/actions/workflows/linter.yml/badge.svg?branch=master)](https://github.com/JacobDomagala/StaticAnalysis/actions/workflows/linter.yml?query=branch%3Amaster)
+[![Test Action](https://github.com/JacobDomagala/StaticAnalysis/actions/workflows/test_action.yml/badge.svg?branch=master)](https://github.com/JacobDomagala/StaticAnalysis/actions/workflows/test_action.yml?query=branch%3Amaster)
+[![Unit Tests](https://github.com/JacobDomagala/StaticAnalysis/actions/workflows/unit_tests.yml/badge.svg?branch=master)](https://github.com/JacobDomagala/StaticAnalysis/actions/workflows/unit_tests.yml?query=branch%3Amaster)
+
 # Static Analysis
 
 GitHub action for CMake based C++ project, that runs [cppcheck](http://cppcheck.sourceforge.net/) and [clang-tidy](https://clang.llvm.org/extra/clang-tidy/). This action works on both push and pull requests.
