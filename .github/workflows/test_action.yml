@@ -22,9 +22,16 @@ jobs:
           git config --global user.email ${{ secrets.USER_EMAIL }}
           git config --global user.name ${{ secrets.USER_NAME }}
 
+          if [ ${GITHUB_EVENT_NAME} = 'push' ]
+          then
+            BRANCH_NAME=${GITHUB_REF_NAME}
+          else
+            BRANCH_NAME=${GITHUB_HEAD_REF}
+          fi
+
           git clone "https://${{secrets.TOKEN}}@github.com/JacobDomagala/TestRepo.git"
           cd TestRepo
-          python ./switch_sa_branch.py -br="${GITHUB_HEAD_REF}"
+          python ./switch_sa_branch.py -br=$BRANCH_NAME
           git diff --quiet && git diff --staged --quiet || git commit -am"Update branch name"
           git push
 
