@@ -12,10 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.10.0
+
       - name: Test the action
         shell: bash
         run: |
@@ -46,5 +48,17 @@ jobs:
           git checkout test-branch-fork
           git commit -as --amend --no-edit
           git push -f
+
+      - name: Output results
+        if: github.event_name == 'pull_request'
+        uses: mshick/add-pr-comment@v2
+        with:
+          message: |
+            **push result**
+
+            **pull_request result**
+
+            **pull_request_target result**
+
 
 
