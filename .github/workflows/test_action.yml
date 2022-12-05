@@ -54,14 +54,14 @@ jobs:
         uses: mshick/add-pr-comment@v2
         with:
           message: |
-            **push result**
-            [Result](https://github.com/JacobDomagala/TestRepo/actions/workflows/test.yml?query=branch%3Amain)
+            ***
+            ### [Result for push](https://github.com/JacobDomagala/TestRepo/actions/workflows/test.yml?query=branch%3Amain)
 
-            **pull_request result**
-            [Result](https://github.com/JacobDomagala/TestRepo/pull/3#issuecomment-828538571)
+            ***
+            ### [Result for pull_request](https://github.com/JacobDomagala/TestRepo/pull/3#issuecomment-828538571)
 
-            **pull_request_target result**
-            [Result](https://github.com/JacobDomagala/TestRepo/pull/7#issuecomment-975492280)
+            ***
+            ### [Result for pull_request_target](https://github.com/JacobDomagala/TestRepo/pull/7#issuecomment-975492280)
 
 
 
