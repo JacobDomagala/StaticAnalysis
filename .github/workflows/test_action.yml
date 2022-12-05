@@ -49,11 +49,12 @@ jobs:
           git commit -as --amend --no-edit
           git push -f
 
-      - name: Output results
+      - name: Output results (PR)
         if: github.event_name == 'pull_request'
         uses: mshick/add-pr-comment@v2
         with:
           message: |
+            ## Test Action results
             ***
             ### [Result for push](https://github.com/JacobDomagala/TestRepo/actions/workflows/test.yml?query=branch%3Amain)
 
@@ -63,5 +64,12 @@ jobs:
             ***
             ### [Result for pull_request_target](https://github.com/JacobDomagala/TestRepo/pull/7#issuecomment-975492280)
 
-
+      - name: Output results (NON-PR)
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          echo -e "\033[1;97mTest Action results\033[0m\n"
+          echo -e "\033[1;34mResult for push:\033[0m \033[1;36mhttps://github.com/JacobDomagala/TestRepo/actions/workflows/test.yml?query=branch%3Amain\033[0m"
+          echo -e "\033[1;34mResult for pull_request:\033[0m \033[1;36mhttps://github.com/JacobDomagala/TestRepo/pull/3#issuecomment-828538571\033[0m"
+          echo -e "\033[1;34mResult for pull_request_target:\033[0m \033[1;36mhttps://github.com/JacobDomagala/TestRepo/pull/7#issuecomment-975492280\033[0m"
 
