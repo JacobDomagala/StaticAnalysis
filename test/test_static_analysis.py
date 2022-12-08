@@ -119,6 +119,42 @@ class TestRunStaticAnalysis(unittest.TestCase):
 
         self.assertEqual(expected_comment_body, comment_body)
 
+        # Multiple clang-tidy issues
+        clang_tidy_issues_found = 4
+        clang_tidy_comment = "dummy issues"
+        expected_comment_body = (
+            f'## <p align="center"><b> :zap: {comment_title} :zap: </b></p> \n\n'
+            "\n\n *** \n"
+            f"<details> <summary> <b> :red_circle: clang-tidy found "
+            f"{clang_tidy_issues_found} issues!"
+            " Click here to see details. </b> </summary> <br>"
+            f"{clang_tidy_comment} </details><br>\n"
+        )
+
+        comment_body = run_static_analysis.prepare_comment_body(
+            "", clang_tidy_comment, 0, clang_tidy_issues_found
+        )
+
+        self.assertEqual(expected_comment_body, comment_body)
+
+        # Single clang-tidy issue
+        clang_tidy_issues_found = 1
+        clang_tidy_comment = "dummy issue"
+        expected_comment_body = (
+            f'## <p align="center"><b> :zap: {comment_title} :zap: </b></p> \n\n'
+            "\n\n *** \n"
+            f"<details> <summary> <b> :red_circle: clang-tidy found "
+            f"{clang_tidy_issues_found} issue!"
+            " Click here to see details. </b> </summary> <br>"
+            f"{clang_tidy_comment} </details><br>\n"
+        )
+
+        comment_body = run_static_analysis.prepare_comment_body(
+            "", clang_tidy_comment, 0, clang_tidy_issues_found
+        )
+
+        self.assertEqual(expected_comment_body, comment_body)
+
     def test_get_files_to_check(self):
         pwd = os.path.dirname(os.path.realpath(__file__))
 
