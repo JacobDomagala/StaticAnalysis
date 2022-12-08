@@ -14,6 +14,7 @@ os.environ["INPUT_VERBOSE"] = "True"
 os.environ["INPUT_REPORT_PR_CHANGES_ONLY"] = "False"
 os.environ["INPUT_REPO"] = "RepoName"
 os.environ["GITHUB_SHA"] = "1234"
+os.environ["INPUT_COMMENT_TITLE"] = "title"
 
 from src import run_static_analysis, get_files_to_check
 
@@ -71,24 +72,49 @@ class TestRunStaticAnalysis(unittest.TestCase):
         self.assertEqual(result, (expected, 2))
 
     def test_prepare_comment_body(self):
-        sha = os.getenv("GITHUB_SHA")
-        repo_name = os.getenv("INPUT_REPO")
-
-        clang_tidy_comment = (
-            f"\n\nhttps://github.com/{repo_name}/blob/{sha}/DummyFile.cpp#L8-L9 \n"
-            f"```diff\n!Line: 8 - style: Error message"
-            f"\n!Line: 6 - note: Note message"
-            f"\n!Line: 7 - note: Another note message\n``` "
-            f"\n\n\nhttps://github.com/{repo_name}/blob/{sha}/DummyFile.cpp#L3-L8 \n"
-            f"```diff\n!Line: 3 - style: Error message\n``` \n <br>\n"
-        )
-
-        COMMENT_TITLE = os.getenv("INPUT_COMMENT_TITLE")
+        comment_title = os.getenv("INPUT_COMMENT_TITLE")
         comment_body = run_static_analysis.prepare_comment_body("", "", 0, 0)
 
+        # Empty results
         expected_comment_body = (
             '## <p align="center"><b> :white_check_mark:'
-            f"{COMMENT_TITLE} - no issues found! :white_check_mark: </b></p>"
+            f"{comment_title} - no issues found! :white_check_mark: </b></p>"
+        )
+
+        self.assertEqual(expected_comment_body, comment_body)
+
+        # Multiple cppcheck issues
+        cppcheck_issues_found = 4
+        cppcheck_comment = "dummy issues"
+        expected_comment_body = (
+            f'## <p align="center"><b> :zap: {comment_title} :zap: </b></p> \n\n'
+            f"<details> <summary> <b> :red_circle: cppcheck found "
+            f"{cppcheck_issues_found} issues!"
+            " Click here to see details. </b> </summary> <br>"
+            f"{cppcheck_comment} </details>"
+            "\n\n *** \n"
+        )
+
+        comment_body = run_static_analysis.prepare_comment_body(
+            cppcheck_comment, "", cppcheck_issues_found, 0
+        )
+
+        self.assertEqual(expected_comment_body, comment_body)
+
+        # Single cppcheck issue
+        cppcheck_issues_found = 1
+        cppcheck_comment = "dummy issue"
+        expected_comment_body = (
+            f'## <p align="center"><b> :zap: {comment_title} :zap: </b></p> \n\n'
+            f"<details> <summary> <b> :red_circle: cppcheck found "
+            f"{cppcheck_issues_found} issue!"
+            " Click here to see details. </b> </summary> <br>"
+            f"{cppcheck_comment} </details>"
+            "\n\n *** \n"
+        )
+
+        comment_body = run_static_analysis.prepare_comment_body(
+            cppcheck_comment, "", cppcheck_issues_found, 0
         )
 
         self.assertEqual(expected_comment_body, comment_body)
