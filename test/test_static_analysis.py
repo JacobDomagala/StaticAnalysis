@@ -70,6 +70,29 @@ class TestRunStaticAnalysis(unittest.TestCase):
 
         self.assertEqual(result, (expected, 2))
 
+    def test_prepare_comment_body(self):
+        sha = os.getenv("GITHUB_SHA")
+        repo_name = os.getenv("INPUT_REPO")
+
+        clang_tidy_comment = (
+            f"\n\nhttps://github.com/{repo_name}/blob/{sha}/DummyFile.cpp#L8-L9 \n"
+            f"```diff\n!Line: 8 - style: Error message"
+            f"\n!Line: 6 - note: Note message"
+            f"\n!Line: 7 - note: Another note message\n``` "
+            f"\n\n\nhttps://github.com/{repo_name}/blob/{sha}/DummyFile.cpp#L3-L8 \n"
+            f"```diff\n!Line: 3 - style: Error message\n``` \n <br>\n"
+        )
+
+        COMMENT_TITLE = os.getenv("INPUT_COMMENT_TITLE")
+        comment_body = run_static_analysis.prepare_comment_body("", "", 0, 0)
+
+        expected_comment_body = (
+            '## <p align="center"><b> :white_check_mark:'
+            f"{COMMENT_TITLE} - no issues found! :white_check_mark: </b></p>"
+        )
+
+        self.assertEqual(expected_comment_body, comment_body)
+
     def test_get_files_to_check(self):
         pwd = os.path.dirname(os.path.realpath(__file__))
 
