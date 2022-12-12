@@ -1,6 +1,7 @@
 import unittest
 import os
 import sys
+import utils.helper_functions
 
 try:
     project_path = f"{os.sep}".join(os.path.abspath(__file__).split(os.sep)[:-2])
@@ -9,7 +10,7 @@ except Exception as exception:
     print(f"Can not add project path to system path! Exiting!\nERROR: {exception}")
     raise SystemExit(1) from exception
 
-os.environ["GITHUB_WORKSPACE"] = f"{project_path}/test/utils"
+os.environ["GITHUB_WORKSPACE"] = f"{project_path}/test/utils/dummy_project"
 os.environ["INPUT_VERBOSE"] = "True"
 os.environ["INPUT_REPORT_PR_CHANGES_ONLY"] = "False"
 os.environ["INPUT_REPO"] = "RepoName"
@@ -30,6 +31,8 @@ def to_list_and_sort(string_in):
 
 class TestRunStaticAnalysis(unittest.TestCase):
     """Unit tests for run_static_analysis module"""
+
+    maxDiff = None
 
     def test_create_comment_for_output(self):
 
@@ -160,31 +163,31 @@ class TestRunStaticAnalysis(unittest.TestCase):
 
         # Excludes == None
         expected = [
-            f"{pwd}/utils/DummyFile.cpp",
-            f"{pwd}/utils/DummyFile.hpp",
-            f"{pwd}/utils/exclude_dir_1/ExcludedFile1.hpp",
-            f"{pwd}/utils/exclude_dir_2/ExcludedFile2.hpp",
+            f"{pwd}/utils/dummy_project/DummyFile.cpp",
+            f"{pwd}/utils/dummy_project/DummyFile.hpp",
+            f"{pwd}/utils/dummy_project/exclude_dir_1/ExcludedFile1.hpp",
+            f"{pwd}/utils/dummy_project/exclude_dir_2/ExcludedFile2.hpp",
         ]
-        result = get_files_to_check.get_files_to_check(f"{pwd}/utils", None)
+        result = get_files_to_check.get_files_to_check(f"{pwd}/utils/dummy_project", None)
 
         self.assertEqual(to_list_and_sort(result), expected)
 
         # Single exclude_dir
         expected = [
-            f"{pwd}/utils/DummyFile.cpp",
-            f"{pwd}/utils/DummyFile.hpp",
-            f"{pwd}/utils/exclude_dir_2/ExcludedFile2.hpp",
+            f"{pwd}/utils/dummy_project/DummyFile.cpp",
+            f"{pwd}/utils/dummy_project/DummyFile.hpp",
+            f"{pwd}/utils/dummy_project/exclude_dir_2/ExcludedFile2.hpp",
         ]
         result = get_files_to_check.get_files_to_check(
-            f"{pwd}/utils", f"{pwd}/utils/exclude_dir_1"
+            f"{pwd}/utils/dummy_project/", f"{pwd}/utils/dummy_project/exclude_dir_1"
         )
 
         self.assertEqual(to_list_and_sort(result), expected)
 
         # Multiple exclude_dir
-        expected = [f"{pwd}/utils/DummyFile.cpp", f"{pwd}/utils/DummyFile.hpp"]
+        expected = [f"{pwd}/utils/dummy_project/DummyFile.cpp", f"{pwd}/utils/dummy_project/DummyFile.hpp"]
         result = get_files_to_check.get_files_to_check(
-            f"{pwd}/utils", f"{pwd}/exclude_dir_1 {pwd}/exclude_dir_2"
+            f"{pwd}/utils/dummy_project/", f"{pwd}/utils/dummy_project/exclude_dir_1 {pwd}/utils/dummy_project/exclude_dir_2"
         )
 
 
