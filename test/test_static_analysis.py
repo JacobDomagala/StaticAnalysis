@@ -34,6 +34,12 @@ class TestRunStaticAnalysis(unittest.TestCase):
 
     maxDiff = None
 
+    def test_get_lines_changed_from_patch(self):
+        patch = "@@ -43,6 +48,8 @@\n@@ -0,0 +1 @@"
+
+        lines = run_static_analysis.get_lines_changed_from_patch(patch)
+        self.assertEqual(lines, [(48, 56), (1, 1)])
+
     def test_create_comment_for_output(self):
 
         cppcheck_content = [
