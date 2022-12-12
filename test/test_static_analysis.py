@@ -1,7 +1,7 @@
 import unittest
 import os
 import sys
-import utils.helper_functions
+import utils.helper_functions as utils
 
 try:
     project_path = f"{os.sep}".join(os.path.abspath(__file__).split(os.sep)[:-2])
@@ -79,23 +79,15 @@ class TestRunStaticAnalysis(unittest.TestCase):
         comment_body = run_static_analysis.prepare_comment_body("", "", 0, 0)
 
         # Empty results
-        expected_comment_body = (
-            '## <p align="center"><b> :white_check_mark:'
-            f"{comment_title} - no issues found! :white_check_mark: </b></p>"
-        )
+        expected_comment_body = utils.generate_comment(comment_title, "", 0, "cppcheck")
 
         self.assertEqual(expected_comment_body, comment_body)
 
         # Multiple cppcheck issues
         cppcheck_issues_found = 4
         cppcheck_comment = "dummy issues"
-        expected_comment_body = (
-            f'## <p align="center"><b> :zap: {comment_title} :zap: </b></p> \n\n'
-            f"<details> <summary> <b> :red_circle: cppcheck found "
-            f"{cppcheck_issues_found} issues!"
-            " Click here to see details. </b> </summary> <br>"
-            f"{cppcheck_comment} </details>"
-            "\n\n *** \n"
+        expected_comment_body = utils.generate_comment(
+            comment_title, cppcheck_comment, cppcheck_issues_found, "cppcheck"
         )
 
         comment_body = run_static_analysis.prepare_comment_body(
@@ -107,13 +99,8 @@ class TestRunStaticAnalysis(unittest.TestCase):
         # Single cppcheck issue
         cppcheck_issues_found = 1
         cppcheck_comment = "dummy issue"
-        expected_comment_body = (
-            f'## <p align="center"><b> :zap: {comment_title} :zap: </b></p> \n\n'
-            f"<details> <summary> <b> :red_circle: cppcheck found "
-            f"{cppcheck_issues_found} issue!"
-            " Click here to see details. </b> </summary> <br>"
-            f"{cppcheck_comment} </details>"
-            "\n\n *** \n"
+        expected_comment_body = utils.generate_comment(
+            comment_title, cppcheck_comment, cppcheck_issues_found, "cppcheck"
         )
 
         comment_body = run_static_analysis.prepare_comment_body(
@@ -125,13 +112,8 @@ class TestRunStaticAnalysis(unittest.TestCase):
         # Multiple clang-tidy issues
         clang_tidy_issues_found = 4
         clang_tidy_comment = "dummy issues"
-        expected_comment_body = (
-            f'## <p align="center"><b> :zap: {comment_title} :zap: </b></p> \n\n'
-            "\n\n *** \n"
-            f"<details> <summary> <b> :red_circle: clang-tidy found "
-            f"{clang_tidy_issues_found} issues!"
-            " Click here to see details. </b> </summary> <br>"
-            f"{clang_tidy_comment} </details><br>\n"
+        expected_comment_body = utils.generate_comment(
+            comment_title, clang_tidy_comment, clang_tidy_issues_found, "clang-tidy"
         )
 
         comment_body = run_static_analysis.prepare_comment_body(
@@ -143,13 +125,8 @@ class TestRunStaticAnalysis(unittest.TestCase):
         # Single clang-tidy issue
         clang_tidy_issues_found = 1
         clang_tidy_comment = "dummy issue"
-        expected_comment_body = (
-            f'## <p align="center"><b> :zap: {comment_title} :zap: </b></p> \n\n'
-            "\n\n *** \n"
-            f"<details> <summary> <b> :red_circle: clang-tidy found "
-            f"{clang_tidy_issues_found} issue!"
-            " Click here to see details. </b> </summary> <br>"
-            f"{clang_tidy_comment} </details><br>\n"
+        expected_comment_body = utils.generate_comment(
+            comment_title, clang_tidy_comment, clang_tidy_issues_found, "clang-tidy"
         )
 
         comment_body = run_static_analysis.prepare_comment_body(
@@ -168,7 +145,9 @@ class TestRunStaticAnalysis(unittest.TestCase):
             f"{pwd}/utils/dummy_project/exclude_dir_1/ExcludedFile1.hpp",
             f"{pwd}/utils/dummy_project/exclude_dir_2/ExcludedFile2.hpp",
         ]
-        result = get_files_to_check.get_files_to_check(f"{pwd}/utils/dummy_project", None)
+        result = get_files_to_check.get_files_to_check(
+            f"{pwd}/utils/dummy_project", None
+        )
 
         self.assertEqual(to_list_and_sort(result), expected)
 
@@ -185,9 +164,13 @@ class TestRunStaticAnalysis(unittest.TestCase):
         self.assertEqual(to_list_and_sort(result), expected)
 
         # Multiple exclude_dir
-        expected = [f"{pwd}/utils/dummy_project/DummyFile.cpp", f"{pwd}/utils/dummy_project/DummyFile.hpp"]
+        expected = [
+            f"{pwd}/utils/dummy_project/DummyFile.cpp",
+            f"{pwd}/utils/dummy_project/DummyFile.hpp",
+        ]
         result = get_files_to_check.get_files_to_check(
-            f"{pwd}/utils/dummy_project", f"{pwd}/utils/dummy_project/exclude_dir_1 {pwd}/utils/dummy_project/exclude_dir_2"
+            f"{pwd}/utils/dummy_project",
+            f"{pwd}/utils/dummy_project/exclude_dir_1 {pwd}/utils/dummy_project/exclude_dir_2",
         )
 
 
