@@ -1,3 +1,2 @@
 .vscode/
-src/__pycache__/*
-test/__pycache__/*
+*__pycache__/
