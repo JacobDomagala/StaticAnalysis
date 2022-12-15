@@ -79,7 +79,7 @@ function process_compile_output() {
 
   const splitLines = str => str.split(/\r?\n/);
   var matchingStrings = [];
-  arrayOfLines = splitLines(compile_result);
+  arrayOfLines = [...new Set(splitLines(compile_result))];
   arrayOfLines.forEach(line => {
     line = make_dir_universal(line);
     var idx = line.indexOf(prefix_dir);
