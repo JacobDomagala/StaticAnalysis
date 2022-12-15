@@ -84,10 +84,10 @@ function process_compile_output() {
   var num_errors = 0;
 
   const splitLines = str => str.split(/\r?\n/);
-  debug_log(`Initial lines: ${splitLines}`);
   var matchingStrings = [];
   arrayOfLines = [...new Set(splitLines(compile_result))];
-  debug_log(`arrayOfLines: ${arrayOfLines}`);
+  debug_log(`Original string:\n ${compile_result} \n\n splitLines:\n ${splitLines(compile_result)} \n\n arrayOfLines:\n ${arrayOfLines}\n\n`);
+
   arrayOfLines.forEach(line => {
     line = make_dir_universal(line);
     var idx = line.indexOf(prefix_dir);
