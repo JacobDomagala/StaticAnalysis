@@ -84,11 +84,16 @@ function process_compile_output() {
   var num_errors = 0;
 
   const splitLines = str => str.split(/\r?\n/);
-  var matchingStrings = [];
-  arrayOfLines = [...new Set(splitLines(compile_result))];
-  debug_log(`Original string:\n ${compile_result} \n\n splitLines:\n ${splitLines(compile_result)} \n\n arrayOfLines:\n ${arrayOfLines}\n\n`);
+  inistialList = splitLines(compile_result)
+  inistialList.forEach(function(part, index) {
+    this[index] = this[index].split("\\").join("/");
+  }, inistialList);
 
-  arrayOfLines.forEach(line => {
+  var matchingStrings = [];
+  uniqueLines = [...new Set(inistialList)];
+  debug_log(`Original string:\n ${compile_result} \n\n inistialList:\n ${splitLines(compile_result)} \n\n uniqueLines:\n ${uniqueLines}\n\n`);
+
+  uniqueLines.forEach(line => {
     line = make_dir_universal(line);
     var idx = line.indexOf(prefix_dir);
 
