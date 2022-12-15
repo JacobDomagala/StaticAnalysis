@@ -13,6 +13,12 @@ async function main() {
 main();
 
 
+function debug_log(log){
+  if(core.getInput("debug_output")) {
+    console.log(log);
+  }
+}
+
 // Switch from '\' to '/' so it makes comparing directories universal
 function make_dir_universal(line){
   return line.split("\\").join("/");
@@ -78,14 +84,22 @@ function process_compile_output() {
   var num_errors = 0;
 
   const splitLines = str => str.split(/\r?\n/);
+  inistialList = splitLines(compile_result)
+  inistialList.forEach(function(part, index) {
+    this[index] = this[index].split("\\").join("/");
+  }, inistialList);
+
   var matchingStrings = [];
-  arrayOfLines = splitLines(compile_result);
-  arrayOfLines.forEach(line => {
+  uniqueLines = [...new Set(inistialList)];
+  debug_log(`Original string:\n ${compile_result} \n\n inistialList:\n ${splitLines(compile_result)} \n\n uniqueLines:\n ${uniqueLines}\n\n`);
+
+  uniqueLines.forEach(line => {
     line = make_dir_universal(line);
     var idx = line.indexOf(prefix_dir);
 
     // Only consider lines that start with 'prefix_dir'
     if (idx == 0 && check_for_exclude_dir(line, exclude_dir) && check_if_valid_line(compiler, line)) {
+      debug_log(`Parsing line: ${line}`);
       line = line.replace(prefix_dir, "");
 
       const [file_path, file_line_start, file_line_end, type] = get_line_info(compiler, line);
