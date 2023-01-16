@@ -37,6 +37,9 @@ inputs:
   report_pr_changes_only:
     description: 'Only post the issues found within the changes introduced in this Pull Request'
     default: false
+  use_cmake:
+    description: 'Determines wether CMake should be used to generate compile_commands.json file'
+    default: true
   cmake_args:
     description: 'Additional CMake arguments'
   force_console_print:
