@@ -58,7 +58,9 @@ fi
 
 mkdir -p build && cd build || exit
 
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "$INPUT_CMAKE_ARGS" ..
+if [ $INPUT_USE_CMAKE = true ]; then
+    cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "$INPUT_CMAKE_ARGS" ..
+fi
 
 if [ -z "$INPUT_EXCLUDE_DIR" ]; then
     files_to_check=$(python3 /get_files_to_check.py -dir="$GITHUB_WORKSPACE")
@@ -72,12 +74,18 @@ debug_print "Files to check = $files_to_check"
 debug_print "INPUT_CPPCHECK_ARGS = $INPUT_CPPCHECK_ARGS"
 debug_print "INPUT_CLANG_TIDY_ARGS = $INPUT_CLANG_TIDY_ARGS"
 
-if [ -z "$INPUT_EXCLUDE_DIR" ]; then
-    debug_print "Running cppcheck --project=compile_commands.json $INPUT_CPPCHECK_ARGS --output-file=cppcheck.txt ..."
-    eval cppcheck --project=compile_commands.json "$INPUT_CPPCHECK_ARGS" --output-file=cppcheck.txt
+if [ $INPUT_USE_CMAKE = true ]; then
+    if [ -z "$INPUT_EXCLUDE_DIR" ]; then
+        debug_print "Running cppcheck --project=compile_commands.json $INPUT_CPPCHECK_ARGS --output-file=cppcheck.txt ..."
+        eval cppcheck --project=compile_commands.json "$INPUT_CPPCHECK_ARGS" --output-file=cppcheck.txt
+    else
+        debug_print "Running cppcheck --project=compile_commands.json $INPUT_CPPCHECK_ARGS --output-file=cppcheck.txt -i$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR ..."
+        eval cppcheck --project=compile_commands.json "$INPUT_CPPCHECK_ARGS" --output-file=cppcheck.txt -i"$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR"
+    fi
 else
-    debug_print "Running cppcheck --project=compile_commands.json $INPUT_CPPCHECK_ARGS --output-file=cppcheck.txt -i$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR ..."
-    eval cppcheck --project=compile_commands.json "$INPUT_CPPCHECK_ARGS" --output-file=cppcheck.txt -i"$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR"
+    # Excludes for clang-tidy are handled in python script
+    debug_print "Running cppcheck $files_to_check $INPUT_CPPCHECK_ARGS --output-file=cppcheck.txt ..."
+    eval cppcheck $files_to_check "$INPUT_CPPCHECK_ARGS" --output-file=cppcheck.txt
 fi
 
 # Excludes for clang-tidy are handled in python script
