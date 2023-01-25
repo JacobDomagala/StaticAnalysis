@@ -1,5 +1,5 @@
 name: "Run static analysis for C++ project"
-description: "Runs cppcheck and clang-tidy on CMake based project. The result is PR comment, or output to GitHub's console"
+description: "Runs cppcheck and clang-tidy on C++ project. The result is PR comment, or output to GitHub's console"
 
 inputs:
   github_token:
@@ -26,7 +26,7 @@ inputs:
     description: 'Additional (space separated) packages that need to be installed in order for project to compile'
   init_script:
     description: |
-      'Optional shell script that will be run before running CMake command.'
+      'Optional shell script that will be run before configuring project (i.e. running CMake command).'
       'This should be used, when the project requires some environmental set-up beforehand'
       'Note. `apt_pckgs` will run before this script, just in case you need some packages installed'
   cppcheck_args:

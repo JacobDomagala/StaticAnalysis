@@ -4,9 +4,9 @@
 
 # Static Analysis
 
-GitHub action for CMake based C++ project, that runs [cppcheck](http://cppcheck.sourceforge.net/) and [clang-tidy](https://clang.llvm.org/extra/clang-tidy/). This action works on both push and pull requests.
+GitHub action for C++ project, that runs [cppcheck](http://cppcheck.sourceforge.net/) and [clang-tidy](https://clang.llvm.org/extra/clang-tidy/). This action works on both push and pull requests.
 
-In order for this action to work properly, your project has to be CMake based and it's also recomennded to use ```.clang-tidy``` file, which should be located in your root directory. If your project requires some additional packages to be installed, you can use `apt_pckgs` and/or `init_script` input variables to install them (see the **Workflow example** or **Inputs** sections below). Also, if your repository should allow contribiutions from forks, then it's required to use this Action with `pull_request_target` trigger event, otherwise the GitHub API won't allow to create PR comments.
+It's recommended that your project is CMake based, but it's not required (see **Inputs** section below). Also it's recommended to use ```.clang-tidy``` file, which should be located in your root directory. If your project requires some additional packages to be installed, you can use `apt_pckgs` and/or `init_script` input variables to install them (see the **Workflow example** or **Inputs** sections below). Also, if your repository should allow contribiutions from forks, then it's required to use this Action with `pull_request_target` trigger event, otherwise the GitHub API won't allow to create PR comments.
 
 - **cppcheck** will run with the following default flags: </br>
 ```--enable=all --suppress=missingInclude --inline-suppr --inconclusive```
@@ -71,6 +71,8 @@ jobs:
         # Exclude any issues found in ${Project_root_dir}/lib
         exclude_dir: lib
 
+        use_cmake: true
+
         # Additional apt packages that need to be installed before running Cmake
         apt_pckgs: software-properties-common libglu1-mesa-dev freeglut3-dev mesa-common-dev
 
@@ -97,6 +99,7 @@ jobs:
 | `cppcheck_args`         | FALSE  | Cppcheck (space separated) arguments that will be used |`--enable=all --suppress=missingInclude --inline-suppr --inconclusive`|
 | `clang_tidy_args`       | FALSE  | clang-tidy arguments that will be used (example: `-checks='*,fuchsia-*,google-*,zircon-*'` |`<empty>`|
 | `report_pr_changes_only`| FALSE  | Only post the issues found within the changes introduced in this Pull Request. This means that only the issues found within the changed lines will po posted. Any other issues caused by these changes in the repository, won't be reported, so in general you should run static analysis on entire code base  |`false`|
+| `use_cmake`             | FALSE  | Determines wether CMake should be used to generate compile_commands.json file | `true` |
 | `cmake_args`            | FALSE  | Additional CMake arguments |`<empty>`|
 | `force_console_print`   | FALSE  | Output the action result to console, instead of creating the comment |`false`|
 
