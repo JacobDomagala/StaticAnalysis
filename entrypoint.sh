@@ -16,6 +16,10 @@ debug_print() {
 
 print_to_console=${INPUT_FORCE_CONSOLE_PRINT}
 
+# Some debug info
+debug_print "Using CMake = $INPUT_USE_CMAKE"
+debug_print "Print to console = $print_to_console"
+
 if [ $print_to_console = true ]; then
     echo "The 'force_console_print' option is enabled. Printing output to console."
 elif [ -z "$INPUT_PR_NUM" ]; then
