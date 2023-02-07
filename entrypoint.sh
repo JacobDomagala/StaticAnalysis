@@ -57,9 +57,9 @@ debug_print "GITHUB_WORKSPACE = ${GITHUB_WORKSPACE} INPUT_EXCLUDE_DIR = ${INPUT_
 mkdir -p build && cd build || exit
 
 if [ -n "$INPUT_INIT_SCRIPT" ]; then
-    chmod +x "$INPUT_INIT_SCRIPT"
+    chmod +x "$GITHUB_WORKSPACE/$INPUT_INIT_SCRIPT"
     # shellcheck source=/dev/null
-    source "$INPUT_INIT_SCRIPT"
+    source "$GITHUB_WORKSPACE/$INPUT_INIT_SCRIPT"
 fi
 
 if [ $INPUT_USE_CMAKE = true ]; then
