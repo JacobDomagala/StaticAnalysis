@@ -54,13 +54,15 @@ fi
 
 debug_print "GITHUB_WORKSPACE = ${GITHUB_WORKSPACE} INPUT_EXCLUDE_DIR = ${INPUT_EXCLUDE_DIR} use_extra_directory = ${use_extra_directory}"
 
-mkdir -p build && cd build || exit
+mkdir -p build
 
 if [ -n "$INPUT_INIT_SCRIPT" ]; then
     chmod +x "$GITHUB_WORKSPACE/$INPUT_INIT_SCRIPT"
     # shellcheck source=/dev/null
     source "$GITHUB_WORKSPACE/$INPUT_INIT_SCRIPT"
 fi
+
+cd build
 
 if [ $INPUT_USE_CMAKE = true ]; then
     cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON "$INPUT_CMAKE_ARGS" ..
