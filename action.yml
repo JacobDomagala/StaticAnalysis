@@ -29,6 +29,7 @@ inputs:
       'Optional shell script that will be run before configuring project (i.e. running CMake command).'
       'This should be used, when the project requires some environmental set-up beforehand'
       'Note. `apt_pckgs` will run before this script, just in case you need some packages installed'
+      'Also this script will be run in the root of the project'
   cppcheck_args:
     description: 'cppcheck (space separated) arguments that will be used'
     default: --enable=all --suppress=missingInclude --inline-suppr --inconclusive
