@@ -11,7 +11,7 @@ async function main() {
       core.setFailed(error.message);
     }
   } else {
-    console.log("This action can only run on 'pull_request' event! Currently running on ${eventType}. Skipping!");
+    console.log(`This action can only run on 'pull_request' event! Currently running on ${eventType}. Skipping!`);
   }
 }
 
