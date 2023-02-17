@@ -3,10 +3,15 @@ const github = require('@actions/github');
 var fs = require("fs");
 
 async function main() {
-  try {
-    await create_or_update_comment(await find_comment_id(), process_compile_output());
-  } catch (error) {
-    core.setFailed(error.message);
+  const eventType = process.env.GITHUB_EVENT_NAME;
+  if (eventType === 'pull_request') {
+    try {
+      await create_or_update_comment(await find_comment_id(), process_compile_output());
+    } catch (error) {
+      core.setFailed(error.message);
+    }
+  } else {
+    console.log("This action can only run on 'pull_request' event! Currently running on ${eventType}. Skipping!");
   }
 }
 
