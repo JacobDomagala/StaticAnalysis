@@ -59,7 +59,7 @@ mkdir -p build
 if [ -n "$INPUT_INIT_SCRIPT" ]; then
     chmod +x "$GITHUB_WORKSPACE/$INPUT_INIT_SCRIPT"
     # shellcheck source=/dev/null
-    source "$GITHUB_WORKSPACE/$INPUT_INIT_SCRIPT"
+    source "$GITHUB_WORKSPACE/$INPUT_INIT_SCRIPT" "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE/build"
 fi
 
 cd build
