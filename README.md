@@ -60,9 +60,14 @@ jobs:
       shell: bash
       run: |
         echo "#!/bin/bash
+
+        # Input args provided by StaticAnalysis action
+        root_dir=\${1}
+        build_dir=\${2}
+        echo \"Hello from the init script! First arg=\${root_dir} second arg=\${build_dir}\"
+
         add-apt-repository ppa:oibaf/graphics-drivers
-        apt update
-        apt upgrade
+        apt update && apt upgrade
         apt install -y libvulkan1 mesa-vulkan-drivers vulkan-utils" > init_script.sh
 
     - name: Run static analysis
@@ -95,7 +100,7 @@ jobs:
 | `comment_title`         | FALSE  | Title for comment with the raport. This should be an unique name | `Static analysis result` |
 | `exclude_dir`           | FALSE  | Directory which should be excluded from the raport | `<empty>` |
 | `apt_pckgs`             | FALSE  | Additional (space separated) packages that need to be installed in order for project to compile | `<empty>` |
-| `init_script`           | FALSE  | Optional shell script that will be run before running CMake command. This should be used, when the project requires some environmental set-up beforehand. | `<empty>` |
+| `init_script`           | FALSE  | Optional shell script that will be run before configuring project (i.e. running CMake command). This should be used, when the project requires some environmental set-up beforehand. Script will be run with 2 arguments: `root_dir`(root directory of user's code) and `build_dir`(build directory created for running SA). Note. `apt_pckgs` will run before this script, just in case you need some packages installed. Also this script will be run in the root of the project (`root_dir`) | `<empty>` |
 | `cppcheck_args`         | FALSE  | Cppcheck (space separated) arguments that will be used |`--enable=all --suppress=missingInclude --inline-suppr --inconclusive`|
 | `clang_tidy_args`       | FALSE  | clang-tidy arguments that will be used (example: `-checks='*,fuchsia-*,google-*,zircon-*'` |`<empty>`|
 | `report_pr_changes_only`| FALSE  | Only post the issues found within the changes introduced in this Pull Request. This means that only the issues found within the changed lines will po posted. Any other issues caused by these changes in the repository, won't be reported, so in general you should run static analysis on entire code base  |`false`|

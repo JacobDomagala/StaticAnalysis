@@ -36,6 +36,7 @@ fi
 debug_print "Repo = ${INPUT_PR_REPO}  PR_HEAD = ${INPUT_PR_HEAD} event name = ${GITHUB_EVENT_NAME}"
 
 use_extra_directory=false
+original_root_dir="$GITHUB_WORKSPACE"
 
 # This is useful when running this Action from fork (together with [pull_request_target])
 if [ "$GITHUB_EVENT_NAME" = "pull_request_target" ] && [ -n "$INPUT_PR_REPO" ]; then
@@ -57,9 +58,10 @@ debug_print "GITHUB_WORKSPACE = ${GITHUB_WORKSPACE} INPUT_EXCLUDE_DIR = ${INPUT_
 mkdir -p build
 
 if [ -n "$INPUT_INIT_SCRIPT" ]; then
-    chmod +x "$GITHUB_WORKSPACE/$INPUT_INIT_SCRIPT"
+    # Use $original_root_dir here, just in case we're running in pull_request_target
+    chmod +x "$original_root_dir/$INPUT_INIT_SCRIPT"
     # shellcheck source=/dev/null
-    source "$GITHUB_WORKSPACE/$INPUT_INIT_SCRIPT"
+    source "$original_root_dir/$INPUT_INIT_SCRIPT" "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE/build"
 fi
 
 cd build
