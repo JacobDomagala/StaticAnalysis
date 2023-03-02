@@ -33,7 +33,7 @@ def debug_print(message):
 
 
 def is_part_of_pr_changes(file_path, issue_file_line, files_changed_in_pr):
-    '''
+    """
     Check if a given file and line number corresponds to a change in the files included in a pull request.
 
     Args:
@@ -48,7 +48,7 @@ def is_part_of_pr_changes(file_path, issue_file_line, files_changed_in_pr):
 
     Returns:
         bool: True if the file and line number correspond to a change in the pull request, False otherwise.
-    '''
+    """
 
     if ONLY_PR_CHANGES == "false":
         return True
@@ -71,7 +71,7 @@ def is_part_of_pr_changes(file_path, issue_file_line, files_changed_in_pr):
 
 
 def get_lines_changed_from_patch(patch):
-    '''
+    """
     Parses a unified diff patch and returns the range of lines that were changed.
 
     Parameters:
@@ -80,7 +80,7 @@ def get_lines_changed_from_patch(patch):
     Returns:
         list: A list of tuples containing the beginning and ending line numbers for each
         section of the file that was changed by the patch.
-    '''
+    """
 
     lines_changed = []
     lines = patch.split("\n")
