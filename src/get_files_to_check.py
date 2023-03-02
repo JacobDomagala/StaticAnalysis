@@ -3,6 +3,19 @@ from pathlib import Path
 
 
 def get_files_to_check(directory_in, excludes_in):
+    """
+    Given a directory path and a string of prefixes to exclude,
+    return a space-separated string of all files in the directory (and its subdirectories)
+    that have a supported extension and do not start with any of the excluded prefixes.
+
+    Args:
+        directory_in (str): The path to the directory to search for files.
+        excludes_in (str): A space-separated string of prefixes to exclude from the search.
+
+    Returns:
+        str: A space-separated string of file paths that meet the search criteria.
+    """
+
     exclude_prefixes = [f"{directory_in}/build"]
 
     if excludes_in is not None:

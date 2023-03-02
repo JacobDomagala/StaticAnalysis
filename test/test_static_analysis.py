@@ -41,6 +41,16 @@ class TestRunStaticAnalysis(unittest.TestCase):
         self.assertEqual(lines, [(48, 56), (1, 1)])
 
     def test_create_comment_for_output(self):
+        """
+        Test the `create_comment_for_output()` function.
+
+        This test case checks whether the `create_comment_for_output()` function correctly
+        generates a GitHub comment that displays static analysis issues for a given set of
+        files.
+
+        The test case creates a mock set of files and static analysis issues, and expects the
+        generated GitHub comment to match a pre-defined expected string.
+        """
 
         cppcheck_content = [
             "/github/workspace/DummyFile.cpp:8:23: style: Error message\n",
@@ -81,6 +91,17 @@ class TestRunStaticAnalysis(unittest.TestCase):
         self.assertEqual(result, (expected, 2))
 
     def test_prepare_comment_body(self):
+        """
+        Test the `prepare_comment_body()` function.
+
+        This test case checks whether the `prepare_comment_body()` function correctly generates
+        the body text of a GitHub comment for a given set of static analysis issues.
+
+        The test case creates mock input parameters representing different types of static
+        analysis issues, and expects the generated comment body to match a pre-defined expected
+        string.
+        """
+
         comment_title = os.getenv("INPUT_COMMENT_TITLE")
         comment_body = run_static_analysis.prepare_comment_body("", "", 0, 0)
 
@@ -142,6 +163,18 @@ class TestRunStaticAnalysis(unittest.TestCase):
         self.assertEqual(expected_comment_body, comment_body)
 
     def test_get_files_to_check(self):
+        """
+        Test the `get_files_to_check()` function.
+
+        This test case checks whether the `get_files_to_check()` function correctly generates a
+        list of file paths to check for static analysis issues in a given directory, excluding
+        any directories that should be skipped.
+
+        The test case creates a mock directory structure and a set of directories to skip,
+        and expects the generated list of file paths to match a pre-defined expected list of
+        file paths.
+        """
+
         pwd = os.path.dirname(os.path.realpath(__file__))
 
         # Excludes == None
