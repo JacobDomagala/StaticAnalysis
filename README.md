@@ -4,15 +4,15 @@
 
 # Static Analysis
 
-GitHub action for C++ project, that runs [cppcheck](http://cppcheck.sourceforge.net/) and [clang-tidy](https://clang.llvm.org/extra/clang-tidy/). This action works on both push and pull requests.
+This GitHub action is designed for C++ projects and performs static analysis using [cppcheck](http://cppcheck.sourceforge.net/) and [clang-tidy](https://clang.llvm.org/extra/clang-tidy/). It can be triggered by push and pull requests.
 
-It's recommended that your project is CMake based, but it's not required (see **Inputs** section below). Also it's recommended to use ```.clang-tidy``` file, which should be located in your root directory. If your project requires some additional packages to be installed, you can use `apt_pckgs` and/or `init_script` input variables to install them (see the **Workflow example** or **Inputs** sections below). Also, if your repository should allow contribiutions from forks, then it's required to use this Action with `pull_request_target` trigger event, otherwise the GitHub API won't allow to create PR comments.
+While it's recommended that your project is CMake-based, it's not required (see the **Inputs** section below). We also recommend using a ```.clang-tidy``` file in your root directory. If your project requires additional packages to be installed, you can use the `apt_pckgs` and/or `init_script` input variables to install them (see the **Workflow example** or **Inputs** sections below). If your repository allows contributions from forks, you must use this Action with the `pull_request_target` trigger event, as the GitHub API won't allow PR comments otherwise.
 
-- **cppcheck** will run with the following default flags: </br>
+By default, **cppcheck** runs with the following flags:
 ```--enable=all --suppress=missingInclude --inline-suppr --inconclusive```
-You can use `cppcheck_args` input to set your flags.
+You can use the `cppcheck_args` input to set your own flags.
 
-- **clang-tidy** will look for the ```.clang-tidy``` file in your repository, or you can set checks via `clang_tidy_args` input.
+**clang-tidy** looks for the ```.clang-tidy``` file in your repository, but you can also set checks using the `clang_tidy_args` input.
 
 ## Pull Request comment
 
@@ -93,21 +93,19 @@ jobs:
 
 ## Inputs
 
-| Name                    |Required| Description                        | Default value |
-|-------------------------|--------|------------------------------------|:---------------:|
-| `github_token`          | FALSE  | Github token used for Github API requests |`${{github.token}}`|
-| `pr_num`                | FALSE  | Pull request number for which the comment will be created |`${{github.event.pull_request.number}}`|
-| `comment_title`         | FALSE  | Title for comment with the raport. This should be an unique name | `Static analysis result` |
-| `exclude_dir`           | FALSE  | Directory which should be excluded from the raport | `<empty>` |
-| `apt_pckgs`             | FALSE  | Additional (space separated) packages that need to be installed in order for project to compile | `<empty>` |
-| `init_script`           | FALSE  | Optional shell script that will be run before configuring project (i.e. running CMake command). This should be used, when the project requires some environmental set-up beforehand. Script will be run with 2 arguments: `root_dir`(root directory of user's code) and `build_dir`(build directory created for running SA). Note. `apt_pckgs` will run before this script, just in case you need some packages installed. Also this script will be run in the root of the project (`root_dir`) | `<empty>` |
-| `cppcheck_args`         | FALSE  | Cppcheck (space separated) arguments that will be used |`--enable=all --suppress=missingInclude --inline-suppr --inconclusive`|
-| `clang_tidy_args`       | FALSE  | clang-tidy arguments that will be used (example: `-checks='*,fuchsia-*,google-*,zircon-*'` |`<empty>`|
-| `report_pr_changes_only`| FALSE  | Only post the issues found within the changes introduced in this Pull Request. This means that only the issues found within the changed lines will po posted. Any other issues caused by these changes in the repository, won't be reported, so in general you should run static analysis on entire code base  |`false`|
-| `use_cmake`             | FALSE  | Determines wether CMake should be used to generate compile_commands.json file | `true` |
-| `cmake_args`            | FALSE  | Additional CMake arguments |`<empty>`|
-| `force_console_print`   | FALSE  | Output the action result to console, instead of creating the comment |`false`|
+| Name                    | Description                        | Default value |
+|-------------------------|------------------------------------|---------------|
+| `github_token`          | Github token used for Github API requests |`${{github.token}}`|
+| `pr_num`                | Pull request number for which the comment will be created |`${{github.event.pull_request.number}}`|
+| `comment_title`         | Title for comment with the raport. This should be an unique name | `Static analysis result` |
+| `exclude_dir`           | Directory which should be excluded from the raport | `<empty>` |
+| `apt_pckgs`             | Additional (space separated) packages that need to be installed in order for project to compile | `<empty>` |
+| `init_script`           | Optional shell script that will be run before configuring project (i.e. running CMake command). This should be used, when the project requires some environmental set-up beforehand. Script will be run with 2 arguments: `root_dir`(root directory of user's code) and `build_dir`(build directory created for running SA). Note. `apt_pckgs` will run before this script, just in case you need some packages installed. Also this script will be run in the root of the project (`root_dir`) | `<empty>` |
+| `cppcheck_args`         | Cppcheck (space separated) arguments that will be used |`--enable=all --suppress=missingInclude --inline-suppr --inconclusive`|
+| `clang_tidy_args`       | clang-tidy arguments that will be used (example: `-checks='*,fuchsia-*,google-*,zircon-*'` |`<empty>`|
+| `report_pr_changes_only`| Only post the issues found within the changes introduced in this Pull Request. This means that only the issues found within the changed lines will po posted. Any other issues caused by these changes in the repository, won't be reported, so in general you should run static analysis on entire code base  |`false`|
+| `use_cmake`             | Determines wether CMake should be used to generate compile_commands.json file | `true` |
+| `cmake_args`            | Additional CMake arguments |`<empty>`|
+| `force_console_print`   | Output the action result to console, instead of creating the comment |`false`|
 
-
-
-### **NOTE: `apt_pckgs` will run before `init_script`, just in case you need some packages installed before running the script**
+**NOTE: `apt_pckgs` will run before `init_script`, just in case you need some packages installed before running the script**
