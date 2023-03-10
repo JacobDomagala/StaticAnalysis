@@ -6,7 +6,7 @@
 
 This GitHub action is designed for C++ projects and performs static analysis using [cppcheck](http://cppcheck.sourceforge.net/) and [clang-tidy](https://clang.llvm.org/extra/clang-tidy/). It can be triggered by push and pull requests.
 
-While it's recommended that your project is CMake-based, it's not required (see the **Inputs** section below). We also recommend using a ```.clang-tidy``` file in your root directory. If your project requires additional packages to be installed, you can use the `apt_pckgs` and/or `init_script` input variables to install them (see the **Workflow example** or **Inputs** sections below). If your repository allows contributions from forks, you must use this Action with the `pull_request_target` trigger event, as the GitHub API won't allow PR comments otherwise.
+While it's recommended that your project is CMake-based, it's not required (see the **Inputs** section below). We also recommend using a ```.clang-tidy``` file in your root directory. If your project requires additional packages to be installed, you can use the `apt_pckgs` and/or `init_script` input variables to install them (see the [**Workflow example**](https://github.com/JacobDomagala/StaticAnalysis#workflow-example) or [**Inputs**](https://github.com/JacobDomagala/StaticAnalysis#inputs) sections below). If your repository allows contributions from forks, you must use this Action with the `pull_request_target` trigger event, as the GitHub API won't allow PR comments otherwise.
 
 By default, **cppcheck** runs with the following flags:
 ```--enable=all --suppress=missingInclude --inline-suppr --inconclusive```
