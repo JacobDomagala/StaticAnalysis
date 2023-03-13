@@ -10384,12 +10384,28 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
-/******/ 	
-/******/ 	// startup
-/******/ 	// Load entry module and return exports
-/******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(5456);
-/******/ 	module.exports = __webpack_exports__;
-/******/ 	
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
+(() => {
+const { make_dir_universal } = __nccwpck_require__(5456);
+
+describe("make_dir_universal", () => {
+  test("should replace backslashes with forward slashes", () => {
+    const input = "C:\\Users\\John\\Documents\\file.txt";
+    const expectedOutput = "C:/Users/John/Documents/file.txt";
+    const actualOutput = make_dir_universal(input);
+    expect(actualOutput).toEqual(expectedOutput);
+  });
+
+  test("should not change input if it already uses forward slashes", () => {
+    const input = "/Users/John/Documents/file.txt";
+    const expectedOutput = "/Users/John/Documents/file.txt";
+    const actualOutput = make_dir_universal(input);
+    expect(actualOutput).toEqual(expectedOutput);
+  });
+});
+})();
+
+module.exports = __webpack_exports__;
 /******/ })()
 ;
