@@ -15,7 +15,9 @@ async function main() {
   }
 }
 
-main();
+if (require.main === module) {
+  main();
+}
 
 
 function debug_log(log){
@@ -31,7 +33,7 @@ function make_dir_universal(line){
 
 // Returns true if 'line' doesn't start with excluded directory. Return false otherwise
 function check_for_exclude_dir(line, exclude_dir) {
-  return (exclude_dir.length == 0) || (line.indexOf(exclude_dir) != 0);
+  return exclude_dir.length === 0 || line.indexOf(exclude_dir) !== 0;
 }
 
 // Checks whether 'line' is warning/error line
@@ -56,7 +58,7 @@ function get_line_end(file_path, line_start) {
   file = fs.readFileSync(work_dir + file_path).toString('utf-8');
   num_lines = (file.split(/\r?\n/)).length - 1;
 
-  return Math.min(num_lines, line_start + parseInt(core.getInput("num_lines_to_display"))).toString();
+  return Math.min(num_lines, parseInt(line_start) + parseInt(core.getInput("num_lines_to_display"))).toString();
 }
 
 function get_line_info(compiler, line) {
@@ -185,3 +187,14 @@ async function create_or_update_comment(comment_id, comment_body) {
     });
   }
 }
+
+
+module.exports = {
+  make_dir_universal,
+  check_for_exclude_dir,
+  check_if_valid_line,
+  get_issue_type,
+  get_line_end,
+  get_line_info,
+  process_compile_output,
+};
