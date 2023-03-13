@@ -58,7 +58,7 @@ function get_line_end(file_path, line_start) {
   file = fs.readFileSync(work_dir + file_path).toString('utf-8');
   num_lines = (file.split(/\r?\n/)).length - 1;
 
-  return Math.min(num_lines, line_start + parseInt(core.getInput("num_lines_to_display"))).toString();
+  return Math.min(num_lines, parseInt(line_start) + parseInt(core.getInput("num_lines_to_display"))).toString();
 }
 
 function get_line_info(compiler, line) {
