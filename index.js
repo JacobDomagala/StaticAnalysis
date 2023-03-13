@@ -33,7 +33,7 @@ function make_dir_universal(line){
 
 // Returns true if 'line' doesn't start with excluded directory. Return false otherwise
 function check_for_exclude_dir(line, exclude_dir) {
-  return (exclude_dir.length == 0) || (line.indexOf(exclude_dir) != 0);
+  return exclude_dir.length === 0 || line.indexOf(exclude_dir) !== 0;
 }
 
 // Checks whether 'line' is warning/error line
