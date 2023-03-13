@@ -14,5 +14,8 @@
     "@actions/github": "^4.0.0",
     "filereader": "^0.10.3",
     "fs": "^0.0.1-security"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0"
   }
 }

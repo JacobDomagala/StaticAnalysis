@@ -185,3 +185,14 @@ async function create_or_update_comment(comment_id, comment_body) {
     });
   }
 }
+
+
+module.exports = {
+  make_dir_universal,
+  check_for_exclude_dir,
+  check_if_valid_line,
+  get_issue_type,
+  get_line_end,
+  get_line_info,
+  process_compile_output,
+};
