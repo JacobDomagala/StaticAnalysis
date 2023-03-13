@@ -15,7 +15,9 @@ async function main() {
   }
 }
 
-main();
+if (require.main === module) {
+  main();
+}
 
 
 function debug_log(log){

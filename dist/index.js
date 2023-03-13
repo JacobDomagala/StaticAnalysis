@@ -21,7 +21,7 @@ async function main() {
   }
 }
 
-main();
+if (false) {}
 
 
 function debug_log(log){
