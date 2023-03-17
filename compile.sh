@@ -5,4 +5,3 @@ sudo npm install @actions/github
 sudo npm i -g @vercel/ncc
 
 sudo ncc build index.js --license licenses.txt
-sudo ncc build test/index.test.js --license licenses.txt
