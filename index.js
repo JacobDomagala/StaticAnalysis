@@ -25,7 +25,7 @@ if (require.main === module) {
  *
  * @param {string} log - The message to log to the console.
  */
-function debug_log(log){
+function debug_log(log) {
   // Check if debug output is enabled
   if (core.getInput("debug_output")) {
     // Log the message to the console
@@ -39,7 +39,7 @@ function debug_log(log){
  * @param {string} line - The directory path to convert.
  * @returns {string} - The converted directory path.
  */
-function make_dir_universal(line){
+function make_dir_universal(line) {
   // Split the directory path by backslashes and rejoin with forward slashes
   return line.split("\\").join("/");
 }
@@ -62,7 +62,7 @@ function check_for_exclude_dir(line, exclude_dir) {
  * @param {string} line - The line to check.
  * @returns {boolean} - True if the line contains a valid error or warning message, false otherwise.
  */
-function check_if_valid_line(compiler, line){
+function check_if_valid_line(compiler, line) {
   // Determine the error and warning keywords based on the compiler
   const error_word = compiler !== "MSVC" ? "error:" : "error C";
   const warning_word = compiler !== "MSVC" ? "warning:" : "warning C";
@@ -82,7 +82,7 @@ function check_if_valid_line(compiler, line){
  * @param {string} line - The line containing the error or warning message.
  * @returns {string} - The type of issue, either "error" or "warning".
  */
-function get_issue_type(compiler, line){
+function get_issue_type(compiler, line) {
   // Determine the warning keyword based on the compiler
   const warning_word = compiler !== "MSVC" ? "warning:" : "warning C";
 
@@ -141,7 +141,7 @@ function get_line_info(compiler, line) {
   let file_line_start = line.substring(file_name_offset, file_name_offset + line.substring(file_name_offset).indexOf(file_line_end_char));
 
   // Special case for MSVC: if the starting line number is not a valid integer, extract it differently
-  if(compiler === "MSVC" && isNaN(parseInt(file_line_start))){
+  if (compiler === "MSVC" && isNaN(parseInt(file_line_start))) {
     file_line_start = line.substring(file_name_offset, file_name_offset + line.substring(file_name_offset).indexOf(")"));
   }
 
@@ -163,7 +163,7 @@ function get_line_info(compiler, line) {
  */
 function process_compile_output() {
   compile_result = fs.readFileSync(core.getInput('compile_result_file')).toString('utf-8');
-  const prefix_dir =  make_dir_universal(core.getInput('work_dir'));
+  const prefix_dir = make_dir_universal(core.getInput('work_dir'));
   const exclude_dir = make_dir_universal(core.getInput('exclude_dir'));
   const compiler = core.getInput('compiler');
   var num_warnings = 0;
@@ -171,7 +171,7 @@ function process_compile_output() {
 
   const splitLines = str => str.split(/\r?\n/);
   inistialList = splitLines(compile_result)
-  inistialList.forEach(function(part, index) {
+  inistialList.forEach(function (part, index) {
     this[index] = this[index].split("\\").join("/");
   }, inistialList);
 
@@ -205,7 +205,7 @@ function process_compile_output() {
 
   if (matchingStrings.length == 0) {
     return `<p align="center"><b> :white_check_mark: ${core.getInput("comment_title")} - SUCCESS! :white_check_mark: </b></p>`
-  }else{
+  } else {
     return `<details> <summary> <b> ${core.getInput("comment_title")} - \
     :warning: Warnings( ${num_warnings} ) :x: Errors( ${num_errors} ) </b> </summary>\r\n${matchingStrings.join('\n')} </details>`;
   }
