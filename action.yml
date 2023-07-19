@@ -32,6 +32,9 @@ inputs:
   debug_output:
     description: 'Use this input to generate debug prints'
     default: false
+  server_url:
+    description: 'URL of GitHub Enterprise server (defaults to github.com)'
+    default: "https://github.com"
 
 runs:
   using: 'node16'

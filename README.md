@@ -47,3 +47,4 @@ jobs:
 | `pull_request_number`   | TRUE     | The GitHub Pull Request number                       | `${{github.event.pull_request.number}}`|
 | `comment_title`         | TRUE     | The comment title displayed at the top of the comment. It is also used to determine whether the comment already exists and should be edited or not. | `COMPILE RESULT` |
 | `num_lines_to_display`  | FALSE    | The number of lines for the code snippet displayed for each error/warning | `5` |
+| `server_url`            | FALSE    | URL of GitHub Enterprise server (defaults to github.com)  | `https://github.com` |
