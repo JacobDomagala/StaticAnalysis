@@ -202,7 +202,7 @@ function process_compile_output() {
       description = "\n```diff\n" + `${color_mark}Line: ${file_line_start} ` + line.substring(line.indexOf(" ")) + "\n```\n";
 
       // Concatinate both modified path to file and the description
-      var link_with_description = `\nhttps://github.com/${github.context.issue.owner}/${github.context.issue.repo}` +
+      var link_with_description = `\n` + core.getInput('server_url') + `/${github.context.issue.owner}/${github.context.issue.repo}` +
         `/blob/${github.context.sha}/${file_path}#L${file_line_start}-L${file_line_end} ${description} </br>\n`;
 
       matchingStrings.push(link_with_description);
