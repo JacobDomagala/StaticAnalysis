@@ -20,6 +20,15 @@ print_to_console=${INPUT_FORCE_CONSOLE_PRINT}
 debug_print "Using CMake = $INPUT_USE_CMAKE"
 debug_print "Print to console = $print_to_console"
 
+preselected_files=""
+if [ "$INPUT_REPORT_PR_CHANGES_ONLY" = true ]; then
+    echo "The 'report_pr_changes_only' option is enabled. Running SA only on modified files."
+    common_ancestor=$(git merge-base origin/"$GITHUB_BASE_REF" feature_branch)
+    git diff --name-only "$common_ancestor" feature_branch | grep -E '\.(c|cpp)$' > list_of_changed_files.txt
+    debug_print "$(cat list_of_changed_files.txt)"
+    preselected_files="$(cat list_of_changed_files.txt)"
+fi
+
 if [ "$print_to_console" = true ]; then
     echo "The 'force_console_print' option is enabled. Printing output to console."
 elif [ -z "$INPUT_PR_NUM" ]; then
@@ -71,11 +80,11 @@ if [ "$INPUT_USE_CMAKE" = true ]; then
 fi
 
 if [ -z "$INPUT_EXCLUDE_DIR" ]; then
-    files_to_check=$(python3 /get_files_to_check.py -dir="$GITHUB_WORKSPACE")
-    debug_print "Running: files_to_check=python3 /get_files_to_check.py -dir=\"$GITHUB_WORKSPACE\")"
+    files_to_check=$(python3 /get_files_to_check.py -dir="$GITHUB_WORKSPACE" -preselected="$preselected_files")
+    debug_print "Running: files_to_check=python3 /get_files_to_check.py -dir=\"$GITHUB_WORKSPACE\" -preselected=\"$preselected_files\")"
 else
-    files_to_check=$(python3 /get_files_to_check.py -exclude="$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR" -dir="$GITHUB_WORKSPACE")
-    debug_print "Running: files_to_check=python3 /get_files_to_check.py -exclude=\"$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR\" -dir=\"$GITHUB_WORKSPACE\")"
+    files_to_check=$(python3 /get_files_to_check.py -exclude="$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR" -dir="$GITHUB_WORKSPACE" -preselected="$preselected_files")
+    debug_print "Running: files_to_check=python3 /get_files_to_check.py -exclude=\"$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR\" -dir=\"$GITHUB_WORKSPACE\" -preselected=\"$preselected_files\")"
 fi
 
 debug_print "Files to check = $files_to_check"
