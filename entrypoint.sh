@@ -20,15 +20,6 @@ print_to_console=${INPUT_FORCE_CONSOLE_PRINT}
 debug_print "Using CMake = $INPUT_USE_CMAKE"
 debug_print "Print to console = $print_to_console"
 
-preselected_files=""
-if [ "$INPUT_REPORT_PR_CHANGES_ONLY" = true ]; then
-    echo "The 'report_pr_changes_only' option is enabled. Running SA only on modified files."
-    common_ancestor=$(git merge-base origin/"$GITHUB_BASE_REF" feature_branch)
-    git diff --name-only "$common_ancestor" feature_branch | grep -E '\.(c|cpp)$' > list_of_changed_files.txt
-    debug_print "$(cat list_of_changed_files.txt)"
-    preselected_files="$(cat list_of_changed_files.txt)"
-fi
-
 if [ "$print_to_console" = true ]; then
     echo "The 'force_console_print' option is enabled. Printing output to console."
 elif [ -z "$INPUT_PR_NUM" ]; then
@@ -60,6 +51,16 @@ if [ "$GITHUB_EVENT_NAME" = "pull_request_target" ] && [ -n "$INPUT_PR_REPO" ]; 
 
     export GITHUB_SHA=$NEW_GITHUB_SHA
     export GITHUB_WORKSPACE=$(pwd)
+fi
+
+preselected_files=""
+if [ "$INPUT_REPORT_PR_CHANGES_ONLY" = true ]; then
+    echo "The 'report_pr_changes_only' option is enabled. Running SA only on modified files."
+    git config --global --add safe.directory /github/workspace
+    git fetch origin
+    common_ancestor=$(git merge-base origin/"$GITHUB_BASE_REF" "origin/$GITHUB_HEAD_REF")
+    preselected_files="$(git diff --name-only "$common_ancestor" "origin/$GITHUB_HEAD_REF" | grep -E '\.(c|cpp|h|hpp)$')"
+    debug_print "Preselected files: \n$preselected_files"
 fi
 
 debug_print "GITHUB_WORKSPACE = ${GITHUB_WORKSPACE} INPUT_EXCLUDE_DIR = ${INPUT_EXCLUDE_DIR} use_extra_directory = ${use_extra_directory}"
