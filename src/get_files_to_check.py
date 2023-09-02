@@ -27,7 +27,7 @@ def get_files_to_check(directory_in, excludes_in, preselected_files):
     supported_extensions = (".h", ".hpp", ".hcc", ".c", ".cc", ".cpp", ".cxx")
     all_files = []
 
-    if len(preselected_files) == 1:
+    if len(preselected_files) == 0:
         for path in Path(directory_in).rglob("*.*"):
             path_ = str(path.resolve())
             if path_.endswith(supported_extensions) and not path_.startswith(

@@ -185,7 +185,7 @@ class TestRunStaticAnalysis(unittest.TestCase):
             f"{pwd}/utils/dummy_project/exclude_dir_2/ExcludedFile2.hpp",
         ]
         result = get_files_to_check.get_files_to_check(
-            f"{pwd}/utils/dummy_project", None
+            f"{pwd}/utils/dummy_project", None, ""
         )
 
         self.assertEqual(to_list_and_sort(result), expected)
@@ -197,7 +197,7 @@ class TestRunStaticAnalysis(unittest.TestCase):
             f"{pwd}/utils/dummy_project/exclude_dir_2/ExcludedFile2.hpp",
         ]
         result = get_files_to_check.get_files_to_check(
-            f"{pwd}/utils/dummy_project", f"{pwd}/utils/dummy_project/exclude_dir_1"
+            f"{pwd}/utils/dummy_project", f"{pwd}/utils/dummy_project/exclude_dir_1", ""
         )
 
         self.assertEqual(to_list_and_sort(result), expected)
@@ -210,6 +210,15 @@ class TestRunStaticAnalysis(unittest.TestCase):
         result = get_files_to_check.get_files_to_check(
             f"{pwd}/utils/dummy_project",
             f"{pwd}/utils/dummy_project/exclude_dir_1 {pwd}/utils/dummy_project/exclude_dir_2",
+            "",
+        )
+
+        # Preselected files present
+        expected = [f"{pwd}/utils/dummy_project/DummyFile.cpp"]
+        result = get_files_to_check.get_files_to_check(
+            f"{pwd}/utils/dummy_project",
+            f"{pwd}/utils/dummy_project/exclude_dir_1 {pwd}/utils/dummy_project/exclude_dir_2",
+            f"{pwd}/utils/dummy_project/DummyFile.cpp {pwd}/utils/dummy_project/exclude_dir_1/ExcludedFile1.hpp",
         )
 
 
