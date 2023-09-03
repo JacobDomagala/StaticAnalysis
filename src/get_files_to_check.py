@@ -36,8 +36,9 @@ def get_files_to_check(directory_in, excludes_in, preselected_files):
                 all_files.append(path_)
     else:
         for file in preselected_files:
-            print(f"File = {file}")
-            if not file.endswith(tuple(exclude_prefixes)):
+            if not file.startswith(directory_in):
+                file = f"{directory_in}/{file}"
+            if not file.startswith(tuple(exclude_prefixes)):
                 all_files.append(file)
 
     return " ".join(all_files)
@@ -46,11 +47,11 @@ def get_files_to_check(directory_in, excludes_in, preselected_files):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-exclude", help="Exclude prefix", required=False)
-    parser.add_argument("-preselected", help="Preselected files", required=False)
+    parser.add_argument("-preselected", help="Preselected files", default="", required=False)
     parser.add_argument("-dir", help="Source directory", required=True)
 
     directory = parser.parse_args().dir
     preselected = parser.parse_args().preselected
     excludes = parser.parse_args().exclude
 
-    print(get_files_to_check(directory, excludes, preselected))
+    print(get_files_to_check(directory, excludes, preselected.split()))
