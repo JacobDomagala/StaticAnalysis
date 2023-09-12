@@ -47,7 +47,9 @@ def get_files_to_check(directory_in, excludes_in, preselected_files):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-exclude", help="Exclude prefix", required=False)
-    parser.add_argument("-preselected", help="Preselected files", default="", required=False)
+    parser.add_argument(
+        "-preselected", help="Preselected files", default="", required=False
+    )
     parser.add_argument("-dir", help="Source directory", required=True)
 
     directory = parser.parse_args().dir
