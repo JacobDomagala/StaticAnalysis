@@ -53,13 +53,12 @@ def is_part_of_pr_changes(file_path, issue_file_line, files_changed_in_pr):
     if ONLY_PR_CHANGES == "false":
         return True
 
-    file_name = file_path[file_path.rfind("/") + 1 :]
-    debug_print(f"Looking for issue found in file={file_name} at line={issue_file_line}...")
+    debug_print(f"Looking for issue found in file={file_path} at line={issue_file_line}...")
     for file, (status, lines_changed_for_file) in files_changed_in_pr.items():
         debug_print(
             f"Changed file by this PR \"{file}\" with status \"{status}\" and changed lines \"{lines_changed_for_file}\""
         )
-        if file == file_name:
+        if file == file_path:
             if status == "added":
                 return True
 
