@@ -54,10 +54,10 @@ def is_part_of_pr_changes(file_path, issue_file_line, files_changed_in_pr):
         return True
 
     file_name = file_path[file_path.rfind("/") + 1 :]
-    debug_print(f"Looking for issue found in file={file_name} ...")
+    debug_print(f"Looking for issue found in file={file_name} at line={issue_file_line}...")
     for file, (status, lines_changed_for_file) in files_changed_in_pr.items():
         debug_print(
-            f"Changed file by this PR {file} with status {status} and changed lines {lines_changed_for_file}"
+            f"Changed file by this PR \"{file}\" with status \"{status}\" and changed lines \"{lines_changed_for_file}\""
         )
         if file == file_name:
             if status == "added":
@@ -65,6 +65,7 @@ def is_part_of_pr_changes(file_path, issue_file_line, files_changed_in_pr):
 
             for (start, end) in lines_changed_for_file:
                 if start <= issue_file_line <= end:
+                    debug_print(f"Issue lines {issue_file_line} is a part of PR!")
                     return True
 
     return False
