@@ -96,6 +96,12 @@ debug_print "INPUT_CPPCHECK_ARGS = $INPUT_CPPCHECK_ARGS"
 debug_print "INPUT_CLANG_TIDY_ARGS = $INPUT_CLANG_TIDY_ARGS"
 
 if [ "$INPUT_USE_CMAKE" = true ]; then
+    if [ "$INPUT_REPORT_PR_CHANGES_ONLY" = true ]; then
+        preselected_altered="${files_to_check// /|}"
+        apt-get install -y jq
+        jq '[.[] | select(.file | test("'"$preselected_altered"'"))]' compile_commands.json > compile_commands_selected.json
+        mv compile_commands_selected.json compile_commands.json
+    fi
     if [ -z "$INPUT_EXCLUDE_DIR" ]; then
         debug_print "Running cppcheck --project=compile_commands.json $INPUT_CPPCHECK_ARGS --output-file=cppcheck.txt ..."
         eval cppcheck --project=compile_commands.json "$INPUT_CPPCHECK_ARGS" --output-file=cppcheck.txt "$GITHUB_WORKSPACE" || true
