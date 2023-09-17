@@ -220,6 +220,56 @@ def generate_description(
     return output_string, description
 
 
+def extract_info(line, prefix, was_note, output_string):
+    """
+    Extracts information from a given line containing file path, line number, and issue description.
+
+    Args:
+    - line (str): The input string containing file path, line number, and issue description.
+    - prefix (str): The prefix to remove from the start of the file path in the line.
+    - was_note (bool): Indicates if the previous issue was a note.
+    - output_string (str): The string containing previous output information.
+
+    Returns:
+    - tuple: A tuple containing:
+        - file_path (str): The path to the file.
+        - is_note (bool): A flag indicating if the issue is a note.
+        - description (str): Description of the issue.
+        - file_line_start (int): The starting line number of the issue.
+        - file_line_end (int): The ending line number of the issue.
+    """
+
+    # Clean up line
+    line = line.replace(prefix, "").lstrip("/")
+
+    # Get the line starting position /path/to/file:line and trim it
+    file_path_end_idx = line.index(":")
+    file_path = line[:file_path_end_idx]
+
+    # Extract the lines information
+    line = line[file_path_end_idx + 1 :]
+
+    # Get line (start, end)
+    file_line_start = int(line[: line.index(":")])
+    file_line_end = get_file_line_end(file_path, file_line_start)
+
+    # Get content of the issue
+    issue_description = line[line.index(" ") + 1 :]
+    is_note = issue_description.startswith("note:")
+    output_string, description = generate_description(
+        is_note, was_note, file_line_start, issue_description, output_string
+    )
+
+    return (
+        file_path,
+        is_note,
+        description,
+        file_line_start,
+        file_line_end,
+        output_string,
+    )
+
+
 def create_comment_for_output(
     tool_output, prefix, files_changed_in_pr, output_to_console
 ):
@@ -250,31 +300,14 @@ def create_comment_for_output(
                 issues_found += 1
                 continue
 
-            # Remove prefix (/home/github/REPO)
-            line = line.replace(prefix, "")
-
-            # Remove trailing '/' from the start
-            if line.startswith("/"):
-                line = line[1:]
-
-            # Get the line starting position /path/to/file:line and trim it
-            file_path_end_idx = line.index(":")
-            file_path = line[:file_path_end_idx]
-
-            # Extract the lines information
-            line = line[file_path_end_idx + 1 :]
-
-            # Get line (start, end)
-            file_line_start = int(line[: line.index(":")])
-            file_line_end = get_file_line_end(file_path, file_line_start)
-
-            # Get content of the issue
-            issue_description = line[line.index(" ") + 1 :]
-            is_note = issue_description.startswith("note:")
-            output_string, description = generate_description(
-                is_note, was_note, file_line_start, issue_description, output_string
-            )
-
+            (
+                file_path,
+                is_note,
+                description,
+                file_line_start,
+                file_line_end,
+                output_string,
+            ) = extract_info(line, prefix, was_note, output_string)
             was_note = is_note
 
             if not is_note:
