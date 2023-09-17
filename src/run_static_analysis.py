@@ -1,6 +1,8 @@
 import argparse
 import os
 import sys
+import subprocess
+import re
 from github import Github
 
 # Input variables from Github action
@@ -32,6 +34,59 @@ def debug_print(message):
             print(f"\033[96m {line}")
 
 
+def parse_diff_output(changed_files):
+    # Regex to capture filename and the line numbers of the changes
+    file_pattern = re.compile(r"^\+\+\+ b/(.*?)$", re.MULTILINE)
+    line_pattern = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", re.MULTILINE)
+
+    files = {}
+    for match in file_pattern.finditer(changed_files):
+        file_name = match.group(1)
+
+        # Filtering for C/C++ files and excluding certain directories
+        if file_name.endswith((".c", ".cpp", ".cxx", ".h", ".hpp")):
+            # Find the lines that changed for this file
+            lines_start_at = match.end()
+            next_file_match = file_pattern.search(changed_files, pos=match.span(0)[1])
+
+            # Slice out the part of the diff that pertains to this file
+            file_diff = changed_files[
+                lines_start_at : next_file_match.span(0)[0] if next_file_match else None
+            ]
+
+            # Extract line numbers of the changes
+            changed_lines = []
+            for line_match in line_pattern.finditer(file_diff):
+                start_line = int(line_match.group(1))
+
+                # The start and end positions for this chunk of diff
+                chunk_start = line_match.end()
+                next_chunk = line_pattern.search(file_diff, pos=line_match.span(0)[1])
+                chunk_diff = file_diff[
+                    chunk_start : next_chunk.span(0)[0] if next_chunk else None
+                ]
+
+                lines = chunk_diff.splitlines()
+                line_counter = 0
+                for line in lines:
+                    if line.startswith("+"):
+                        changed_lines.append(start_line + line_counter)
+                        line_counter += 1
+
+            if changed_lines:
+                files[file_name] = changed_lines
+
+    return files
+
+
+def get_changed_files(common_ancestor, feature_branch):
+    """Get a dictionary of files and their changed lines between the common ancestor and feature_branch."""
+    cmd = ["git", "diff", "-U0", "--ignore-all-space", common_ancestor, feature_branch]
+    result = subprocess.check_output(cmd).decode("utf-8")
+
+    return parse_diff_output(result)
+
+
 def is_part_of_pr_changes(file_path, issue_file_line, files_changed_in_pr):
     """
     Check if a given file and line number corresponds to a change in the files included in a pull request.
@@ -56,17 +111,14 @@ def is_part_of_pr_changes(file_path, issue_file_line, files_changed_in_pr):
     debug_print(
         f"Looking for issue found in file={file_path} at line={issue_file_line}..."
     )
-    for file, (status, lines_changed_for_file) in files_changed_in_pr.items():
+    for file, lines_changed_for_file in files_changed_in_pr.items():
         debug_print(
-            f'Changed file by this PR "{file}" with status "{status}" and changed lines "{lines_changed_for_file}"'
+            f'Changed file by this PR "{file}" with changed lines "{lines_changed_for_file}"'
         )
         if file == file_path:
-            if status == "added":
-                return True
-
-            for start, end in lines_changed_for_file:
-                if start <= issue_file_line <= end:
-                    debug_print(f"Issue lines {issue_file_line} is a part of PR!")
+            for line in lines_changed_for_file:
+                if line == issue_file_line:
+                    debug_print(f"Issue line {issue_file_line} is a part of PR!")
                     return True
 
     return False
@@ -394,6 +446,12 @@ def read_files_and_parse_results():
         help="Whether the actual code is in 'pr_tree' directory",
         required=True,
     )
+    parser.add_argument(
+        "--common",
+        default="",
+        help="common ancestor between two branches (default: %(default)s)",
+    )
+    parser.add_argument("--head", default="", help="Head branch (default: %(default)s)")
 
     if parser.parse_args().fork_repository == "true":
         global REPO_NAME
@@ -413,6 +471,12 @@ def read_files_and_parse_results():
     with open(clangtidy_file_name, "r") as file:
         clang_tidy_content = file.readlines()
 
+    common_ancestor = parser.parse_args().common
+    print(f"Common ancestor: {common_ancestor}")
+
+    feature_branch = parser.parse_args().head
+    print(f"Head branch: {feature_branch}")
+
     line_prefix = f"{WORK_DIR}"
 
     debug_print(
@@ -423,7 +487,7 @@ def read_files_and_parse_results():
 
     files_changed_in_pr = dict()
     if not output_to_console:
-        files_changed_in_pr = setup_changed_files()
+        files_changed_in_pr = get_changed_files(common_ancestor, feature_branch)
 
     cppcheck_comment, cppcheck_issues_found = create_comment_for_output(
         cppcheck_content, line_prefix, files_changed_in_pr, output_to_console

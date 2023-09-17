@@ -54,6 +54,7 @@ if [ "$GITHUB_EVENT_NAME" = "pull_request_target" ] && [ -n "$INPUT_PR_REPO" ]; 
 fi
 
 preselected_files=""
+common_ancestor=""
 if [ "$INPUT_REPORT_PR_CHANGES_ONLY" = true ]; then
     echo "The 'report_pr_changes_only' option is enabled. Running SA only on modified files."
     git config --global --add safe.directory /github/workspace
@@ -123,4 +124,6 @@ else
     eval run-clang-tidy-16 "$INPUT_CLANG_TIDY_ARGS" "$files_to_check" >clang_tidy.txt 2>&1 || true
 fi
 
-python3 /run_static_analysis.py -cc cppcheck.txt -ct clang_tidy.txt -o "$print_to_console" -fk "$use_extra_directory"
+cd -
+
+python3 /run_static_analysis.py -cc ./build/cppcheck.txt -ct ./build/clang_tidy.txt -o "$print_to_console" -fk "$use_extra_directory" --common "$common_ancestor" --head "origin/$GITHUB_HEAD_REF"
