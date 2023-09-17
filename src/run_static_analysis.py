@@ -294,6 +294,8 @@ def create_comment_for_output(
     was_note = False
     for line in tool_output:
         if line.startswith(prefix) and not is_excluded_dir(line):
+            debug_print(f"\nCurrent output_string = \n{output_string}\n")
+
             # In case where we only output to console, skip the next part
             if output_to_console:
                 output_string += f"\n{line}"
@@ -351,6 +353,7 @@ def create_comment_for_output(
                     CURRENT_COMMENT_LENGTH = COMMENT_MAX_SIZE
                     return output_string, issues_found
 
+    debug_print(f"\nFinal output_string = \n{output_string}\n")
     return output_string, issues_found
 
 
