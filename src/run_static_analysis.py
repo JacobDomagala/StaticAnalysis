@@ -220,7 +220,7 @@ def generate_description(
     return output_string, description
 
 
-def extract_info(line, prefix, was_note, output_string):
+def extract_info(line, prefix):
     """
     Extracts information from a given line containing file path, line number, and issue description.
 
@@ -256,18 +256,43 @@ def extract_info(line, prefix, was_note, output_string):
     # Get content of the issue
     issue_description = line[line.index(" ") + 1 :]
     is_note = issue_description.startswith("note:")
-    output_string, description = generate_description(
-        is_note, was_note, file_line_start, issue_description, output_string
-    )
 
-    return (
-        file_path,
-        is_note,
-        description,
-        file_line_start,
-        file_line_end,
-        output_string,
-    )
+    return (file_path, is_note, file_line_start, file_line_end, issue_description)
+
+
+def generate_output(is_note, file_path, file_line_start, file_line_end, description):
+    if not is_note:
+        if TARGET_REPO_NAME != REPO_NAME:
+            if file_path not in FILES_WITH_ISSUES:
+                with open(f"../{file_path}") as file:
+                    lines = file.readlines()
+                    FILES_WITH_ISSUES[file_path] = lines
+
+            modified_content = FILES_WITH_ISSUES[file_path][
+                file_line_start - 1 : file_line_end - 1
+            ]
+            modified_content[0] = modified_content[0][:-1] + " <---- HERE\n"
+            file_content = "".join(modified_content)
+
+            file_url = f"https://github.com/{REPO_NAME}/blob/{SHA}/{file_path}#L{file_line_start}"
+            new_line = (
+                "\n\n------"
+                f"\n\n <b><i>Issue found in file</b></i> [{REPO_NAME + file_path}]({file_url})\n"
+                f"```cpp\n"
+                f"{file_content}"
+                f"\n``` \n"
+                f"{description} <br>\n"
+            )
+
+        else:
+            new_line = (
+                f"\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}/{file_path}"
+                f"#L{file_line_start}-L{file_line_end} {description} <br>\n"
+            )
+    else:
+        new_line = description
+
+    return new_line
 
 
 def create_comment_for_output(
@@ -305,45 +330,20 @@ def create_comment_for_output(
             (
                 file_path,
                 is_note,
-                description,
                 file_line_start,
                 file_line_end,
-                output_string,
-            ) = extract_info(line, prefix, was_note, output_string)
-            was_note = is_note
-
-            if not is_note:
-                if TARGET_REPO_NAME != REPO_NAME:
-                    if file_path not in FILES_WITH_ISSUES:
-                        with open(f"../{file_path}") as file:
-                            lines = file.readlines()
-                            FILES_WITH_ISSUES[file_path] = lines
-
-                    modified_content = FILES_WITH_ISSUES[file_path][
-                        file_line_start - 1 : file_line_end - 1
-                    ]
-                    modified_content[0] = modified_content[0][:-1] + " <---- HERE\n"
-                    file_content = "".join(modified_content)
-
-                    file_url = f"https://github.com/{REPO_NAME}/blob/{SHA}/{file_path}#L{file_line_start}"
-                    new_line = (
-                        "\n\n------"
-                        f"\n\n <b><i>Issue found in file</b></i> [{REPO_NAME + file_path}]({file_url})\n"
-                        f"```cpp\n"
-                        f"{file_content}"
-                        f"\n``` \n"
-                        f"{description} <br>\n"
-                    )
-
-                else:
-                    new_line = (
-                        f"\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}/{file_path}"
-                        f"#L{file_line_start}-L{file_line_end} {description} <br>\n"
-                    )
-            else:
-                new_line = description
+                issue_description,
+            ) = extract_info(line, prefix)
 
             if is_part_of_pr_changes(file_path, file_line_start, files_changed_in_pr):
+                output_string, description = generate_description(
+                    is_note, was_note, file_line_start, issue_description, output_string
+                )
+                was_note = is_note
+                new_line = generate_output(
+                    is_note, file_path, file_line_start, file_line_end, description
+                )
+
                 if check_for_char_limit(new_line):
                     output_string += new_line
                     CURRENT_COMMENT_LENGTH += len(new_line)
