@@ -53,16 +53,18 @@ def is_part_of_pr_changes(file_path, issue_file_line, files_changed_in_pr):
     if ONLY_PR_CHANGES == "false":
         return True
 
-    debug_print(f"Looking for issue found in file={file_path} at line={issue_file_line}...")
+    debug_print(
+        f"Looking for issue found in file={file_path} at line={issue_file_line}..."
+    )
     for file, (status, lines_changed_for_file) in files_changed_in_pr.items():
         debug_print(
-            f"Changed file by this PR \"{file}\" with status \"{status}\" and changed lines \"{lines_changed_for_file}\""
+            f'Changed file by this PR "{file}" with status "{status}" and changed lines "{lines_changed_for_file}"'
         )
         if file == file_path:
             if status == "added":
                 return True
 
-            for (start, end) in lines_changed_for_file:
+            for start, end in lines_changed_for_file:
                 if start <= issue_file_line <= end:
                     debug_print(f"Issue lines {issue_file_line} is a part of PR!")
                     return True
@@ -181,7 +183,7 @@ def get_file_line_end(file, file_line_start):
             whichever is smaller.
     """
 
-    num_lines = sum(1 for line in open(WORK_DIR + file))
+    num_lines = sum(1 for line in open(f"{WORK_DIR}/{file}"))
     return min(file_line_start + 5, num_lines)
 
 
@@ -248,12 +250,25 @@ def create_comment_for_output(
                 issues_found += 1
                 continue
 
+            # Remove prefix (/home/github/REPO)
             line = line.replace(prefix, "")
+
+            # Remove trailing '/' from the start
+            if line.startswith("/"):
+                line = line[1:]
+
+            # Get the line starting position /path/to/file:line and trim it
             file_path_end_idx = line.index(":")
             file_path = line[:file_path_end_idx]
+
+            # Extract the lines information
             line = line[file_path_end_idx + 1 :]
+
+            # Get line (start, end)
             file_line_start = int(line[: line.index(":")])
             file_line_end = get_file_line_end(file_path, file_line_start)
+
+            # Get content of the issue
             issue_description = line[line.index(" ") + 1 :]
             is_note = issue_description.startswith("note:")
             output_string, description = generate_description(
@@ -264,7 +279,6 @@ def create_comment_for_output(
 
             if not is_note:
                 if TARGET_REPO_NAME != REPO_NAME:
-
                     if file_path not in FILES_WITH_ISSUES:
                         with open(f"../{file_path}") as file:
                             lines = file.readlines()
@@ -276,7 +290,7 @@ def create_comment_for_output(
                     modified_content[0] = modified_content[0][:-1] + " <---- HERE\n"
                     file_content = "".join(modified_content)
 
-                    file_url = f"https://github.com/{REPO_NAME}/blob/{SHA}{file_path}#L{file_line_start}"
+                    file_url = f"https://github.com/{REPO_NAME}/blob/{SHA}/{file_path}#L{file_line_start}"
                     new_line = (
                         "\n\n------"
                         f"\n\n <b><i>Issue found in file</b></i> [{REPO_NAME + file_path}]({file_url})\n"
@@ -288,7 +302,7 @@ def create_comment_for_output(
 
                 else:
                     new_line = (
-                        f"\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}{file_path}"
+                        f"\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}/{file_path}"
                         f"#L{file_line_start}-L{file_line_end} {description} <br>\n"
                     )
             else:
