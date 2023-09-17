@@ -35,6 +35,33 @@ def debug_print(message):
 
 
 def parse_diff_output(changed_files):
+    """
+    Parses the diff output to extract filenames and corresponding line numbers of changes.
+
+    The function identifies changed lines in C/C++ files and excludes certain directories
+    based on the file extension. It then extracts the line numbers of the changes
+    (additions) and associates them with their respective files.
+
+    Parameters:
+    - changed_files (str): The diff output string.
+
+    Returns:
+    - dict: A dictionary where keys are filenames and values are lists of line numbers
+            that have changes.
+
+    Usage Example:
+    ```python
+    diff_output = "<output from `git diff` command>"
+    changed_file_data = parse_diff_output(diff_output)
+    for file, lines in changed_file_data.items():
+        print(f"File: {file}, Changed Lines: {lines}")
+    ```
+
+    Note:
+    - The function only considers additions in the diff, lines starting with "+".
+    - Filenames in the return dictionary include their paths relative to the repo root.
+    """
+
     # Regex to capture filename and the line numbers of the changes
     file_pattern = re.compile(r"^\+\+\+ b/(.*?)$", re.MULTILINE)
     line_pattern = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", re.MULTILINE)
@@ -169,30 +196,6 @@ def get_lines_changed_from_patch(patch):
     return lines_changed
 
 
-def setup_changed_files():
-    """
-    Extracts the names and changes of the files modified in the pull request.
-
-    Returns a dictionary where the keys are the filenames and the values are tuples containing
-    the status of the file (added, modified, deleted) and a list of lines that were changed.
-    """
-
-    files_changed = {}
-
-    github = Github(GITHUB_TOKEN)
-    repo = github.get_repo(TARGET_REPO_NAME)
-    pull_request = repo.get_pull(int(PR_NUM))
-    num_changed_files = pull_request.changed_files
-    debug_print(f"Changed files {num_changed_files}")
-    files = pull_request.get_files()
-    for file in files:
-        if file.patch is not None:
-            lines_changed_for_file = get_lines_changed_from_patch(file.patch)
-            files_changed[file.filename] = (file.status, lines_changed_for_file)
-
-    return files_changed
-
-
 def check_for_char_limit(incoming_line):
     global CURRENT_COMMENT_LENGTH
     return (CURRENT_COMMENT_LENGTH + len(incoming_line)) <= COMMENT_MAX_SIZE
@@ -231,8 +234,8 @@ def get_file_line_end(file, file_line_start):
         file_line_start (int): The starting line number.
 
     Returns:
-        int: The ending line number, which is either `file_line_start + 5` or the total number of lines in the file,
-            whichever is smaller.
+        int: The ending line number, which is either `file_line_start + 5`
+        or the total number of lines in the file, whichever is smaller.
     """
 
     num_lines = sum(1 for line in open(f"{WORK_DIR}/{file}"))
@@ -313,6 +316,30 @@ def extract_info(line, prefix):
 
 
 def generate_output(is_note, file_path, file_line_start, file_line_end, description):
+    """
+    Generate a formatted output string based on the details of a code issue.
+
+    This function takes information about a code issue and constructs a string that
+    includes details such as the location of the issue in the codebase, the affected code
+    lines, and a description of the issue. If the issue is a note, only the description
+    is returned. If the issue occurs in a different repository than the target, it
+    also fetches the lines where the issue was detected.
+
+    Parameters:
+    - is_note (bool): Whether the issue is just a note or a code issue.
+    - file_path (str): Path to the file where the issue was detected.
+    - file_line_start (int): The line number in the file where the issue starts.
+    - file_line_end (int): The line number in the file where the issue ends.
+    - description (str): Description of the issue.
+
+    Returns:
+    - str: Formatted string with details of the issue.
+
+    Note:
+    - This function relies on several global variables like TARGET_REPO_NAME, REPO_NAME,
+      FILES_WITH_ISSUES, and SHA which should be set before calling this function.
+    """
+
     if not is_note:
         if TARGET_REPO_NAME != REPO_NAME:
             if file_path not in FILES_WITH_ISSUES:
