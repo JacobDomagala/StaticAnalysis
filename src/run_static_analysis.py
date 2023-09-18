@@ -1,6 +1,8 @@
 import argparse
 import os
 import sys
+import subprocess
+import re
 from github import Github
 
 # Input variables from Github action
@@ -32,6 +34,86 @@ def debug_print(message):
             print(f"\033[96m {line}")
 
 
+def parse_diff_output(changed_files):
+    """
+    Parses the diff output to extract filenames and corresponding line numbers of changes.
+
+    The function identifies changed lines in C/C++ files and excludes certain directories
+    based on the file extension. It then extracts the line numbers of the changes
+    (additions) and associates them with their respective files.
+
+    Parameters:
+    - changed_files (str): The diff output string.
+
+    Returns:
+    - dict: A dictionary where keys are filenames and values are lists of line numbers
+            that have changes.
+
+    Usage Example:
+    ```python
+    diff_output = "<output from `git diff` command>"
+    changed_file_data = parse_diff_output(diff_output)
+    for file, lines in changed_file_data.items():
+        print(f"File: {file}, Changed Lines: {lines}")
+    ```
+
+    Note:
+    - The function only considers additions in the diff, lines starting with "+".
+    - Filenames in the return dictionary include their paths relative to the repo root.
+    """
+
+    # Regex to capture filename and the line numbers of the changes
+    file_pattern = re.compile(r"^\+\+\+ b/(.*?)$", re.MULTILINE)
+    line_pattern = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", re.MULTILINE)
+
+    files = {}
+    for match in file_pattern.finditer(changed_files):
+        file_name = match.group(1)
+
+        # Filtering for C/C++ files and excluding certain directories
+        if file_name.endswith((".c", ".cpp", ".cxx", ".h", ".hpp")):
+            # Find the lines that changed for this file
+            lines_start_at = match.end()
+            next_file_match = file_pattern.search(changed_files, pos=match.span(0)[1])
+
+            # Slice out the part of the diff that pertains to this file
+            file_diff = changed_files[
+                lines_start_at : next_file_match.span(0)[0] if next_file_match else None
+            ]
+
+            # Extract line numbers of the changes
+            changed_lines = []
+            for line_match in line_pattern.finditer(file_diff):
+                start_line = int(line_match.group(1))
+
+                # The start and end positions for this chunk of diff
+                chunk_start = line_match.end()
+                next_chunk = line_pattern.search(file_diff, pos=line_match.span(0)[1])
+                chunk_diff = file_diff[
+                    chunk_start : next_chunk.span(0)[0] if next_chunk else None
+                ]
+
+                lines = chunk_diff.splitlines()
+                line_counter = 0
+                for line in lines:
+                    if line.startswith("+"):
+                        changed_lines.append(start_line + line_counter)
+                        line_counter += 1
+
+            if changed_lines:
+                files[file_name] = changed_lines
+
+    return files
+
+
+def get_changed_files(common_ancestor, feature_branch):
+    """Get a dictionary of files and their changed lines between the common ancestor and feature_branch."""
+    cmd = ["git", "diff", "-U0", "--ignore-all-space", common_ancestor, feature_branch]
+    result = subprocess.check_output(cmd).decode("utf-8")
+
+    return parse_diff_output(result)
+
+
 def is_part_of_pr_changes(file_path, issue_file_line, files_changed_in_pr):
     """
     Check if a given file and line number corresponds to a change in the files included in a pull request.
@@ -53,18 +135,17 @@ def is_part_of_pr_changes(file_path, issue_file_line, files_changed_in_pr):
     if ONLY_PR_CHANGES == "false":
         return True
 
-    file_name = file_path[file_path.rfind("/") + 1 :]
-    debug_print(f"Looking for issue found in file={file_name} ...")
-    for file, (status, lines_changed_for_file) in files_changed_in_pr.items():
+    debug_print(
+        f"Looking for issue found in file={file_path} at line={issue_file_line}..."
+    )
+    for file, lines_changed_for_file in files_changed_in_pr.items():
         debug_print(
-            f"Changed file by this PR {file} with status {status} and changed lines {lines_changed_for_file}"
+            f'Changed file by this PR "{file}" with changed lines "{lines_changed_for_file}"'
         )
-        if file == file_name:
-            if status == "added":
-                return True
-
-            for (start, end) in lines_changed_for_file:
-                if start <= issue_file_line <= end:
+        if file == file_path:
+            for line in lines_changed_for_file:
+                if line == issue_file_line:
+                    debug_print(f"Issue line {issue_file_line} is a part of PR!")
                     return True
 
     return False
@@ -115,30 +196,6 @@ def get_lines_changed_from_patch(patch):
     return lines_changed
 
 
-def setup_changed_files():
-    """
-    Extracts the names and changes of the files modified in the pull request.
-
-    Returns a dictionary where the keys are the filenames and the values are tuples containing
-    the status of the file (added, modified, deleted) and a list of lines that were changed.
-    """
-
-    files_changed = {}
-
-    github = Github(GITHUB_TOKEN)
-    repo = github.get_repo(TARGET_REPO_NAME)
-    pull_request = repo.get_pull(int(PR_NUM))
-    num_changed_files = pull_request.changed_files
-    debug_print(f"Changed files {num_changed_files}")
-    files = pull_request.get_files()
-    for file in files:
-        if file.patch is not None:
-            lines_changed_for_file = get_lines_changed_from_patch(file.patch)
-            files_changed[file.filename] = (file.status, lines_changed_for_file)
-
-    return files_changed
-
-
 def check_for_char_limit(incoming_line):
     global CURRENT_COMMENT_LENGTH
     return (CURRENT_COMMENT_LENGTH + len(incoming_line)) <= COMMENT_MAX_SIZE
@@ -177,11 +234,11 @@ def get_file_line_end(file, file_line_start):
         file_line_start (int): The starting line number.
 
     Returns:
-        int: The ending line number, which is either `file_line_start + 5` or the total number of lines in the file,
-            whichever is smaller.
+        int: The ending line number, which is either `file_line_start + 5`
+        or the total number of lines in the file, whichever is smaller.
     """
 
-    num_lines = sum(1 for line in open(WORK_DIR + file))
+    num_lines = sum(1 for line in open(f"{WORK_DIR}/{file}"))
     return min(file_line_start + 5, num_lines)
 
 
@@ -218,6 +275,113 @@ def generate_description(
     return output_string, description
 
 
+def extract_info(line, prefix):
+    """
+    Extracts information from a given line containing file path, line number, and issue description.
+
+    Args:
+    - line (str): The input string containing file path, line number, and issue description.
+    - prefix (str): The prefix to remove from the start of the file path in the line.
+    - was_note (bool): Indicates if the previous issue was a note.
+    - output_string (str): The string containing previous output information.
+
+    Returns:
+    - tuple: A tuple containing:
+        - file_path (str): The path to the file.
+        - is_note (bool): A flag indicating if the issue is a note.
+        - description (str): Description of the issue.
+        - file_line_start (int): The starting line number of the issue.
+        - file_line_end (int): The ending line number of the issue.
+    """
+
+    # Clean up line
+    line = line.replace(prefix, "").lstrip("/")
+
+    # Get the line starting position /path/to/file:line and trim it
+    file_path_end_idx = line.index(":")
+    file_path = line[:file_path_end_idx]
+
+    # Extract the lines information
+    line = line[file_path_end_idx + 1 :]
+
+    # Get line (start, end)
+    file_line_start = int(line[: line.index(":")])
+    file_line_end = get_file_line_end(file_path, file_line_start)
+
+    # Get content of the issue
+    issue_description = line[line.index(" ") + 1 :]
+    is_note = issue_description.startswith("note:")
+
+    return (file_path, is_note, file_line_start, file_line_end, issue_description)
+
+
+def generate_output(is_note, file_path, file_line_start, file_line_end, description):
+    """
+    Generate a formatted output string based on the details of a code issue.
+
+    This function takes information about a code issue and constructs a string that
+    includes details such as the location of the issue in the codebase, the affected code
+    lines, and a description of the issue. If the issue is a note, only the description
+    is returned. If the issue occurs in a different repository than the target, it
+    also fetches the lines where the issue was detected.
+
+    Parameters:
+    - is_note (bool): Whether the issue is just a note or a code issue.
+    - file_path (str): Path to the file where the issue was detected.
+    - file_line_start (int): The line number in the file where the issue starts.
+    - file_line_end (int): The line number in the file where the issue ends.
+    - description (str): Description of the issue.
+
+    Returns:
+    - str: Formatted string with details of the issue.
+
+    Note:
+    - This function relies on several global variables like TARGET_REPO_NAME, REPO_NAME,
+      FILES_WITH_ISSUES, and SHA which should be set before calling this function.
+    """
+
+    if not is_note:
+        if TARGET_REPO_NAME != REPO_NAME:
+            if file_path not in FILES_WITH_ISSUES:
+                try:
+                    with open(f"{file_path}") as file:
+                        lines = file.readlines()
+                        FILES_WITH_ISSUES[file_path] = lines
+                except FileNotFoundError:
+                    print(f"Error: The file '{file_path}' was not found.")
+
+            modified_content = FILES_WITH_ISSUES[file_path][
+                file_line_start - 1 : file_line_end - 1
+            ]
+
+            debug_print(
+                f"generate_output for following file: \nfile_path={file_path} \nmodified_content={modified_content}\n"
+            )
+
+            modified_content[0] = modified_content[0][:-1] + " <---- HERE\n"
+            file_content = "".join(modified_content)
+
+            file_url = f"https://github.com/{REPO_NAME}/blob/{SHA}/{file_path}#L{file_line_start}"
+            new_line = (
+                "\n\n------"
+                f"\n\n <b><i>Issue found in file</b></i> [{REPO_NAME}/{file_path}]({file_url})\n"
+                f"```cpp\n"
+                f"{file_content}"
+                f"\n``` \n"
+                f"{description} <br>\n"
+            )
+
+        else:
+            new_line = (
+                f"\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}/{file_path}"
+                f"#L{file_line_start}-L{file_line_end} {description} <br>\n"
+            )
+    else:
+        new_line = description
+
+    return new_line
+
+
 def create_comment_for_output(
     tool_output, prefix, files_changed_in_pr, output_to_console
 ):
@@ -242,59 +406,31 @@ def create_comment_for_output(
     was_note = False
     for line in tool_output:
         if line.startswith(prefix) and not is_excluded_dir(line):
+            debug_print(f"\nCurrent output_string = \n{output_string}\n")
+
             # In case where we only output to console, skip the next part
             if output_to_console:
                 output_string += f"\n{line}"
                 issues_found += 1
                 continue
 
-            line = line.replace(prefix, "")
-            file_path_end_idx = line.index(":")
-            file_path = line[:file_path_end_idx]
-            line = line[file_path_end_idx + 1 :]
-            file_line_start = int(line[: line.index(":")])
-            file_line_end = get_file_line_end(file_path, file_line_start)
-            issue_description = line[line.index(" ") + 1 :]
-            is_note = issue_description.startswith("note:")
-            output_string, description = generate_description(
-                is_note, was_note, file_line_start, issue_description, output_string
-            )
-
-            was_note = is_note
-
-            if not is_note:
-                if TARGET_REPO_NAME != REPO_NAME:
-
-                    if file_path not in FILES_WITH_ISSUES:
-                        with open(f"../{file_path}") as file:
-                            lines = file.readlines()
-                            FILES_WITH_ISSUES[file_path] = lines
-
-                    modified_content = FILES_WITH_ISSUES[file_path][
-                        file_line_start - 1 : file_line_end - 1
-                    ]
-                    modified_content[0] = modified_content[0][:-1] + " <---- HERE\n"
-                    file_content = "".join(modified_content)
-
-                    file_url = f"https://github.com/{REPO_NAME}/blob/{SHA}{file_path}#L{file_line_start}"
-                    new_line = (
-                        "\n\n------"
-                        f"\n\n <b><i>Issue found in file</b></i> [{REPO_NAME + file_path}]({file_url})\n"
-                        f"```cpp\n"
-                        f"{file_content}"
-                        f"\n``` \n"
-                        f"{description} <br>\n"
-                    )
-
-                else:
-                    new_line = (
-                        f"\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}{file_path}"
-                        f"#L{file_line_start}-L{file_line_end} {description} <br>\n"
-                    )
-            else:
-                new_line = description
+            (
+                file_path,
+                is_note,
+                file_line_start,
+                file_line_end,
+                issue_description,
+            ) = extract_info(line, prefix)
 
             if is_part_of_pr_changes(file_path, file_line_start, files_changed_in_pr):
+                output_string, description = generate_description(
+                    is_note, was_note, file_line_start, issue_description, output_string
+                )
+                was_note = is_note
+                new_line = generate_output(
+                    is_note, file_path, file_line_start, file_line_end, description
+                )
+
                 if check_for_char_limit(new_line):
                     output_string += new_line
                     CURRENT_COMMENT_LENGTH += len(new_line)
@@ -304,6 +440,7 @@ def create_comment_for_output(
                     CURRENT_COMMENT_LENGTH = COMMENT_MAX_SIZE
                     return output_string, issues_found
 
+    debug_print(f"\nFinal output_string = \n{output_string}\n")
     return output_string, issues_found
 
 
@@ -344,6 +481,12 @@ def read_files_and_parse_results():
         help="Whether the actual code is in 'pr_tree' directory",
         required=True,
     )
+    parser.add_argument(
+        "--common",
+        default="",
+        help="common ancestor between two branches (default: %(default)s)",
+    )
+    parser.add_argument("--head", default="", help="Head branch (default: %(default)s)")
 
     if parser.parse_args().fork_repository == "true":
         global REPO_NAME
@@ -363,6 +506,9 @@ def read_files_and_parse_results():
     with open(clangtidy_file_name, "r") as file:
         clang_tidy_content = file.readlines()
 
+    common_ancestor = parser.parse_args().common
+    feature_branch = parser.parse_args().head
+
     line_prefix = f"{WORK_DIR}"
 
     debug_print(
@@ -372,8 +518,8 @@ def read_files_and_parse_results():
     )
 
     files_changed_in_pr = dict()
-    if not output_to_console:
-        files_changed_in_pr = setup_changed_files()
+    if not output_to_console and (ONLY_PR_CHANGES == "true"):
+        files_changed_in_pr = get_changed_files(common_ancestor, feature_branch)
 
     cppcheck_comment, cppcheck_issues_found = create_comment_for_output(
         cppcheck_content, line_prefix, files_changed_in_pr, output_to_console
