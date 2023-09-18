@@ -499,10 +499,7 @@ def read_files_and_parse_results():
         clang_tidy_content = file.readlines()
 
     common_ancestor = parser.parse_args().common
-    print(f"Common ancestor: {common_ancestor}")
-
     feature_branch = parser.parse_args().head
-    print(f"Head branch: {feature_branch}")
 
     line_prefix = f"{WORK_DIR}"
 
@@ -513,7 +510,7 @@ def read_files_and_parse_results():
     )
 
     files_changed_in_pr = dict()
-    if not output_to_console:
+    if not output_to_console and (ONLY_PR_CHANGES == "true"):
         files_changed_in_pr = get_changed_files(common_ancestor, feature_branch)
 
     cppcheck_comment, cppcheck_issues_found = create_comment_for_output(
