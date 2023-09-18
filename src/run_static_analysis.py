@@ -343,20 +343,28 @@ def generate_output(is_note, file_path, file_line_start, file_line_end, descript
     if not is_note:
         if TARGET_REPO_NAME != REPO_NAME:
             if file_path not in FILES_WITH_ISSUES:
-                with open(f"../{file_path}") as file:
-                    lines = file.readlines()
-                    FILES_WITH_ISSUES[file_path] = lines
+                try:
+                    with open(f"{file_path}") as file:
+                        lines = file.readlines()
+                        FILES_WITH_ISSUES[file_path] = lines
+                except FileNotFoundError:
+                    print(f"Error: The file '{file_path}' was not found.")
 
             modified_content = FILES_WITH_ISSUES[file_path][
                 file_line_start - 1 : file_line_end - 1
             ]
+
+            debug_print(
+                f"generate_output for following file: \nfile_path={file_path} \nmodified_content={modified_content}\n"
+            )
+
             modified_content[0] = modified_content[0][:-1] + " <---- HERE\n"
             file_content = "".join(modified_content)
 
             file_url = f"https://github.com/{REPO_NAME}/blob/{SHA}/{file_path}#L{file_line_start}"
             new_line = (
                 "\n\n------"
-                f"\n\n <b><i>Issue found in file</b></i> [{REPO_NAME + file_path}]({file_url})\n"
+                f"\n\n <b><i>Issue found in file</b></i> [{REPO_NAME}/{file_path}]({file_url})\n"
                 f"```cpp\n"
                 f"{file_content}"
                 f"\n``` \n"
