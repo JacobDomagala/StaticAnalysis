@@ -60,6 +60,7 @@ if [ "$INPUT_REPORT_PR_CHANGES_ONLY" = true ]; then
     git config --global --add safe.directory /github/workspace
     git fetch origin
     common_ancestor=$(git merge-base origin/"$GITHUB_BASE_REF" "origin/$GITHUB_HEAD_REF")
+    debug_print "Common ancestor: $common_ancestor"
     preselected_files="$(git diff --name-only "$common_ancestor" "origin/$GITHUB_HEAD_REF" | grep -E '\.(c|cpp|h|hpp)$')"
     debug_print "Preselected files: \n$preselected_files"
 fi
