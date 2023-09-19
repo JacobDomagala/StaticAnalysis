@@ -62,7 +62,12 @@ if [ "$INPUT_REPORT_PR_CHANGES_ONLY" = true ]; then
     common_ancestor=$(git merge-base origin/"$GITHUB_BASE_REF" "origin/$GITHUB_HEAD_REF")
     debug_print "Common ancestor: $common_ancestor"
     preselected_files="$(git diff --name-only "$common_ancestor" "origin/$GITHUB_HEAD_REF" | grep -E '\.(c|cpp|h|hpp)$')" || true
-    debug_print "Preselected files: \n$preselected_files"
+    if [ -z "$preselected_files" ]; then
+        debug_print "No (C/C++ files changed in the PR! Only files ending with c|cpp|h|hpp are considered."
+        exit 0
+    else
+        debug_print "Preselected files: \n$preselected_files"
+    fi
 fi
 
 debug_print "GITHUB_WORKSPACE = ${GITHUB_WORKSPACE} INPUT_EXCLUDE_DIR = ${INPUT_EXCLUDE_DIR} use_extra_directory = ${use_extra_directory}"
