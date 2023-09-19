@@ -60,8 +60,19 @@ if [ "$INPUT_REPORT_PR_CHANGES_ONLY" = true ]; then
     git config --global --add safe.directory /github/workspace
     git fetch origin
     common_ancestor=$(git merge-base origin/"$GITHUB_BASE_REF" "origin/$GITHUB_HEAD_REF")
-    preselected_files="$(git diff --name-only "$common_ancestor" "origin/$GITHUB_HEAD_REF" | grep -E '\.(c|cpp|h|hpp)$')"
-    debug_print "Preselected files: \n$preselected_files"
+    debug_print "Common ancestor: $common_ancestor"
+    preselected_files="$(git diff --name-only "$common_ancestor" "origin/$GITHUB_HEAD_REF" | grep -E '\.(c|cpp|h|hpp)$')" || true
+    if [ -z "$preselected_files" ]; then
+        debug_print "No (C/C++ files changed in the PR! Only files ending with c|cpp|h|hpp are considered."
+
+        # Create empty files
+        touch cppcheck.txt
+        touch clang_tidy.txt
+        python3 /run_static_analysis.py -cc ./cppcheck.txt -ct ./clang_tidy.txt -o "$print_to_console" -fk "$use_extra_directory" --common "$common_ancestor" --head "origin/$GITHUB_HEAD_REF"
+        exit 0
+    else
+        debug_print "Preselected files: \n$preselected_files"
+    fi
 fi
 
 debug_print "GITHUB_WORKSPACE = ${GITHUB_WORKSPACE} INPUT_EXCLUDE_DIR = ${INPUT_EXCLUDE_DIR} use_extra_directory = ${use_extra_directory}"
