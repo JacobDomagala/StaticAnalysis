@@ -113,20 +113,15 @@ if [ -z "$files_to_check" ]; then
     echo "No files to check"
 else
     if [ "$INPUT_USE_CMAKE" = true ]; then
-        # if [ "$INPUT_REPORT_PR_CHANGES_ONLY" = true ]; then
-        #     preselected_altered="${files_to_check// /|}"
-        #     apt-get install -y jq
-        #     jq '[.[] | select(.file | test("'"$preselected_altered"'"))]' compile_commands.json > compile_commands_selected.json
-        #     debug_print "compile_commands_selected.json= \n$(cat compile_commands_selected.json)"
-        #     mv compile_commands_selected.json compile_commands.json
-        # fi
-        if [ -z "$INPUT_EXCLUDE_DIR" ]; then
-            debug_print "Running cppcheck -j $num_proc --project=compile_commands.json $INPUT_CPPCHECK_ARGS --file-filter=$files_to_check --output-file=cppcheck.txt ..."
-            eval cppcheck -j "$num_proc" --project=compile_commands.json "$INPUT_CPPCHECK_ARGS" --file-filter="$files_to_check" --output-file=cppcheck.txt "$GITHUB_WORKSPACE" || true
-        else
-            debug_print "Running cppcheck -j $num_proc --project=compile_commands.json $INPUT_CPPCHECK_ARGS --file-filter=$files_to_check --output-file=cppcheck.txt -i$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR ..."
-            eval cppcheck -j "$num_proc" --project=compile_commands.json "$INPUT_CPPCHECK_ARGS" --file-filter="$files_to_check" --output-file=cppcheck.txt -i"$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR" "$GITHUB_WORKSPACE" || true
-        fi
+        for file in $files_to_check; do
+            exclude_arg=""
+            if [ -n "$INPUT_EXCLUDE_DIR" ]; then
+                exclude_arg="-i$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR"
+            fi
+
+            debug_print "Running cppcheck --project=compile_commands.json $INPUT_CPPCHECK_ARGS --file-filter=$file --enable=all --output-file=cppcheck.txt $exclude_arg"
+            eval cppcheck --project=compile_commands.json "$INPUT_CPPCHECK_ARGS" --file-filter="$file" --output-file=cppcheck.txt "$exclude_arg" || true
+        done
 
         # Excludes for clang-tidy are handled in python script
         debug_print "Running run-clang-tidy-16 $INPUT_CLANG_TIDY_ARGS -p $(pwd) $files_to_check >>clang_tidy.txt 2>&1"
@@ -134,8 +129,8 @@ else
 
     else
         # Excludes for clang-tidy are handled in python script
-        debug_print "Running cppcheck -j $num_proc $files_to_check $INPUT_CPPCHECK_ARGS --file-filter=$files_to_check --output-file=cppcheck.txt ..."
-        eval cppcheck -j "$num_proc" "$files_to_check" "$INPUT_CPPCHECK_ARGS" --file-filter="$files_to_check" --output-file=cppcheck.txt || true
+        debug_print "Running cppcheck -j $num_proc $files_to_check $INPUT_CPPCHECK_ARGS --output-file=cppcheck.txt ..."
+        eval cppcheck -j "$num_proc" "$files_to_check" "$INPUT_CPPCHECK_ARGS" --output-file=cppcheck.txt || true
 
         debug_print "Running run-clang-tidy-16 $INPUT_CLANG_TIDY_ARGS $files_to_check >>clang_tidy.txt 2>&1"
         eval run-clang-tidy-16 "$INPUT_CLANG_TIDY_ARGS" "$files_to_check" >clang_tidy.txt 2>&1 || true
