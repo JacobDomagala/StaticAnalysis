@@ -117,6 +117,7 @@ else
             preselected_altered="${files_to_check// /|}"
             apt-get install -y jq
             jq '[.[] | select(.file | test("'"$preselected_altered"'"))]' compile_commands.json > compile_commands_selected.json
+            debug_print "compile_commands_selected.json= \n$(cat compile_commands_selected.json)"
             mv compile_commands_selected.json compile_commands.json
         fi
         if [ -z "$INPUT_EXCLUDE_DIR" ]; then
