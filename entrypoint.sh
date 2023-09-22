@@ -119,9 +119,14 @@ else
                 exclude_arg="-i$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR"
             fi
 
-            debug_print "Running cppcheck --project=compile_commands.json $INPUT_CPPCHECK_ARGS --file-filter=$file --enable=all --output-file=cppcheck.txt $exclude_arg"
-            eval cppcheck --project=compile_commands.json "$INPUT_CPPCHECK_ARGS" --file-filter="$file" --output-file=cppcheck.txt "$exclude_arg" || true
+            # Replace '/' with '_'
+            file_name=$(echo "$file" | tr '/' '_')
+
+            debug_print "Running cppcheck --project=compile_commands.json $INPUT_CPPCHECK_ARGS --file-filter=$file --enable=all --output-file=cppcheck_$file_name.txt $exclude_arg"
+            eval cppcheck --project=compile_commands.json "$INPUT_CPPCHECK_ARGS" --file-filter="$file" --output-file="cppcheck_$file_name.txt" "$exclude_arg" || true
         done
+
+        cat cppcheck_*.txt > cppcheck.txt
 
         # Excludes for clang-tidy are handled in python script
         debug_print "Running run-clang-tidy-16 $INPUT_CLANG_TIDY_ARGS -p $(pwd) $files_to_check >>clang_tidy.txt 2>&1"
