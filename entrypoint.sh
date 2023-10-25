@@ -7,10 +7,7 @@ export TERM=xterm-color
 
 debug_print() {
     if [ "$INPUT_VERBOSE" = "true" ]; then
-        IFS=$'\n' read -ra ADDR <<< "$1"
-        for i in "${ADDR[@]}"; do
-            echo -e "\u001b[32m $i \u001b[0m"
-        done
+        echo -e "\u001b[32m $1 \u001b[0m"
     fi
 }
 
