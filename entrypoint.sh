@@ -104,8 +104,8 @@ else
 fi
 
 debug_print "Files to check = $files_to_check"
-debug_print "INPUT_CPPCHECK_ARGS = $INPUT_CPPCHECK_ARGS"
-debug_print "INPUT_CLANG_TIDY_ARGS = $INPUT_CLANG_TIDY_ARGS"
+debug_print "INPUT_CPPCHECK_ARGS = \"$INPUT_CPPCHECK_ARGS\""
+debug_print "INPUT_CLANG_TIDY_ARGS = \"$INPUT_CLANG_TIDY_ARGS\""
 
 num_proc=$(nproc)
 
@@ -122,22 +122,22 @@ else
             # Replace '/' with '_'
             file_name=$(echo "$file" | tr '/' '_')
 
-            debug_print "Running cppcheck --project=compile_commands.json $INPUT_CPPCHECK_ARGS --file-filter=$file --enable=all --output-file=cppcheck_$file_name.txt $exclude_arg"
+            debug_print "Running cppcheck --project=compile_commands.json \"$INPUT_CPPCHECK_ARGS\" --file-filter=$file --enable=all --output-file=cppcheck_$file_name.txt $exclude_arg"
             eval cppcheck --project=compile_commands.json "$INPUT_CPPCHECK_ARGS" --file-filter="$file" --output-file="cppcheck_$file_name.txt" "$exclude_arg" || true
         done
 
         cat cppcheck_*.txt > cppcheck.txt
 
         # Excludes for clang-tidy are handled in python script
-        debug_print "Running run-clang-tidy-16 $INPUT_CLANG_TIDY_ARGS -p $(pwd) $files_to_check >>clang_tidy.txt 2>&1"
+        debug_print "Running run-clang-tidy-16 \"$INPUT_CLANG_TIDY_ARGS\" -p $(pwd) $files_to_check >>clang_tidy.txt 2>&1"
         eval run-clang-tidy-16 "$INPUT_CLANG_TIDY_ARGS" -p "$(pwd)" "$files_to_check" >clang_tidy.txt 2>&1 || true
 
     else
         # Excludes for clang-tidy are handled in python script
-        debug_print "Running cppcheck -j $num_proc $files_to_check $INPUT_CPPCHECK_ARGS --output-file=cppcheck.txt ..."
+        debug_print "Running cppcheck -j $num_proc $files_to_check \"$INPUT_CPPCHECK_ARGS\" --output-file=cppcheck.txt ..."
         eval cppcheck -j "$num_proc" "$files_to_check" "$INPUT_CPPCHECK_ARGS" --output-file=cppcheck.txt || true
 
-        debug_print "Running run-clang-tidy-16 $INPUT_CLANG_TIDY_ARGS $files_to_check >>clang_tidy.txt 2>&1"
+        debug_print "Running run-clang-tidy-16 \"$INPUT_CLANG_TIDY_ARGS\" $files_to_check >>clang_tidy.txt 2>&1"
         eval run-clang-tidy-16 "$INPUT_CLANG_TIDY_ARGS" "$files_to_check" >clang_tidy.txt 2>&1 || true
     fi
 
