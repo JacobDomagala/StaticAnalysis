@@ -82,7 +82,7 @@ class TestRunStaticAnalysis(unittest.TestCase):
             f"```diff\n!Line: 8 - style: Error message"
             f"\n!Line: 6 - note: Note message"
             f"\n!Line: 7 - note: Another note message\n``` "
-            f"\n\n\nhttps://github.com/{repo_name}/blob/{sha}/DummyFile.cpp#L3-L8 \n"
+            f"\n\n\n\nhttps://github.com/{repo_name}/blob/{sha}/DummyFile.cpp#L3-L8 \n"
             f"```diff\n!Line: 3 - style: Error message\n``` \n <br>\n"
         )
 

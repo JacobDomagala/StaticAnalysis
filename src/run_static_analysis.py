@@ -384,7 +384,7 @@ def generate_output(is_note, file_path, file_line_start, file_line_end, descript
 
 def append_issue(is_note, per_issue_string, new_line, list_of_issues):
     if not is_note:
-        if len(per_issue_string) > 0:
+        if len(per_issue_string) > 0 and (per_issue_string not in list_of_issues):
             list_of_issues.append(per_issue_string)
         per_issue_string = new_line
     else:
@@ -418,8 +418,6 @@ def create_comment_for_output(
 
     for line in tool_output:
         if line.startswith(prefix) and not is_excluded_dir(line):
-            debug_print(f"\nCurrent list_of_issues = \n{list_of_issues}\n")
-
             (
                 file_path,
                 is_note,
@@ -457,16 +455,17 @@ def create_comment_for_output(
                 else:
                     CURRENT_COMMENT_LENGTH = COMMENT_MAX_SIZE
 
-                    set_of_issues = set(list_of_issues)
+                    return "\n".join(list_of_issues), len(list_of_issues)
 
-                    return "\n".join(set_of_issues), len(set_of_issues)
+    # Append any unprocessed issues
+    if len(per_issue_string) > 0 and (per_issue_string not in list_of_issues):
+        list_of_issues.append(per_issue_string)
 
-    set_of_issues = set(list_of_issues)
-    output_string = "\n".join(set_of_issues)
+    output_string = "\n".join(list_of_issues)
 
     debug_print(f"\nFinal output_string = \n{output_string}\n")
 
-    return output_string, len(set_of_issues)
+    return output_string, len(list_of_issues)
 
 
 def read_files_and_parse_results():
