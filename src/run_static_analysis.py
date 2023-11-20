@@ -382,6 +382,17 @@ def generate_output(is_note, file_path, file_line_start, file_line_end, descript
     return new_line
 
 
+def append_issue(is_note, per_issue_string, new_line, list_of_issues):
+    if not is_note:
+        if len(per_issue_string) > 0 and (per_issue_string not in list_of_issues):
+            list_of_issues.append(per_issue_string)
+        per_issue_string = new_line
+    else:
+        per_issue_string += new_line
+
+    return per_issue_string
+
+
 def create_comment_for_output(
     tool_output, prefix, files_changed_in_pr, output_to_console
 ):
@@ -399,21 +410,14 @@ def create_comment_for_output(
         tuple: A tuple containing the generated comment and the number of issues found.
     """
 
-    issues_found = 0
     global CURRENT_COMMENT_LENGTH
     global FILES_WITH_ISSUES
-    output_string = ""
+    list_of_issues = []
+    per_issue_string = ""
     was_note = False
+
     for line in tool_output:
         if line.startswith(prefix) and not is_excluded_dir(line):
-            debug_print(f"\nCurrent output_string = \n{output_string}\n")
-
-            # In case where we only output to console, skip the next part
-            if output_to_console:
-                output_string += f"\n{line}"
-                issues_found += 1
-                continue
-
             (
                 file_path,
                 is_note,
@@ -422,9 +426,20 @@ def create_comment_for_output(
                 issue_description,
             ) = extract_info(line, prefix)
 
+            # In case where we only output to console, skip the next part
+            if output_to_console:
+                per_issue_string = append_issue(
+                    is_note, per_issue_string, line, list_of_issues
+                )
+                continue
+
             if is_part_of_pr_changes(file_path, file_line_start, files_changed_in_pr):
-                output_string, description = generate_description(
-                    is_note, was_note, file_line_start, issue_description, output_string
+                per_issue_string, description = generate_description(
+                    is_note,
+                    was_note,
+                    file_line_start,
+                    issue_description,
+                    per_issue_string,
                 )
                 was_note = is_note
                 new_line = generate_output(
@@ -432,16 +447,25 @@ def create_comment_for_output(
                 )
 
                 if check_for_char_limit(new_line):
-                    output_string += new_line
+                    per_issue_string = append_issue(
+                        is_note, per_issue_string, new_line, list_of_issues
+                    )
                     CURRENT_COMMENT_LENGTH += len(new_line)
-                    if not is_note:
-                        issues_found += 1
+
                 else:
                     CURRENT_COMMENT_LENGTH = COMMENT_MAX_SIZE
-                    return output_string, issues_found
+
+                    return "\n".join(list_of_issues), len(list_of_issues)
+
+    # Append any unprocessed issues
+    if len(per_issue_string) > 0 and (per_issue_string not in list_of_issues):
+        list_of_issues.append(per_issue_string)
+
+    output_string = "\n".join(list_of_issues)
 
     debug_print(f"\nFinal output_string = \n{output_string}\n")
-    return output_string, issues_found
+
+    return output_string, len(list_of_issues)
 
 
 def read_files_and_parse_results():
