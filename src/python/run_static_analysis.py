@@ -37,9 +37,11 @@ def debug_print(message):
 
 def parse_pylint_json(pylint_json_in):
 
+    print(f"Opening file {pylint_json_in} ...")
     with open(pylint_json_in, "r") as file:
         data = file.read()
 
+    print(f"File content {data}")
     try:
         pylint_data = json.loads(data)
         for item in pylint_data:
@@ -108,6 +110,7 @@ def parse_input_vars():
 
 
 if __name__ == "__main__":
+    print("starting ...")
     (
         pylint_file_name_in,
         output_to_console_in,

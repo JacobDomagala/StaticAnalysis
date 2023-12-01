@@ -2,7 +2,7 @@
 # shellcheck disable=SC2155
 
 set -e
-
+set -x
 # Following variables are declared/defined in parent script
 preselected_files=${preselected_files:-""}
 print_to_console=${print_to_console:-false}
@@ -22,6 +22,7 @@ debug_print "Files to check = $files_to_check"
 if [ -z "$files_to_check" ]; then
     echo "No files to check"
 else
-    pylint . --output-format=json:pylint_out.json
+    pip3 install pylint --break-system-packages
+    pylint . --output-format=json:pylint_out.json || true
     python3 /python/run_static_analysis.py -pl ./pylint_out.json -o "$print_to_console" -fk "$use_extra_directory" --common "$common_ancestor" --head "origin/$GITHUB_HEAD_REF"
 fi
