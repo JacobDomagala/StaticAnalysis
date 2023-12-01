@@ -53,6 +53,9 @@ inputs:
   language:
     description: 'Programming language to check for. Supported languages are: C++/Python'
     default: C++
+  pylint_args:
+    description: 'PyLint options'
+
 
 runs:
   using: "docker"

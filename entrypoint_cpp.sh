@@ -3,6 +3,8 @@
 
 set -e
 
+cd build
+
 if [ "$INPUT_REPORT_PR_CHANGES_ONLY" = true ]; then
   if [ -z "$preselected_files" ]; then
         # Create empty files

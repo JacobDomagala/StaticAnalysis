@@ -87,8 +87,6 @@ if [ -n "$INPUT_INIT_SCRIPT" ]; then
     source "$original_root_dir/$INPUT_INIT_SCRIPT" "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE/build"
 fi
 
-cd build
-
 if [ "${INPUT_LANGUAGE,,}" = "c++" ]; then
     debug_print "Running checks on c++ code"
     source "$GITHUB_WORKSPACE/entrypoint_cpp.sh" "$preselected_files" "$common_ancestor"

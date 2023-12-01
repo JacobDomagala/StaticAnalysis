@@ -23,6 +23,9 @@ if [ -z "$files_to_check" ]; then
     echo "No files to check"
 else
     pip3 install pylint --break-system-packages
-    pylint . --output-format=json:pylint_out.json || true
+
+    # Trim newlines
+    INPUT_PYLINT_ARGS="${INPUT_PYLINT_ARGS%"${INPUT_PYLINT_ARGS##*[![:space:]]}"}"
+    eval "pylint . --output-format=json:pylint_out.json ${INPUT_PYLINT_ARGS}|| true"
     python3 /python/run_static_analysis.py -pl ./pylint_out.json -o "$print_to_console" -fk "$use_extra_directory" --common "$common_ancestor" --head "origin/$GITHUB_HEAD_REF"
 fi
