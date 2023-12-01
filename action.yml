@@ -50,6 +50,9 @@ inputs:
   verbose:
     description: 'Verbose output. Used for debugging'
     default: false
+  language:
+    description: 'Programming language to check for. Supported languages are: C++/Python'
+    default: C++
 
 runs:
   using: "docker"
