@@ -91,8 +91,8 @@ cd build
 
 if [ "${INPUT_LANGUAGE,,}" = "c++" ]; then
     debug_print "Running checks on c++ code"
-    source "./entrypoint_cpp.sh" "$preselected_files" "$common_ancestor"
+    source "$GITHUB_WORKSPACE/entrypoint_cpp.sh" "$preselected_files" "$common_ancestor"
 else # assume python
     debug_print "Running checks on Python code"
-    source "./entrypoint_python.sh" "$preselected_files" "$common_ancestor"
+    source "$GITHUB_WORKSPACE/entrypoint_python.sh" "$preselected_files" "$common_ancestor"
 fi
