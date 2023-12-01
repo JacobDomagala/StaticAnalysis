@@ -1,0 +1,16 @@
+[MASTER]
+ignore=__init__.py
+
+[MESSAGES CONTROL]
+disable=import-error,
+       missing-module-docstring,
+       missing-function-docstring,
+       global-statement,
+       wrong-import-position
+
+[FORMAT]
+max-line-length=120
+
+[DESIGN]
+max-locals=25
+min-similarity-lines=10

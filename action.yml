@@ -55,7 +55,8 @@ inputs:
     default: C++
   pylint_args:
     description: 'PyLint options'
-
+  python_dirs:
+    description: 'Directories containing python files to be checked'
 
 runs:
   using: "docker"
