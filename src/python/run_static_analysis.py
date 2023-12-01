@@ -1,50 +1,19 @@
 import argparse
 import os
 import sys
-import subprocess
-import re
-from github import Github
 import json
 
-# Input variables from Github action
-GITHUB_TOKEN = os.getenv("INPUT_GITHUB_TOKEN")
-PR_NUM = os.getenv("INPUT_PR_NUM")
-WORK_DIR = f'{os.getenv("GITHUB_WORKSPACE")}'
-REPO_NAME = os.getenv("INPUT_REPO")
-TARGET_REPO_NAME = os.getenv("INPUT_REPO")
-SHA = os.getenv("GITHUB_SHA")
-COMMENT_TITLE = os.getenv("INPUT_COMMENT_TITLE")
-ONLY_PR_CHANGES = os.getenv("INPUT_REPORT_PR_CHANGES_ONLY", "False").lower()
-VERBOSE = os.getenv("INPUT_VERBOSE", "False").lower() == "true"
-FILES_WITH_ISSUES = {}
-
-# Max characters per comment - 65536
-# Make some room for HTML tags and error message
-MAX_CHAR_COUNT_REACHED = (
-    "!Maximum character count per GitHub comment has been reached!"
-    " Not all warnings/errors has been parsed!"
-)
-COMMENT_MAX_SIZE = 65000
-CURRENT_COMMENT_LENGTH = 0
-
-
-def debug_print(message):
-    if VERBOSE:
-        lines = message.split("\n")
-        for line in lines:
-            print(f"\033[96m {line}")
-
+import sa_utils as utils
 
 def parse_pylint_json(pylint_json_in):
-
-    print(f"Opening file {pylint_json_in} ...")
     with open(pylint_json_in, "r") as file:
         data = file.read()
 
-    print(f"File content {data}")
+    output_string=""
     try:
         pylint_data = json.loads(data)
         for item in pylint_data:
+            output_string += f"{item['path']}:{item['line']}"
             print("Type:", item["type"])
             print("Module:", item["module"])
             print("Object:", item["obj"])
@@ -99,7 +68,8 @@ def parse_input_vars():
     common_ancestor = parser.parse_args().common
     feature_branch = parser.parse_args().head
 
-    line_prefix = f"{WORK_DIR}"
+    line_prefix = f"{sa_utils.WORK_DIR}"
+
     return (
         pylint_file_name,
         output_to_console,

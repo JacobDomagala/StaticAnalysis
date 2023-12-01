@@ -1,0 +1,272 @@
+import os
+import re
+import subprocess
+
+# Input variables from Github action
+GITHUB_TOKEN = os.getenv("INPUT_GITHUB_TOKEN")
+PR_NUM = os.getenv("INPUT_PR_NUM")
+WORK_DIR = f'{os.getenv("GITHUB_WORKSPACE")}'
+REPO_NAME = os.getenv("INPUT_REPO")
+TARGET_REPO_NAME = os.getenv("INPUT_REPO")
+SHA = os.getenv("GITHUB_SHA")
+COMMENT_TITLE = os.getenv("INPUT_COMMENT_TITLE", "Static Analysis")
+ONLY_PR_CHANGES = os.getenv("INPUT_REPORT_PR_CHANGES_ONLY", "False").lower()
+VERBOSE = os.getenv("INPUT_VERBOSE", "False").lower() == "true"
+FILES_WITH_ISSUES = {}
+
+# Max characters per comment - 65536
+# Make some room for HTML tags and error message
+MAX_CHAR_COUNT_REACHED = (
+    "!Maximum character count per GitHub comment has been reached!"
+    " Not all warnings/errors has been parsed!"
+)
+COMMENT_MAX_SIZE = 65000
+CURRENT_COMMENT_LENGTH = 0
+
+
+def debug_print(message):
+    if VERBOSE:
+        lines = message.split("\n")
+        for line in lines:
+            print(f"\033[96m {line}")
+
+
+def parse_diff_output(changed_files):
+    """
+    Parses the diff output to extract filenames and corresponding line numbers of changes.
+
+    The function identifies changed lines in C/C++ files and excludes certain directories
+    based on the file extension. It then extracts the line numbers of the changes
+    (additions) and associates them with their respective files.
+
+    Parameters:
+    - changed_files (str): The diff output string.
+
+    Returns:
+    - dict: A dictionary where keys are filenames and values are lists of line numbers
+            that have changes.
+
+    Usage Example:
+    ```python
+    diff_output = "<output from `git diff` command>"
+    changed_file_data = parse_diff_output(diff_output)
+    for file, lines in changed_file_data.items():
+        print(f"File: {file}, Changed Lines: {lines}")
+    ```
+
+    Note:
+    - The function only considers additions in the diff, lines starting with "+".
+    - Filenames in the return dictionary include their paths relative to the repo root.
+    """
+
+    # Regex to capture filename and the line numbers of the changes
+    file_pattern = re.compile(r"^\+\+\+ b/(.*?)$", re.MULTILINE)
+    line_pattern = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", re.MULTILINE)
+
+    files = {}
+    for match in file_pattern.finditer(changed_files):
+        file_name = match.group(1)
+
+        # Filtering for C/C++ files and excluding certain directories
+        if file_name.endswith((".c", ".cpp", ".cxx", ".h", ".hpp")):
+            # Find the lines that changed for this file
+            lines_start_at = match.end()
+            next_file_match = file_pattern.search(changed_files, pos=match.span(0)[1])
+
+            # Slice out the part of the diff that pertains to this file
+            file_diff = changed_files[
+                lines_start_at : next_file_match.span(0)[0] if next_file_match else None
+            ]
+
+            # Extract line numbers of the changes
+            changed_lines = []
+            for line_match in line_pattern.finditer(file_diff):
+                start_line = int(line_match.group(1))
+
+                # The start and end positions for this chunk of diff
+                chunk_start = line_match.end()
+                next_chunk = line_pattern.search(file_diff, pos=line_match.span(0)[1])
+                chunk_diff = file_diff[
+                    chunk_start : next_chunk.span(0)[0] if next_chunk else None
+                ]
+
+                lines = chunk_diff.splitlines()
+                line_counter = 0
+                for line in lines:
+                    if line.startswith("+"):
+                        changed_lines.append(start_line + line_counter)
+                        line_counter += 1
+
+            if changed_lines:
+                files[file_name] = changed_lines
+
+    return files
+
+
+def get_changed_files(common_ancestor, feature_branch):
+    """Get a dictionary of files and their changed lines between the common ancestor and feature_branch."""
+    cmd = ["git", "diff", "-U0", "--ignore-all-space", common_ancestor, feature_branch]
+    result = subprocess.check_output(cmd).decode("utf-8")
+
+    return parse_diff_output(result)
+
+
+def is_part_of_pr_changes(file_path, issue_file_line, files_changed_in_pr):
+    """
+    Check if a given file and line number corresponds to a change in the files included in a pull request.
+
+    Args:
+        file_path (str): The path to the file in question.
+        issue_file_line (int): The line number within the file to check.
+        files_changed_in_pr (dict): A dictionary of files changed in a pull request, where the keys are file paths
+                                    and the values are tuples of the form (status, lines_changed_for_file), where
+                                    status is a string indicating the change status ("added", "modified", or "removed"),
+                                    and lines_changed_for_file is a list of tuples, where each tuple represents a range
+                                    of lines changed in the file (e.g. [(10, 15), (20, 25)] indicates that lines 10-15
+                                    and 20-25 were changed in the file).
+
+    Returns:
+        bool: True if the file and line number correspond to a change in the pull request, False otherwise.
+    """
+
+    if ONLY_PR_CHANGES == "false":
+        return True
+
+    debug_print(
+        f"Looking for issue found in file={file_path} at line={issue_file_line}..."
+    )
+    for file, lines_changed_for_file in files_changed_in_pr.items():
+        debug_print(
+            f'Changed file by this PR "{file}" with changed lines "{lines_changed_for_file}"'
+        )
+        if file == file_path:
+            for line in lines_changed_for_file:
+                if line == issue_file_line:
+                    debug_print(f"Issue line {issue_file_line} is a part of PR!")
+                    return True
+
+    return False
+
+
+def get_lines_changed_from_patch(patch):
+    """
+    Parses a unified diff patch and returns the range of lines that were changed.
+
+    Parameters:
+        patch (str): The unified diff patch to parse.
+
+    Returns:
+        list: A list of tuples containing the beginning and ending line numbers for each
+        section of the file that was changed by the patch.
+    """
+
+    lines_changed = []
+    lines = patch.split("\n")
+
+    for line in lines:
+        # Example line @@ -43,6 +48,8 @@
+        # ------------ ^
+        if line.startswith("@@"):
+            # Example line @@ -43,6 +48,8 @@
+            # ----------------------^
+            idx_beg = line.index("+")
+
+            # Example line @@ -43,6 +48,8 @@
+            #                       ^--^
+            try:
+                idx_end = line[idx_beg:].index(",")
+                line_begin = int(line[idx_beg + 1 : idx_beg + idx_end])
+
+                idx_beg = idx_beg + idx_end
+                idx_end = line[idx_beg + 1 :].index("@@")
+
+                num_lines = int(line[idx_beg + 1 : idx_beg + idx_end])
+            except ValueError:
+                # Special case for single line files
+                # such as @@ -0,0 +1 @@
+                idx_end = line[idx_beg:].index(" ")
+                line_begin = int(line[idx_beg + 1 : idx_beg + idx_end])
+                num_lines = 0
+
+            lines_changed.append((line_begin, line_begin + num_lines))
+
+    return lines_changed
+
+
+def check_for_char_limit(incoming_line):
+    global CURRENT_COMMENT_LENGTH
+    return (CURRENT_COMMENT_LENGTH + len(incoming_line)) <= COMMENT_MAX_SIZE
+
+
+def is_excluded_dir(line):
+    """
+    Determines if a given line is from a directory that should be excluded from processing.
+
+    Args:
+        line (str): The line to check.
+
+    Returns:
+        bool: True if the line is from a directory that should be excluded, False otherwise.
+    """
+
+    # In future this could be multiple different directories
+    exclude_dir = os.getenv("INPUT_EXCLUDE_DIR")
+    if not exclude_dir:
+        return False
+
+    excluded_dir = f"{WORK_DIR}/{exclude_dir}"
+    debug_print(
+        f"{line} and {excluded_dir} with result {line.startswith(excluded_dir)}"
+    )
+
+    return line.startswith(excluded_dir)
+
+
+def get_file_line_end(file, file_line_start):
+    """
+    Returns the ending line number for a given file, starting from a specified line number.
+
+    Args:
+        file (str): The name of the file to read.
+        file_line_start (int): The starting line number.
+
+    Returns:
+        int: The ending line number, which is either `file_line_start + 5`
+        or the total number of lines in the file, whichever is smaller.
+    """
+
+    num_lines = sum(1 for line in open(f"{WORK_DIR}/{file}"))
+    return min(file_line_start + 5, num_lines)
+
+
+def generate_description(
+    is_note, was_note, file_line_start, issue_description, output_string
+):
+    """Generate description for an issue
+
+    is_note -- is the current issue a Note: or not
+    was_note -- was the previous issue a Note: or not
+    file_line_start -- line to which the issue corresponds
+    issue_description -- the description from cppcheck/clang-tidy
+    output_string -- entire description (can be altered if the current/previous issue is/was Note:)
+    """
+    global CURRENT_COMMENT_LENGTH
+
+    if not is_note:
+        description = f"\n```diff\n!Line: {file_line_start} - {issue_description}``` \n"
+    else:
+        if not was_note:
+            # Previous line consists of ```diff <content> ```, so remove the closing ```
+            # and append the <content> with Note: ...`
+
+            # 12 here means "``` \n<br>\n"`
+            num_chars_to_remove = 12
+        else:
+            # Previous line is Note: so it ends with "``` \n"
+            num_chars_to_remove = 6
+
+        output_string = output_string[:-num_chars_to_remove]
+        CURRENT_COMMENT_LENGTH -= num_chars_to_remove
+        description = f"\n!Line: {file_line_start} - {issue_description}``` \n"
+
+    return output_string, description
