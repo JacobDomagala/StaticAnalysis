@@ -13,4 +13,6 @@ debug_print() {
 if [ "${INPUT_LANGUAGE,,}" = "c++" ]; then
     debug_print "Running checks on c++ code"
     source "./entrypoint_cpp.sh"
+else
+   debug_print "Running checks on Python code"
 fi
