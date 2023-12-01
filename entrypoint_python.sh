@@ -3,15 +3,6 @@
 
 set -e
 
-if [ "$INPUT_REPORT_PR_CHANGES_ONLY" = true ]; then
-  if [ -z "$preselected_files" ]; then
-        # Create empty files
-        touch cppcheck.txt
-        touch clang_tidy.txt
-        python3 /run_static_analysis.py -cc ./cppcheck.txt -ct ./clang_tidy.txt -o "$print_to_console" -fk "$use_extra_directory" --common "$common_ancestor" --head "origin/$GITHUB_HEAD_REF"
-        exit 0
-   fi
-fi
 
 if [ "$INPUT_USE_CMAKE" = true ]; then
     # Trim trailing newlines
@@ -21,11 +12,11 @@ if [ "$INPUT_USE_CMAKE" = true ]; then
 fi
 
 if [ -z "$INPUT_EXCLUDE_DIR" ]; then
-    files_to_check=$(python3 /get_files_to_check.py -dir="$GITHUB_WORKSPACE" -preselected="$preselected_files" -lang="cpp")
-    debug_print "Running: files_to_check=python3 /get_files_to_check.py -dir=\"$GITHUB_WORKSPACE\" -preselected=\"$preselected_files\" -lang=\"cpp\")"
+    files_to_check=$(python3 /get_files_to_check.py -dir="$GITHUB_WORKSPACE" -preselected="$preselected_files")
+    debug_print "Running: files_to_check=python3 /get_files_to_check.py -dir=\"$GITHUB_WORKSPACE\" -preselected=\"$preselected_files\")"
 else
-    files_to_check=$(python3 /get_files_to_check.py -exclude="$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR" -dir="$GITHUB_WORKSPACE" -preselected="$preselected_files" -lang="cpp")
-    debug_print "Running: files_to_check=python3 /get_files_to_check.py -exclude=\"$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR\" -dir=\"$GITHUB_WORKSPACE\" -preselected=\"$preselected_files\" -lang=\"cpp\")"
+    files_to_check=$(python3 /get_files_to_check.py -exclude="$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR" -dir="$GITHUB_WORKSPACE" -preselected="$preselected_files")
+    debug_print "Running: files_to_check=python3 /get_files_to_check.py -exclude=\"$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR\" -dir=\"$GITHUB_WORKSPACE\" -preselected=\"$preselected_files\")"
 fi
 
 debug_print "Files to check = $files_to_check"

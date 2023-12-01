@@ -528,8 +528,7 @@ def read_files_and_parse_results():
     line_prefix = f"{WORK_DIR}"
 
     debug_print(
-        f"pylint result: \n {pylint_content} \n"
-        f"line_prefix: {line_prefix} \n"
+        f"pylint result: \n {pylint_content} \n" f"line_prefix: {line_prefix} \n"
     )
 
     files_changed_in_pr = dict()
