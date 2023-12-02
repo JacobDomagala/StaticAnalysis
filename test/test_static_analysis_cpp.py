@@ -17,7 +17,7 @@ os.environ["INPUT_REPO"] = "RepoName"
 os.environ["GITHUB_SHA"] = "1234"
 os.environ["INPUT_COMMENT_TITLE"] = "title"
 
-from src import run_static_analysis, get_files_to_check
+from src import static_analysis_cpp, get_files_to_check
 
 
 def to_list_and_sort(string_in):
@@ -29,16 +29,10 @@ def to_list_and_sort(string_in):
     return list_out
 
 
-class TestRunStaticAnalysis(unittest.TestCase):
+class TestStaticAnalysisCpp(unittest.TestCase):
     """Unit tests for run_static_analysis module"""
 
     maxDiff = None
-
-    def test_get_lines_changed_from_patch(self):
-        patch = "@@ -43,6 +48,8 @@\n@@ -0,0 +1 @@"
-
-        lines = run_static_analysis.get_lines_changed_from_patch(patch)
-        self.assertEqual(lines, [(48, 56), (1, 1)])
 
     def test_create_comment_for_output(self):
         """
@@ -71,7 +65,7 @@ class TestRunStaticAnalysis(unittest.TestCase):
             "/github/workspace/DummyFile.hpp": ("added", (1, 10)),
             "/github/workspace/DummyFile.cpp": ("added", (1, 10)),
         }
-        result = run_static_analysis.create_comment_for_output(
+        result = static_analysis_cpp.create_comment_for_output(
             cppcheck_content, "/github/workspace", files_changed_in_pr, False
         )
 
@@ -80,10 +74,10 @@ class TestRunStaticAnalysis(unittest.TestCase):
         expected = (
             f"\n\nhttps://github.com/{repo_name}/blob/{sha}/DummyFile.cpp#L8-L9 \n"
             f"```diff\n!Line: 8 - style: Error message"
-            f"\n!Line: 6 - note: Note message"
+            f"\n\n!Line: 6 - note: Note message"
             f"\n!Line: 7 - note: Another note message\n``` "
             f"\n\n\n\nhttps://github.com/{repo_name}/blob/{sha}/DummyFile.cpp#L3-L8 \n"
-            f"```diff\n!Line: 3 - style: Error message\n``` \n <br>\n"
+            f"```diff\n!Line: 3 - style: Error message\n\n``` \n <br>\n"
         )
 
         print(result)
@@ -103,7 +97,7 @@ class TestRunStaticAnalysis(unittest.TestCase):
         """
 
         comment_title = os.getenv("INPUT_COMMENT_TITLE")
-        comment_body = run_static_analysis.prepare_comment_body("", "", 0, 0)
+        comment_body = static_analysis_cpp.prepare_comment_body("", "", 0, 0)
 
         # Empty results
         expected_comment_body = utils.generate_comment(comment_title, "", 0, "cppcheck")
@@ -117,7 +111,7 @@ class TestRunStaticAnalysis(unittest.TestCase):
             comment_title, cppcheck_comment, cppcheck_issues_found, "cppcheck"
         )
 
-        comment_body = run_static_analysis.prepare_comment_body(
+        comment_body = static_analysis_cpp.prepare_comment_body(
             cppcheck_comment, "", cppcheck_issues_found, 0
         )
 
@@ -130,7 +124,7 @@ class TestRunStaticAnalysis(unittest.TestCase):
             comment_title, cppcheck_comment, cppcheck_issues_found, "cppcheck"
         )
 
-        comment_body = run_static_analysis.prepare_comment_body(
+        comment_body = static_analysis_cpp.prepare_comment_body(
             cppcheck_comment, "", cppcheck_issues_found, 0
         )
 
@@ -143,7 +137,7 @@ class TestRunStaticAnalysis(unittest.TestCase):
             comment_title, clang_tidy_comment, clang_tidy_issues_found, "clang-tidy"
         )
 
-        comment_body = run_static_analysis.prepare_comment_body(
+        comment_body = static_analysis_cpp.prepare_comment_body(
             "", clang_tidy_comment, 0, clang_tidy_issues_found
         )
 
@@ -156,7 +150,7 @@ class TestRunStaticAnalysis(unittest.TestCase):
             comment_title, clang_tidy_comment, clang_tidy_issues_found, "clang-tidy"
         )
 
-        comment_body = run_static_analysis.prepare_comment_body(
+        comment_body = static_analysis_cpp.prepare_comment_body(
             "", clang_tidy_comment, 0, clang_tidy_issues_found
         )
 

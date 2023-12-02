@@ -1,7 +1,7 @@
 import argparse
 import os
 import sys
-import sa_utils as utils
+from . import sa_utils as utils
 
 
 def append_issue(is_note, per_issue_string, new_line, list_of_issues):
