@@ -2,6 +2,8 @@ import os
 import re
 import subprocess
 
+from github import Github
+
 # Input variables from Github action
 GITHUB_TOKEN = os.getenv("INPUT_GITHUB_TOKEN")
 PR_NUM = os.getenv("INPUT_PR_NUM")
@@ -12,6 +14,7 @@ SHA = os.getenv("GITHUB_SHA")
 COMMENT_TITLE = os.getenv("INPUT_COMMENT_TITLE", "Static Analysis")
 ONLY_PR_CHANGES = os.getenv("INPUT_REPORT_PR_CHANGES_ONLY", "False").lower()
 VERBOSE = os.getenv("INPUT_VERBOSE", "False").lower() == "true"
+LANG = os.getenv("INPUT_LANGUAGE", "c++").lower()
 FILES_WITH_ISSUES = {}
 
 # Max characters per comment - 65536
@@ -35,7 +38,7 @@ def parse_diff_output(changed_files):
     """
     Parses the diff output to extract filenames and corresponding line numbers of changes.
 
-    The function identifies changed lines in C/C++ files and excludes certain directories
+    The function identifies changed lines in files and excludes certain directories
     based on the file extension. It then extracts the line numbers of the changes
     (additions) and associates them with their respective files.
 
@@ -63,12 +66,19 @@ def parse_diff_output(changed_files):
     file_pattern = re.compile(r"^\+\+\+ b/(.*?)$", re.MULTILINE)
     line_pattern = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", re.MULTILINE)
 
+    if LANG == "c++":
+        supported_extensions = (".h", ".hpp", ".hcc", ".c", ".cc", ".cpp", ".cxx")
+    elif LANG == "python":
+        supported_extensions = ".py"
+    else:
+        raise RuntimeError(f"Unknown language {LANG}")
+
     files = {}
     for match in file_pattern.finditer(changed_files):
         file_name = match.group(1)
 
-        # Filtering for C/C++ files and excluding certain directories
-        if file_name.endswith((".c", ".cpp", ".cxx", ".h", ".hpp")):
+        # Filtering for language specific files and excluding certain directories
+        if file_name.endswith(supported_extensions):
             # Find the lines that changed for this file
             lines_start_at = match.end()
             next_file_match = file_pattern.search(changed_files, pos=match.span(0)[1])
@@ -253,7 +263,9 @@ def generate_description(
     global CURRENT_COMMENT_LENGTH
 
     if not is_note:
-        description = f"\n```diff\n!Line: {file_line_start} - {issue_description}``` \n"
+        description = (
+            f"\n```diff\n!Line: {file_line_start} - {issue_description}\n``` \n"
+        )
     else:
         if not was_note:
             # Previous line consists of ```diff <content> ```, so remove the closing ```
@@ -270,3 +282,142 @@ def generate_description(
         description = f"\n!Line: {file_line_start} - {issue_description}``` \n"
 
     return output_string, description
+
+
+def create_or_edit_comment(comment_body):
+    """
+    Creates or edits a comment on a pull request with the given comment body.
+
+    Args:
+    - comment_body: A string containing the full comment body to be created or edited.
+
+    Returns:
+    - None.
+    """
+
+    github = Github(GITHUB_TOKEN)
+    repo = github.get_repo(TARGET_REPO_NAME)
+    pull_request = repo.get_pull(int(PR_NUM))
+
+    comments = pull_request.get_issue_comments()
+    found_id = -1
+    comment_to_edit = None
+    for comment in comments:
+        if (comment.user.login == "github-actions[bot]") and (
+            COMMENT_TITLE in comment.body
+        ):
+            found_id = comment.id
+            comment_to_edit = comment
+            break
+
+    if found_id != -1 and comment_to_edit:
+        comment_to_edit.edit(body=comment_body)
+    else:
+        pull_request.create_issue_comment(body=comment_body)
+
+
+def generate_output(is_note, file_path, file_line_start, file_line_end, description):
+    """
+    Generate a formatted output string based on the details of a code issue.
+
+    This function takes information about a code issue and constructs a string that
+    includes details such as the location of the issue in the codebase, the affected code
+    lines, and a description of the issue. If the issue is a note, only the description
+    is returned. If the issue occurs in a different repository than the target, it
+    also fetches the lines where the issue was detected.
+
+    Parameters:
+    - is_note (bool): Whether the issue is just a note or a code issue.
+    - file_path (str): Path to the file where the issue was detected.
+    - file_line_start (int): The line number in the file where the issue starts.
+    - file_line_end (int): The line number in the file where the issue ends.
+    - description (str): Description of the issue.
+
+    Returns:
+    - str: Formatted string with details of the issue.
+
+    Note:
+    - This function relies on several global variables like TARGET_REPO_NAME, REPO_NAME,
+      FILES_WITH_ISSUES, and SHA which should be set before calling this function.
+    """
+
+    if not is_note:
+        if TARGET_REPO_NAME != REPO_NAME:
+            if file_path not in FILES_WITH_ISSUES:
+                try:
+                    with open(f"{file_path}") as file:
+                        lines = file.readlines()
+                        FILES_WITH_ISSUES[file_path] = lines
+                except FileNotFoundError:
+                    print(f"Error: The file '{file_path}' was not found.")
+
+            modified_content = FILES_WITH_ISSUES[file_path][
+                file_line_start - 1 : file_line_end - 1
+            ]
+
+            debug_print(
+                f"generate_output for following file: \nfile_path={file_path} \nmodified_content={modified_content}\n"
+            )
+
+            modified_content[0] = modified_content[0][:-1] + " <---- HERE\n"
+            file_content = "".join(modified_content)
+
+            file_url = f"https://github.com/{REPO_NAME}/blob/{SHA}/{file_path}#L{file_line_start}"
+            new_line = (
+                "\n\n------"
+                f"\n\n <b><i>Issue found in file</b></i> [{REPO_NAME}/{file_path}]({file_url})\n"
+                f"```{LANG}\n"
+                f"{file_content}"
+                f"\n``` \n"
+                f"{description} <br>\n"
+            )
+
+        else:
+            new_line = (
+                f"\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}/{file_path}"
+                f"#L{file_line_start}-L{file_line_end} {description} <br>\n"
+            )
+    else:
+        new_line = description
+
+    return new_line
+
+
+def extract_info(line, prefix):
+    """
+    Extracts information from a given line containing file path, line number, and issue description.
+
+    Args:
+    - line (str): The input string containing file path, line number, and issue description.
+    - prefix (str): The prefix to remove from the start of the file path in the line.
+    - was_note (bool): Indicates if the previous issue was a note.
+    - output_string (str): The string containing previous output information.
+
+    Returns:
+    - tuple: A tuple containing:
+        - file_path (str): The path to the file.
+        - is_note (bool): A flag indicating if the issue is a note.
+        - description (str): Description of the issue.
+        - file_line_start (int): The starting line number of the issue.
+        - file_line_end (int): The ending line number of the issue.
+    """
+
+    # Clean up line
+    line = line.replace(prefix, "").lstrip("/")
+
+    # Get the line starting position /path/to/file:line and trim it
+    file_path_end_idx = line.index(":")
+    file_path = line[:file_path_end_idx]
+
+    # Extract the lines information
+    line = line[file_path_end_idx + 1 :]
+
+    # Get line (start, end)
+    file_line_start = int(line[: line.index(":")])
+    file_line_end = get_file_line_end(file_path, file_line_start)
+
+    # Get content of the issue
+    issue_description = line[line.index(" ") + 1 :]
+    is_note = issue_description.startswith("note:")
+
+    return (file_path, is_note, file_line_start, file_line_end, issue_description)

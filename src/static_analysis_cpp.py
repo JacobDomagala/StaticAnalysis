@@ -1,114 +1,7 @@
 import argparse
 import os
 import sys
-from github import Github
 import sa_utils as utils
-
-def extract_info(line, prefix):
-    """
-    Extracts information from a given line containing file path, line number, and issue description.
-
-    Args:
-    - line (str): The input string containing file path, line number, and issue description.
-    - prefix (str): The prefix to remove from the start of the file path in the line.
-    - was_note (bool): Indicates if the previous issue was a note.
-    - output_string (str): The string containing previous output information.
-
-    Returns:
-    - tuple: A tuple containing:
-        - file_path (str): The path to the file.
-        - is_note (bool): A flag indicating if the issue is a note.
-        - description (str): Description of the issue.
-        - file_line_start (int): The starting line number of the issue.
-        - file_line_end (int): The ending line number of the issue.
-    """
-
-    # Clean up line
-    line = line.replace(prefix, "").lstrip("/")
-
-    # Get the line starting position /path/to/file:line and trim it
-    file_path_end_idx = line.index(":")
-    file_path = line[:file_path_end_idx]
-
-    # Extract the lines information
-    line = line[file_path_end_idx + 1 :]
-
-    # Get line (start, end)
-    file_line_start = int(line[: line.index(":")])
-    file_line_end = utils.get_file_line_end(file_path, file_line_start)
-
-    # Get content of the issue
-    issue_description = line[line.index(" ") + 1 :]
-    is_note = issue_description.startswith("note:")
-
-    return (file_path, is_note, file_line_start, file_line_end, issue_description)
-
-
-def generate_output(is_note, file_path, file_line_start, file_line_end, description):
-    """
-    Generate a formatted output string based on the details of a code issue.
-
-    This function takes information about a code issue and constructs a string that
-    includes details such as the location of the issue in the codebase, the affected code
-    lines, and a description of the issue. If the issue is a note, only the description
-    is returned. If the issue occurs in a different repository than the target, it
-    also fetches the lines where the issue was detected.
-
-    Parameters:
-    - is_note (bool): Whether the issue is just a note or a code issue.
-    - file_path (str): Path to the file where the issue was detected.
-    - file_line_start (int): The line number in the file where the issue starts.
-    - file_line_end (int): The line number in the file where the issue ends.
-    - description (str): Description of the issue.
-
-    Returns:
-    - str: Formatted string with details of the issue.
-
-    Note:
-    - This function relies on several global variables like TARGET_REPO_NAME, REPO_NAME,
-      FILES_WITH_ISSUES, and SHA which should be set before calling this function.
-    """
-
-    if not is_note:
-        if utils.TARGET_REPO_NAME != REPO_NAME:
-            if file_path not in utils.FILES_WITH_ISSUES:
-                try:
-                    with open(f"{file_path}") as file:
-                        lines = file.readlines()
-                        utils.FILES_WITH_ISSUES[file_path] = lines
-                except FileNotFoundError:
-                    print(f"Error: The file '{file_path}' was not found.")
-
-            modified_content = utils.FILES_WITH_ISSUES[file_path][
-                file_line_start - 1 : file_line_end - 1
-            ]
-
-            utils.debug_print(
-                f"generate_output for following file: \nfile_path={file_path} \nmodified_content={modified_content}\n"
-            )
-
-            modified_content[0] = modified_content[0][:-1] + " <---- HERE\n"
-            file_content = "".join(modified_content)
-
-            file_url = f"https://github.com/{REPO_NAME}/blob/{SHA}/{file_path}#L{file_line_start}"
-            new_line = (
-                "\n\n------"
-                f"\n\n <b><i>Issue found in file</b></i> [{REPO_NAME}/{file_path}]({file_url})\n"
-                f"```cpp\n"
-                f"{file_content}"
-                f"\n``` \n"
-                f"{description} <br>\n"
-            )
-
-        else:
-            new_line = (
-                f"\n\nhttps://github.com/{REPO_NAME}/blob/{SHA}/{file_path}"
-                f"#L{file_line_start}-L{file_line_end} {description} <br>\n"
-            )
-    else:
-        new_line = description
-
-    return new_line
 
 
 def append_issue(is_note, per_issue_string, new_line, list_of_issues):
@@ -153,7 +46,7 @@ def create_comment_for_output(
                 file_line_start,
                 file_line_end,
                 issue_description,
-            ) = extract_info(line, prefix)
+            ) = utils.extract_info(line, prefix)
 
             # In case where we only output to console, skip the next part
             if output_to_console:
@@ -173,7 +66,7 @@ def create_comment_for_output(
                     per_issue_string,
                 )
                 was_note = is_note
-                new_line = generate_output(
+                new_line = utils.generate_output(
                     is_note, file_path, file_line_start, file_line_end, description
                 )
 
@@ -349,41 +242,11 @@ def prepare_comment_body(
     if utils.CURRENT_COMMENT_LENGTH == utils.COMMENT_MAX_SIZE:
         full_comment_body += f"\n```diff\n{utils.MAX_CHAR_COUNT_REACHED}\n```"
 
-    utils.debug_print(f"Repo={REPO_NAME} pr_num={utils.PR_NUM} comment_title={utils.COMMENT_TITLE}")
+    utils.debug_print(
+        f"Repo={utils.REPO_NAME} pr_num={utils.PR_NUM} comment_title={utils.COMMENT_TITLE}"
+    )
 
     return full_comment_body
-
-
-def create_or_edit_comment(comment_body):
-    """
-    Creates or edits a comment on a pull request with the given comment body.
-
-    Args:
-    - comment_body: A string containing the full comment body to be created or edited.
-
-    Returns:
-    - None.
-    """
-
-    github = Github(utils.GITHUB_TOKEN)
-    repo = github.get_repo(utils.TARGET_REPO_NAME)
-    pull_request = repo.get_pull(int(utils.PR_NUM))
-
-    comments = pull_request.get_issue_comments()
-    found_id = -1
-    comment_to_edit = None
-    for comment in comments:
-        if (comment.user.login == "github-actions[bot]") and (
-            utils.COMMENT_TITLE in comment.body
-        ):
-            found_id = comment.id
-            comment_to_edit = comment
-            break
-
-    if found_id != -1 and comment_to_edit:
-        comment_to_edit.edit(body=comment_body)
-    else:
-        pull_request.create_issue_comment(body=comment_body)
 
 
 if __name__ == "__main__":
@@ -402,6 +265,6 @@ if __name__ == "__main__":
             cppcheck_issues_found_in,
             clang_tidy_issues_found_in,
         )
-        create_or_edit_comment(comment_body_in)
+        utils.create_or_edit_comment(comment_body_in)
 
     sys.exit(cppcheck_issues_found_in + clang_tidy_issues_found_in)

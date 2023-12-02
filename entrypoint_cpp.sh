@@ -70,5 +70,5 @@ else
 
     cd -
 
-    python3 /run_static_analysis.py -cc ./build/cppcheck.txt -ct ./build/clang_tidy.txt -o "$print_to_console" -fk "$use_extra_directory" --common "$common_ancestor" --head "origin/$GITHUB_HEAD_REF"
+    python3 /static_analysis_cpp.py -cc ./build/cppcheck.txt -ct ./build/clang_tidy.txt -o "$print_to_console" -fk "$use_extra_directory" --common "$common_ancestor" --head "origin/$GITHUB_HEAD_REF"
 fi
