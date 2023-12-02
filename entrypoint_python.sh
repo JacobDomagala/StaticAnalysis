@@ -2,7 +2,7 @@
 # shellcheck disable=SC2155
 
 set -e
-set -x
+
 # Following variables are declared/defined in parent script
 preselected_files=${preselected_files:-""}
 print_to_console=${print_to_console:-false}

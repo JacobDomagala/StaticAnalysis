@@ -3,6 +3,12 @@
 
 set -e
 
+# Following variables are declared/defined in parent script
+preselected_files=${preselected_files:-""}
+print_to_console=${print_to_console:-false}
+use_extra_directory=${use_extra_directory:-false}
+common_ancestor=${common_ancestor:-""}
+
 cd build
 
 if [ "$INPUT_REPORT_PR_CHANGES_ONLY" = true ]; then

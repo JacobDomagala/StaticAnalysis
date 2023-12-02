@@ -48,7 +48,8 @@ if [ "$GITHUB_EVENT_NAME" = "pull_request_target" ] && [ -n "$INPUT_PR_REPO" ]; 
     NEW_GITHUB_SHA=$(git rev-parse HEAD)
 
     export GITHUB_SHA=$NEW_GITHUB_SHA
-    export GITHUB_WORKSPACE=$(pwd)
+    pwd=$(pwd)
+    export GITHUB_WORKSPACE=$pwd
 fi
 
 preselected_files=""
