@@ -1,62 +1,41 @@
-import argparse
 import os
 import sys
 import json
 
-import sa_utils as utils
+from . import sa_utils as utils
 
 
 def parse_pylint_json(
-    pylint_json_in, output_to_console, common_ancestor, feature_branch, line_prefix
+    pylint_json_in, output_to_console, common_ancestor, feature_branch
 ):
-    with open(pylint_json_in, "r") as file:
+    with open(pylint_json_in, "r", encoding="utf-8") as file:
         data = file.read()
 
-    files_changed_in_pr = dict()
+    files_changed_in_pr = {}
     if not output_to_console and (utils.ONLY_PR_CHANGES == "true"):
         files_changed_in_pr = utils.get_changed_files(common_ancestor, feature_branch)
 
-    pylint_comment, pylint_issues_found = create_comment_for_output(
-        json.loads(data), line_prefix, files_changed_in_pr, output_to_console
+    pylint_comment_out, pylint_issues_found_out = create_comment_for_output(
+        json.loads(data), files_changed_in_pr, output_to_console
     )
 
-    if output_to_console and pylint_issues_found:
+    if output_to_console and pylint_issues_found_out:
         print("##[error] Issues found!\n")
         error_color = "\u001b[31m"
-        print(f"{error_color}PyLint results: {pylint_comment}")
+        print(f"{error_color}PyLint results: {pylint_comment_out}")
 
-    return pylint_comment, pylint_issues_found
+    return pylint_comment_out, pylint_issues_found_out
 
 
 def parse_input_vars():
-    # Get cppcheck and clang-tidy files
-    parser = argparse.ArgumentParser()
+    parser = utils.create_common_input_vars_parser()
     parser.add_argument(
         "-pl", "--pylint", help="Output file name for pylint", required=True
     )
-    parser.add_argument(
-        "-o",
-        "--output_to_console",
-        help="Whether to output the result to console",
-        required=True,
-    )
-    parser.add_argument(
-        "-fk",
-        "--fork_repository",
-        help="Whether the actual code is in 'pr_tree' directory",
-        required=True,
-    )
-    parser.add_argument(
-        "--common",
-        default="",
-        help="common ancestor between two branches (default: %(default)s)",
-    )
-    parser.add_argument("--head", default="", help="Head branch (default: %(default)s)")
-    if parser.parse_args().fork_repository == "true":
-        global REPO_NAME
 
+    if parser.parse_args().fork_repository == "true":
         # Make sure to use Head repository
-        REPO_NAME = os.getenv("INPUT_PR_REPO")
+        utils.REPO_NAME = os.getenv("INPUT_PR_REPO")
 
     pylint_file_name = parser.parse_args().pylint
     output_to_console = parser.parse_args().output_to_console == "true"
@@ -64,15 +43,7 @@ def parse_input_vars():
     common_ancestor = parser.parse_args().common
     feature_branch = parser.parse_args().head
 
-    line_prefix = f"{utils.WORK_DIR}"
-
-    return (
-        pylint_file_name,
-        output_to_console,
-        common_ancestor,
-        feature_branch,
-        line_prefix,
-    )
+    return (pylint_file_name, output_to_console, common_ancestor, feature_branch)
 
 
 def append_issue(is_note, per_issue_string, new_line, list_of_issues):
@@ -86,9 +57,7 @@ def append_issue(is_note, per_issue_string, new_line, list_of_issues):
     return per_issue_string
 
 
-def create_comment_for_output(
-    tool_output, prefix, files_changed_in_pr, output_to_console
-):
+def create_comment_for_output(tool_output, files_changed_in_pr, output_to_console):
     """
     Generates a comment for a GitHub pull request based on the tool output.
 
@@ -103,8 +72,6 @@ def create_comment_for_output(
         tuple: A tuple containing the generated comment and the number of issues found.
     """
 
-    global CURRENT_COMMENT_LENGTH
-    global FILES_WITH_ISSUES
     list_of_issues = []
     per_issue_string = ""
 
@@ -160,7 +127,7 @@ def create_comment_for_output(
     return output_string, len(list_of_issues)
 
 
-def prepare_comment_body(pylint_comment, pylint_issues_found):
+def prepare_comment_body(pylint_comment_in, pylint_issues_found_in):
     """
     Generates a comment body based on the results of the PyLint analysis.
 
@@ -172,7 +139,7 @@ def prepare_comment_body(pylint_comment, pylint_issues_found):
         str: The final comment body that will be posted as a comment on the pull request.
     """
 
-    if pylint_issues_found == 0:
+    if pylint_issues_found_in == 0:
         full_comment_body = (
             '## <p align="center"><b> :white_check_mark:'
             f"{utils.COMMENT_TITLE} - no issues found! :white_check_mark: </b></p>"
@@ -184,9 +151,9 @@ def prepare_comment_body(pylint_comment, pylint_issues_found):
 
         full_comment_body += (
             f"<details> <summary> <b> :red_circle: PyLint found "
-            f"{pylint_issues_found} {'issues' if pylint_issues_found > 1 else 'issue'}!"
+            f"{pylint_issues_found_in} {'issues' if pylint_issues_found_in > 1 else 'issue'}!"
             " Click here to see details. </b> </summary> <br>"
-            f"{pylint_comment} </details>"
+            f"{pylint_comment_in} </details>"
         )
 
         full_comment_body += "\n\n *** \n"
@@ -207,15 +174,10 @@ if __name__ == "__main__":
         output_to_console_in,
         common_ancestor_in,
         feature_branch_in,
-        line_prefix_in,
     ) = parse_input_vars()
 
     pylint_comment, pylint_issues_found = parse_pylint_json(
-        pylint_file_name_in,
-        output_to_console_in,
-        common_ancestor_in,
-        feature_branch_in,
-        line_prefix_in,
+        pylint_file_name_in, output_to_console_in, common_ancestor_in, feature_branch_in
     )
     if not output_to_console_in:
         comment_body_in = prepare_comment_body(pylint_comment, pylint_issues_found)

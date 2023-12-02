@@ -1,7 +1,7 @@
-import argparse
 import os
 import sys
-from . import sa_utils as utils
+
+from src import sa_utils as utils
 
 
 def append_issue(is_note, per_issue_string, new_line, list_of_issues):
@@ -31,9 +31,6 @@ def create_comment_for_output(
     Returns:
         tuple: A tuple containing the generated comment and the number of issues found.
     """
-
-    global CURRENT_COMMENT_LENGTH
-    global FILES_WITH_ISSUES
     list_of_issues = []
     per_issue_string = ""
     was_note = False
@@ -110,48 +107,28 @@ def read_files_and_parse_results():
     """
 
     # Get cppcheck and clang-tidy files
-    parser = argparse.ArgumentParser()
+    parser = utils.create_common_input_vars_parser()
     parser.add_argument(
         "-cc", "--cppcheck", help="Output file name for cppcheck", required=True
     )
     parser.add_argument(
         "-ct", "--clangtidy", help="Output file name for clang-tidy", required=True
     )
-    parser.add_argument(
-        "-o",
-        "--output_to_console",
-        help="Whether to output the result to console",
-        required=True,
-    )
-    parser.add_argument(
-        "-fk",
-        "--fork_repository",
-        help="Whether the actual code is in 'pr_tree' directory",
-        required=True,
-    )
-    parser.add_argument(
-        "--common",
-        default="",
-        help="common ancestor between two branches (default: %(default)s)",
-    )
-    parser.add_argument("--head", default="", help="Head branch (default: %(default)s)")
 
     if parser.parse_args().fork_repository == "true":
-        global REPO_NAME
-
         # Make sure to use Head repository
-        REPO_NAME = os.getenv("INPUT_PR_REPO")
+        utils.REPO_NAME = os.getenv("INPUT_PR_REPO")
 
     cppcheck_file_name = parser.parse_args().cppcheck
     clangtidy_file_name = parser.parse_args().clangtidy
     output_to_console = parser.parse_args().output_to_console == "true"
 
     cppcheck_content = ""
-    with open(cppcheck_file_name, "r") as file:
+    with open(cppcheck_file_name, "r", encoding="utf-8") as file:
         cppcheck_content = file.readlines()
 
     clang_tidy_content = ""
-    with open(clangtidy_file_name, "r") as file:
+    with open(clangtidy_file_name, "r", encoding="utf-8") as file:
         clang_tidy_content = file.readlines()
 
     common_ancestor = parser.parse_args().common
@@ -165,7 +142,7 @@ def read_files_and_parse_results():
         f"line_prefix: {line_prefix} \n"
     )
 
-    files_changed_in_pr = dict()
+    files_changed_in_pr = {}
     if not output_to_console and (utils.ONLY_PR_CHANGES == "true"):
         files_changed_in_pr = utils.get_changed_files(common_ancestor, feature_branch)
 

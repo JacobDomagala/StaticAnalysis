@@ -61,12 +61,12 @@ if [ "$INPUT_REPORT_PR_CHANGES_ONLY" = true ]; then
     common_ancestor=$(git merge-base origin/"$GITHUB_BASE_REF" "origin/$GITHUB_HEAD_REF")
     debug_print "Common ancestor: $common_ancestor"
     if [ "$check_cpp" = "true" ]; then
-        preselected_files="$(git diff --name-only "$common_ancestor" "origin/$GITHUB_HEAD_REF" | grep -E '\.(py)$')" || true
-        output_string="No (C/C++) files changed in the PR! Only files ending with c|cpp|h|hpp are considered."
+        preselected_files="$(git diff --name-only "$common_ancestor" "origin/$GITHUB_HEAD_REF" | grep -E '\.(c|cpp|h|hpp)$')" || true
+        output_string="No (C/C++) files changed in the PR! Only files ending with .c, .cpp, .h, or .hpp are considered."
     fi
 
     if [ "$check_python" = "true" ]; then
-        preselected_files="$(git diff --name-only "$common_ancestor" "origin/$GITHUB_HEAD_REF" | grep -E '\.(c|cpp|h|hpp)$')" || true
+        preselected_files="$(git diff --name-only "$common_ancestor" "origin/$GITHUB_HEAD_REF" | grep -E '\.(py)$')" || true
         output_string="No Python files changed in the PR! Only files ending with .py are considered."
     fi
 
@@ -90,8 +90,8 @@ fi
 
 if [ "${INPUT_LANGUAGE,,}" = "c++" ]; then
     debug_print "Running checks on c++ code"
-    source "$GITHUB_WORKSPACE/entrypoint_cpp.sh" "$preselected_files" "$common_ancestor"
+    source "/src/entrypoint_cpp.sh"
 else # assume python
     debug_print "Running checks on Python code"
-    source "$GITHUB_WORKSPACE/entrypoint_python.sh" "$preselected_files" "$common_ancestor"
+    source "/src/entrypoint_python.sh"
 fi

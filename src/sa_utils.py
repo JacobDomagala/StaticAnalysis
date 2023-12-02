@@ -1,15 +1,16 @@
 import os
 import re
 import subprocess
+import argparse
 
 from github import Github
 
 # Input variables from Github action
 GITHUB_TOKEN = os.getenv("INPUT_GITHUB_TOKEN")
-PR_NUM = os.getenv("INPUT_PR_NUM")
+PR_NUM = os.getenv("INPUT_PR_NUM", "-1")
 WORK_DIR = f'{os.getenv("GITHUB_WORKSPACE")}'
 REPO_NAME = os.getenv("INPUT_REPO")
-TARGET_REPO_NAME = os.getenv("INPUT_REPO")
+TARGET_REPO_NAME = os.getenv("INPUT_REPO", "")
 SHA = os.getenv("GITHUB_SHA")
 COMMENT_TITLE = os.getenv("INPUT_COMMENT_TITLE", "Static Analysis")
 ONLY_PR_CHANGES = os.getenv("INPUT_REPORT_PR_CHANGES_ONLY", "False").lower()
@@ -204,7 +205,6 @@ def get_lines_changed_from_patch(patch):
 
 
 def check_for_char_limit(incoming_line):
-    global CURRENT_COMMENT_LENGTH
     return (CURRENT_COMMENT_LENGTH + len(incoming_line)) <= COMMENT_MAX_SIZE
 
 
@@ -232,21 +232,23 @@ def is_excluded_dir(line):
     return line.startswith(excluded_dir)
 
 
-def get_file_line_end(file, file_line_start):
+def get_file_line_end(file_in, file_line_start_in):
     """
     Returns the ending line number for a given file, starting from a specified line number.
 
     Args:
-        file (str): The name of the file to read.
-        file_line_start (int): The starting line number.
+        file_in (str): The name of the file to read.
+        file_line_start_in (int): The starting line number.
 
     Returns:
         int: The ending line number, which is either `file_line_start + 5`
         or the total number of lines in the file, whichever is smaller.
     """
 
-    num_lines = sum(1 for line in open(f"{WORK_DIR}/{file}"))
-    return min(file_line_start + 5, num_lines)
+    with open(f"{WORK_DIR}/{file_in}", encoding="utf-8") as file:
+        num_lines = sum(1 for line in file)
+
+    return min(file_line_start_in + 5, num_lines)
 
 
 def generate_description(
@@ -345,7 +347,7 @@ def generate_output(is_note, file_path, file_line_start, file_line_end, descript
         if TARGET_REPO_NAME != REPO_NAME:
             if file_path not in FILES_WITH_ISSUES:
                 try:
-                    with open(f"{file_path}") as file:
+                    with open(f"{file_path}", encoding="utf-8") as file:
                         lines = file.readlines()
                         FILES_WITH_ISSUES[file_path] = lines
                 except FileNotFoundError:
@@ -421,3 +423,27 @@ def extract_info(line, prefix):
     is_note = issue_description.startswith("note:")
 
     return (file_path, is_note, file_line_start, file_line_end, issue_description)
+
+
+def create_common_input_vars_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-o",
+        "--output_to_console",
+        help="Whether to output the result to console",
+        required=True,
+    )
+    parser.add_argument(
+        "-fk",
+        "--fork_repository",
+        help="Whether the actual code is in 'pr_tree' directory",
+        required=True,
+    )
+    parser.add_argument(
+        "--common",
+        default="",
+        help="common ancestor between two branches (default: %(default)s)",
+    )
+    parser.add_argument("--head", default="", help="Head branch (default: %(default)s)")
+
+    return parser
