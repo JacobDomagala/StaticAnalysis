@@ -78,7 +78,9 @@ def create_comment_for_output(tool_output, files_changed_in_pr, output_to_consol
     for line in tool_output:
         file_path = line["path"]
         file_line_start = line["line"]
-        issue_description = line["message"]
+        issue_description = (
+            f"{line['message-id']}: {line['message']} ({line['symbol']})"
+        )
 
         file_line_end = utils.get_file_line_end(file_path, file_line_start)
 

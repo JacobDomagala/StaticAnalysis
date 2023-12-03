@@ -20,6 +20,7 @@ jobs:
           verbose: True
           pylint_args: "--rcfile=.pylintrc --recursive=true"
           python_dirs: "src test"
+          exclude_dir: "test/utils/"
 
       - name: PyLint
         uses: ricardochaves/python-lint@v1.4.0

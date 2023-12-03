@@ -30,7 +30,7 @@ def to_list_and_sort(string_in):
 
 
 class TestStaticAnalysisCpp(unittest.TestCase):
-    """Unit tests for run_static_analysis module"""
+    """Unit tests for static_analysis_cpp"""
 
     maxDiff = None
 

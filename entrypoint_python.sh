@@ -15,11 +15,11 @@ if [ -z "$INPUT_PYTHON_DIRS" ]; then
 fi
 
 if [ -z "$INPUT_EXCLUDE_DIR" ]; then
+    debug_print "Running: files_to_check=\$(python3 /src/get_files_to_check.py -dir=\"$GITHUB_WORKSPACE\" -preselected=\"$preselected_files\" -lang=\"python\")"
     files_to_check=$(python3 /src/get_files_to_check.py -dir="$GITHUB_WORKSPACE" -preselected="$preselected_files" -lang="python")
-    debug_print "Running: files_to_check=python3 /src/get_files_to_check.py -dir=\"$GITHUB_WORKSPACE\" -preselected=\"$preselected_files\")"
 else
-    files_to_check=$(python3 /src/get_files_to_check.py -exclude="$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR" -dir="$GITHUB_WORKSPACE" -preselected="$preselected_files")
-    debug_print "Running: files_to_check=python3 /src/get_files_to_check.py -exclude=\"$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR\" -dir=\"$GITHUB_WORKSPACE\" -preselected=\"$preselected_files\")"
+    debug_print "Running: files_to_check=\$(python3 /src/get_files_to_check.py -exclude=\"$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR\" -dir=\"$GITHUB_WORKSPACE\" -preselected=\"$preselected_files\" -lang=\"python\")"
+    files_to_check=$(python3 /src/get_files_to_check.py -exclude="$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR" -dir="$GITHUB_WORKSPACE" -preselected="$preselected_files" -lang="python")
 fi
 
 debug_print "Files to check = $files_to_check"
@@ -31,7 +31,7 @@ else
 
     # Trim newlines
     INPUT_PYLINT_ARGS="${INPUT_PYLINT_ARGS%"${INPUT_PYLINT_ARGS##*[![:space:]]}"}"
-    eval "pylint $INPUT_PYTHON_DIRS --output-format=json:pylint_out.json $INPUT_PYLINT_ARGS || true"
+    eval "pylint $files_to_check --output-format=json:pylint_out.json $INPUT_PYLINT_ARGS || true"
 
     cd /
     python3 -m src.static_analysis_python -pl "$GITHUB_WORKSPACE/pylint_out.json" -o "$print_to_console" -fk "$use_extra_directory" --common "$common_ancestor" --head "origin/$GITHUB_HEAD_REF"
