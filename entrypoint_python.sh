@@ -27,8 +27,6 @@ debug_print "Files to check = $files_to_check"
 if [ -z "$files_to_check" ]; then
     echo "No files to check"
 else
-    pip3 install pylint --break-system-packages
-
     # Trim newlines
     INPUT_PYLINT_ARGS="${INPUT_PYLINT_ARGS%"${INPUT_PYLINT_ARGS##*[![:space:]]}"}"
     eval "pylint $files_to_check --output-format=json:pylint_out.json $INPUT_PYLINT_ARGS || true"
