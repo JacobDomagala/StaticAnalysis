@@ -10,7 +10,7 @@ This GitHub action is designed for C++/Python projects and performs static analy
 
 It can be triggered by push and pull requests.
 
-For further information and guidance about setup and various inputs, please see sections dedicated to each language ([**C++**](https://github.com/JacobDomagala/StaticAnalysis?tab=readme-ov-file#c++) and [**Python**](https://github.com/JacobDomagala/StaticAnalysis?tab=readme-ov-file#python))
+For further information and guidance about setup and various inputs, please see sections dedicated to each language ([**C++**](https://github.com/JacobDomagala/StaticAnalysis?tab=readme-ov-file#c) and [**Python**](https://github.com/JacobDomagala/StaticAnalysis?tab=readme-ov-file#python))
 
 ## Pull Request comment
 
