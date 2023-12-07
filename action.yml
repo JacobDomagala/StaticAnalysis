@@ -50,6 +50,13 @@ inputs:
   verbose:
     description: 'Verbose output. Used for debugging'
     default: false
+  language:
+    description: 'Programming language to check for. Supported languages are: C++/Python'
+    default: C++
+  pylint_args:
+    description: 'PyLint options'
+  python_dirs:
+    description: 'Directories containing python files to be checked'
 
 runs:
   using: "docker"

@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
         build-essential python3 python3-pip git clang-$CLANG_VERSION clang-tidy-$CLANG_VERSION wget libssl-dev ninja-build \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-    && pip3 install PyGithub --break-system-packages \
+    && pip3 install PyGithub pylint --break-system-packages \
     && ln -s "$(which clang++-$CLANG_VERSION)" /usr/bin/clang++ \
     && ln -s "$(which clang-$CLANG_VERSION)" /usr/bin/clang \
     && ln -s /usr/bin/python3 /usr/bin/python

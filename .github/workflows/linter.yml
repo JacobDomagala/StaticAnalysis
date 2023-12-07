@@ -11,17 +11,29 @@ jobs:
     name: Run Linter
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v1
-      - uses: ricardochaves/python-lint@v1.4.0
+      - uses: actions/checkout@v3
+
+      - name: CodeQuality
+        uses: JacobDomagala/StaticAnalysis@112-support-python
+        with:
+          language: "Python"
+          verbose: True
+          pylint_args: "--rcfile=.pylintrc --recursive=true"
+          python_dirs: "src test"
+          exclude_dir: "test/utils/"
+
+      - name: PyLint
+        uses: ricardochaves/python-lint@v1.4.0
         with:
           python-root-list: "src test"
-          use-pylint: true
+          use-pylint: false
           use-pycodestyle: true
           use-flake8: true
           use-black: true
           use-mypy: true
           use-isort: false
-          extra-pylint-options: "--rcfile=setup.cfg --max-line-length=120 --max-locals=25 --min-similarity-lines=10"
           extra-mypy-options: "--ignore-missing-imports --show-error-codes"
           extra-flake8-options: "--max-line-length=120 --ignore=E203,E402"
           extra-pycodestyle-options: "--max-line-length=120 --ignore=E203,E402"
+
+

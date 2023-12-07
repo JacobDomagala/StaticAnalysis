@@ -1,12 +1,11 @@
-FROM jdomagala/static_analysis:latest
+FROM jdomagala/static_analysis:python
 
-COPY entrypoint.sh /
-RUN chmod +x /entrypoint.sh
+WORKDIR /src
 
-COPY src/run_static_analysis.py /
-RUN chmod +x /run_static_analysis.py
+COPY src/*.py ./
 
-COPY src/get_files_to_check.py /
-RUN chmod +x /get_files_to_check.py
+COPY *.sh ./
+RUN chmod +x *.sh
 
-ENTRYPOINT ["/entrypoint.sh"]
+
+ENTRYPOINT ["/src/entrypoint.sh"]
