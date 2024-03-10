@@ -176,20 +176,19 @@ function process_compile_output() {
   var num_errors = 0;
 
   const splitLines = str => str.split(/\r?\n/);
-  inistialList = splitLines(compile_result)
-  inistialList.forEach(function (part, index) {
+  initialList = splitLines(compile_result).map(line => line.trimStart());
+  initialList.forEach(function (part, index) {
     this[index] = this[index].split("\\").join("/");
-  }, inistialList);
+  }, initialList);
 
   var matchingStrings = [];
-  uniqueLines = [...new Set(inistialList)];
-  debug_log(`Original string:\n ${compile_result} \n\n inistialList:\n ${splitLines(compile_result)} \n\n uniqueLines:\n ${uniqueLines}\n\n`);
-
+  uniqueLines = [...new Set(initialList)];
   uniqueLines.forEach(line => {
     line = make_dir_universal(line);
     var idx = line.indexOf(prefix_dir);
 
     // Only consider lines that start with 'prefix_dir'
+    debug_log(`Checking line: ${line} with idx=${idx} ${check_for_exclude_dir(line, exclude_dir)} and ${check_if_valid_line(compiler, line)}`)
     if (idx == 0 && check_for_exclude_dir(line, exclude_dir) && check_if_valid_line(compiler, line)) {
       debug_log(`Parsing line: ${line}`);
       line = line.replace(prefix_dir, "");
@@ -870,7 +869,7 @@ class OidcClient {
                 .catch(error => {
                 throw new Error(`Failed to get ID Token. \n 
         Error Code : ${error.statusCode}\n 
-        Error Message: ${error.result.message}`);
+        Error Message: ${error.message}`);
             });
             const id_token = (_a = res.result) === null || _a === void 0 ? void 0 : _a.value;
             if (!id_token) {
