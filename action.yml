@@ -1,5 +1,5 @@
 name: "Static analysis for C++/Python project"
-description: "This GitHub action performs static analysis for C++/Python projects using cppcheck and clang-tidy for C++, and pylint for Python, with results as PR comments or console output."
+description: "Static analysis with cppcheck & clang-tidy for C++, pylint for Python. Posts results to PRs or console."
 
 inputs:
   github_token:
