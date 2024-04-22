@@ -1,4 +1,4 @@
-FROM jdomagala/static_analysis:update_tools
+FROM jdomagala/static_analysis:latest
 
 WORKDIR /src
 
