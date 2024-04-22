@@ -1,4 +1,4 @@
-FROM jdomagala/static_analysis:python
+FROM jdomagala/static_analysis:latest
 
 WORKDIR /src
 
