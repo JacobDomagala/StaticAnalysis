@@ -16,7 +16,7 @@ For further information and guidance about setup and various inputs, please see 
 
 Created comment will contain code snippets with the issue description. When this action is run for the first time, the comment with the initial result will be created for current Pull Request. Consecutive runs will edit this comment with updated status.
 
-Note that it's possible that the amount of issues detected can make the comment's body to be greater than the GitHub's character limit per PR comment (which is 65536). In that case, the created comment will contain only the isues found up to that point, and the information that the limit of characters was reached.
+Note that it's possible that the amount of issues detected can make the comment's body to be greater than the GitHub's character limit per PR comment (which is 65536). In that case, the created comment will contain only the issues found up to that point, and the information that the limit of characters was reached.
 
 ## Output example (C++)
 ![output](https://github.com/JacobDomagala/StaticAnalysis/wiki/output_example.png)
@@ -35,7 +35,7 @@ For non Pull Requests, the output will be printed to GitHub's output console. Th
 While it's recommended that your project is CMake-based, it's not required (see the [**Inputs**](https://github.com/JacobDomagala/StaticAnalysis#inputs) section below). We also recommend using a ```.clang-tidy``` file in your root directory. If your project requires additional packages to be installed, you can use the `apt_pckgs` and/or `init_script` input variables to install them (see the [**Workflow example**](https://github.com/JacobDomagala/StaticAnalysis#workflow-example) or [**Inputs**](https://github.com/JacobDomagala/StaticAnalysis#inputs) sections below). If your repository allows contributions from forks, you must use this Action with the `pull_request_target` trigger event, as the GitHub API won't allow PR comments otherwise.
 
 By default, **cppcheck** runs with the following flags:
-```--enable=all --suppress=missingInclude --inline-suppr --inconclusive```
+```--enable=all --suppress=missingIncludeSystem --inline-suppr --inconclusive```
 You can use the `cppcheck_args` input to set your own flags.
 
 **clang-tidy** looks for the ```.clang-tidy``` file in your repository, but you can also set checks using the `clang_tidy_args` input.
@@ -101,7 +101,7 @@ jobs:
         clang_tidy_args: -checks='*,fuchsia-*,google-*,zircon-*,abseil-*,modernize-use-trailing-return-type'
 
         # (Optional) cppcheck args
-        cppcheck_args: --enable=all --suppress=missingInclude
+        cppcheck_args: --enable=all --suppress=missingIncludeSystem
 ```
 
 ## Inputs
@@ -114,7 +114,7 @@ jobs:
 | `exclude_dir`           | Directory which should be excluded from the raport | `<empty>` |
 | `apt_pckgs`             | Additional (space separated) packages that need to be installed in order for project to compile | `<empty>` |
 | `init_script`           | Optional shell script that will be run before configuring project (i.e. running CMake command). This should be used, when the project requires some environmental set-up beforehand. Script will be run with 2 arguments: `root_dir`(root directory of user's code) and `build_dir`(build directory created for running SA). Note. `apt_pckgs` will run before this script, just in case you need some packages installed. Also this script will be run in the root of the project (`root_dir`) | `<empty>` |
-| `cppcheck_args`         | Cppcheck (space separated) arguments that will be used |`--enable=all --suppress=missingInclude --inline-suppr --inconclusive`|
+| `cppcheck_args`         | Cppcheck (space separated) arguments that will be used |`--enable=all --suppress=missingIncludeSystem --inline-suppr --inconclusive`|
 | `clang_tidy_args`       | clang-tidy arguments that will be used (example: `-checks='*,fuchsia-*,google-*,zircon-*'` |`<empty>`|
 | `report_pr_changes_only`| Only post the issues found within the changes introduced in this Pull Request. This means that only the issues found within the changed lines will po posted. Any other issues caused by these changes in the repository, won't be reported, so in general you should run static analysis on entire code base  |`false`|
 | `use_cmake`             | Determines wether CMake should be used to generate compile_commands.json file | `true` |
