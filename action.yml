@@ -33,7 +33,7 @@ inputs:
       'Also this script will be run in the root of the project (`root_dir`)'
   cppcheck_args:
     description: 'cppcheck (space separated) arguments that will be used'
-    default: --enable=all --suppress=missingInclude --inline-suppr --inconclusive
+    default: --enable=all --suppress=missingIncludeSystem --inline-suppr --inconclusive
   clang_tidy_args:
     description: 'clang-tidy arguments that will be used (example: -checks="*,fuchsia-*,google-*,zircon-*"'
   report_pr_changes_only:
