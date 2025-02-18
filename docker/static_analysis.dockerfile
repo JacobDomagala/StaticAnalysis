@@ -1,7 +1,7 @@
 FROM ubuntu:23.04 as base
 
 # Define versions as environment variables
-ENV CLANG_VERSION=18 \
+ENV CLANG_VERSION=19 \
     CPPCHECK_VERSION=2.14.0 \
     CXX=clang++ \
     CC=clang \
