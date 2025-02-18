@@ -1,4 +1,4 @@
-name: "Static analysis for C++/Python project"
+name: "Static analysis for C++ (Clang-19)/Python project"
 description: "Static analysis with cppcheck & clang-tidy for C++, pylint for Python. Posts results to PRs or console."
 
 inputs:
