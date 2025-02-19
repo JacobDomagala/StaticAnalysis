@@ -104,7 +104,7 @@ def create_comment_for_output(tool_output, files_changed_in_pr, output_to_consol
             )
 
             new_line = utils.generate_output(
-                False, file_path, file_line_start, file_line_end, description
+                False, ("", file_path), file_line_start, file_line_end, description
             )
 
             if utils.check_for_char_limit(new_line):

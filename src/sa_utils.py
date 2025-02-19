@@ -318,7 +318,7 @@ def create_or_edit_comment(comment_body):
         pull_request.create_issue_comment(body=comment_body)
 
 
-def generate_output(is_note, file_path, file_line_start, file_line_end, description, prefix=""):
+def generate_output(is_note, prefix_and_file_path, file_line_start, file_line_end, description):
     """
     Generate a formatted output string based on the details of a code issue.
 
@@ -344,6 +344,7 @@ def generate_output(is_note, file_path, file_line_start, file_line_end, descript
     """
 
     if not is_note:
+        prefix, file_path = prefix_and_file_path
         if TARGET_REPO_NAME != REPO_NAME:
             if file_path not in FILES_WITH_ISSUES:
                 try:

@@ -64,7 +64,7 @@ def create_comment_for_output(
                 )
                 was_note = is_note
                 new_line = utils.generate_output(
-                    is_note, file_path, file_line_start, file_line_end, description, prefix
+                    is_note, (prefix, file_path), file_line_start, file_line_end, description
                 )
 
                 if utils.check_for_char_limit(new_line):
