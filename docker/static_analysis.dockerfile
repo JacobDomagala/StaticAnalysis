@@ -1,4 +1,4 @@
-FROM ubuntu:24.04 as base
+FROM ubuntu:24.04 AS base
 
 # Define versions as environment variables
 ENV CLANG_VERSION=20 \
