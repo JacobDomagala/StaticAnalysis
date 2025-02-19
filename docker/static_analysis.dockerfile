@@ -1,8 +1,8 @@
-FROM ubuntu:23.04 as base
+FROM ubuntu:24.04 AS base
 
 # Define versions as environment variables
-ENV CLANG_VERSION=18 \
-    CPPCHECK_VERSION=2.14.0 \
+ENV CLANG_VERSION=20 \
+    CPPCHECK_VERSION=2.16.0 \
     CXX=clang++ \
     CC=clang \
     DEBIAN_FRONTEND=noninteractive

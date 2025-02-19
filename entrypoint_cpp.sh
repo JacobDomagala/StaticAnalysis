@@ -67,16 +67,16 @@ else
         cat cppcheck_*.txt > cppcheck.txt
 
         # Excludes for clang-tidy are handled in python script
-        debug_print "Running run-clang-tidy-18 $CLANG_TIDY_ARGS -p $(pwd) $files_to_check >>clang_tidy.txt 2>&1"
-        eval run-clang-tidy-18 "$CLANG_TIDY_ARGS" -p "$(pwd)" "$files_to_check" >clang_tidy.txt 2>&1 || true
+        debug_print "Running run-clang-tidy-20 $CLANG_TIDY_ARGS -p $(pwd) $files_to_check >>clang_tidy.txt 2>&1"
+        eval run-clang-tidy-20 "$CLANG_TIDY_ARGS" -p "$(pwd)" "$files_to_check" >clang_tidy.txt 2>&1 || true
 
     else
         # Excludes for clang-tidy are handled in python script
         debug_print "Running cppcheck -j $num_proc $files_to_check $CPPCHECK_ARGS --output-file=cppcheck.txt ..."
         eval cppcheck -j "$num_proc" "$files_to_check" "$CPPCHECK_ARGS" --output-file=cppcheck.txt || true
 
-        debug_print "Running run-clang-tidy-18 $CLANG_TIDY_ARGS $files_to_check >>clang_tidy.txt 2>&1"
-        eval run-clang-tidy-18 "$CLANG_TIDY_ARGS" "$files_to_check" >clang_tidy.txt 2>&1 || true
+        debug_print "Running run-clang-tidy-20 $CLANG_TIDY_ARGS $files_to_check >>clang_tidy.txt 2>&1"
+        eval run-clang-tidy-20 "$CLANG_TIDY_ARGS" "$files_to_check" >clang_tidy.txt 2>&1 || true
     fi
 
     cd /

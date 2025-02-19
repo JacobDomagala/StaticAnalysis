@@ -27,12 +27,12 @@ BASE_URL="http://apt.llvm.org"
 needed_binaries=(lsb_release wget add-apt-repository gpg)
 missing_binaries=()
 for binary in "${needed_binaries[@]}"; do
-    if ! which "$binary" &>/dev/null ; then
-        missing_binaries+=("$binary")
+    if ! which $binary &>/dev/null ; then
+        missing_binaries+=($binary)
     fi
 done
 if [[ ${#missing_binaries[@]} -gt 0 ]] ; then
-    echo "You are missing some tools this script requires: " "${missing_binaries[@]}"
+    echo "You are missing some tools this script requires: ${missing_binaries[@]}"
     echo "(hint: apt install lsb-release wget software-properties-common gnupg)"
     exit 4
 fi
@@ -40,12 +40,12 @@ fi
 # Set default values for commandline arguments
 # We default to the current stable branch of LLVM
 LLVM_VERSION=$CURRENT_LLVM_STABLE
+ALL=0
 DISTRO=$(lsb_release -is)
 VERSION=$(lsb_release -sr)
 UBUNTU_CODENAME=""
 CODENAME_FROM_ARGUMENTS=""
 # Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
-# shellcheck disable=SC1091
 source /etc/os-release
 DISTRO=${DISTRO,,}
 case ${DISTRO} in
@@ -76,18 +76,21 @@ esac
 if [ "$#" -ge 1 ] && [ "${1::1}" != "-" ]; then
     if [ "$1" != "all" ]; then
         LLVM_VERSION=$1
+    else
+        # special case for ./llvm.sh all
+        ALL=1
     fi
     OPTIND=2
     if [ "$#" -ge 2 ]; then
       if [ "$2" == "all" ]; then
           # Install all packages
+          ALL=1
           OPTIND=3
       fi
     fi
 fi
 
 while getopts ":hm:n:" arg; do
-    # shellcheck disable=SC2220
     case $arg in
     h)
         usage
@@ -124,7 +127,9 @@ LLVM_VERSION_PATTERNS[15]="-15"
 LLVM_VERSION_PATTERNS[16]="-16"
 LLVM_VERSION_PATTERNS[17]="-17"
 LLVM_VERSION_PATTERNS[18]="-18"
-LLVM_VERSION_PATTERNS[19]=""
+LLVM_VERSION_PATTERNS[19]="-19"
+LLVM_VERSION_PATTERNS[20]="-20"
+LLVM_VERSION_PATTERNS[21]=""
 
 if [ ! ${LLVM_VERSION_PATTERNS[$LLVM_VERSION]+_} ]; then
     echo "This script does not support LLVM version $LLVM_VERSION"
@@ -138,7 +143,7 @@ if [[ -n "${CODENAME}" ]]; then
     REPO_NAME="deb ${BASE_URL}/${CODENAME}/  llvm-toolchain${LINKNAME}${LLVM_VERSION_STRING} main"
 
     # check if the repository exists for the distro and version
-    if ! wget -q --method=HEAD "${BASE_URL}/${CODENAME}" &> /dev/null; then
+    if ! wget -q --method=HEAD ${BASE_URL}/${CODENAME} &> /dev/null; then
         if [[ -n "${CODENAME_FROM_ARGUMENTS}" ]]; then
             echo "Specified codename '${CODENAME}' is not supported by this script."
         else
@@ -156,12 +161,25 @@ if [[ ! -f /etc/apt/trusted.gpg.d/apt.llvm.org.asc ]]; then
     wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
 fi
 
-# shellcheck disable=SC2006
 if [[ -z "`apt-key list 2> /dev/null | grep -i llvm`" ]]; then
     # Delete the key in the old format
-    apt-key del AF4F7421
+    apt-key del AF4F7421 || true
 fi
+if [[ "${VERSION_CODENAME}" == "bookworm" ]]; then
+    # add it twice to workaround:
+    # https://github.com/llvm/llvm-project/issues/62475
+    add-apt-repository -y "${REPO_NAME}"
+fi
+
 add-apt-repository -y "${REPO_NAME}"
 apt-get update
-PKG="clang-$LLVM_VERSION lld-$LLVM_VERSION clangd-$LLVM_VERSION clang-tidy-$LLVM_VERSION"
-apt-get install -y "$PKG"
+PKG="clang-$LLVM_VERSION lldb-$LLVM_VERSION lld-$LLVM_VERSION clangd-$LLVM_VERSION clang-tidy-$LLVM_VERSION clang-format-$LLVM_VERSION clang-tools-$LLVM_VERSION"
+if [[ $ALL -eq 1 ]]; then
+    # same as in test-install.sh
+    # No worries if we have dups
+    PKG="$PKG clang-tidy-$LLVM_VERSION clang-format-$LLVM_VERSION clang-tools-$LLVM_VERSION llvm-$LLVM_VERSION-dev lld-$LLVM_VERSION lldb-$LLVM_VERSION llvm-$LLVM_VERSION-tools libomp-$LLVM_VERSION-dev libc++-$LLVM_VERSION-dev libc++abi-$LLVM_VERSION-dev libclang-common-$LLVM_VERSION-dev libclang-$LLVM_VERSION-dev libclang-cpp$LLVM_VERSION-dev libunwind-$LLVM_VERSION-dev"
+    if test $LLVM_VERSION -gt 14; then
+        PKG="$PKG libclang-rt-$LLVM_VERSION-dev libpolly-$LLVM_VERSION-dev"
+    fi
+fi
+apt-get install -y $PKG
