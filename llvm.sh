@@ -27,12 +27,12 @@ BASE_URL="http://apt.llvm.org"
 needed_binaries=(lsb_release wget add-apt-repository gpg)
 missing_binaries=()
 for binary in "${needed_binaries[@]}"; do
-    if ! which $binary &>/dev/null ; then
-        missing_binaries+=($binary)
+    if ! which "$binary" &>/dev/null ; then
+        missing_binaries+=("$binary")
     fi
 done
 if [[ ${#missing_binaries[@]} -gt 0 ]] ; then
-    echo "You are missing some tools this script requires: ${missing_binaries[@]}"
+    echo "You are missing some tools this script requires: " "${missing_binaries[@]}"
     echo "(hint: apt install lsb-release wget software-properties-common gnupg)"
     exit 4
 fi
@@ -145,7 +145,7 @@ if [[ -n "${CODENAME}" ]]; then
     REPO_NAME="deb ${BASE_URL}/${CODENAME}/  llvm-toolchain${LINKNAME}${LLVM_VERSION_STRING} main"
 
     # check if the repository exists for the distro and version
-    if ! wget -q --method=HEAD ${BASE_URL}/${CODENAME} &> /dev/null; then
+    if ! wget -q --method=HEAD "${BASE_URL}/${CODENAME}" &> /dev/null; then
         if [[ -n "${CODENAME_FROM_ARGUMENTS}" ]]; then
             echo "Specified codename '${CODENAME}' is not supported by this script."
         else
@@ -181,8 +181,8 @@ if [[ $ALL -eq 1 ]]; then
     # same as in test-install.sh
     # No worries if we have dups
     PKG="$PKG clang-format-$LLVM_VERSION clang-tools-$LLVM_VERSION llvm-$LLVM_VERSION-dev llvm-$LLVM_VERSION-tools libomp-$LLVM_VERSION-dev libc++-$LLVM_VERSION-dev libc++abi-$LLVM_VERSION-dev libclang-common-$LLVM_VERSION-dev libclang-$LLVM_VERSION-dev libclang-cpp$LLVM_VERSION-dev libunwind-$LLVM_VERSION-dev"
-    if test $LLVM_VERSION -gt 14; then
+    if test "$LLVM_VERSION" -gt 14; then
         PKG="$PKG libclang-rt-$LLVM_VERSION-dev libpolly-$LLVM_VERSION-dev"
     fi
 fi
-apt-get install -y $PKG
+apt-get install -y "$PKG"
