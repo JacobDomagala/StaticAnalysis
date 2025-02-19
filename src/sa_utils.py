@@ -318,7 +318,7 @@ def create_or_edit_comment(comment_body):
         pull_request.create_issue_comment(body=comment_body)
 
 
-def generate_output(is_note, file_path, file_line_start, file_line_end, description):
+def generate_output(is_note, file_path, file_line_start, file_line_end, description, prefix=""):
     """
     Generate a formatted output string based on the details of a code issue.
 
@@ -347,11 +347,11 @@ def generate_output(is_note, file_path, file_line_start, file_line_end, descript
         if TARGET_REPO_NAME != REPO_NAME:
             if file_path not in FILES_WITH_ISSUES:
                 try:
-                    with open(f"{file_path}", encoding="utf-8") as file:
+                    with open(f"{prefix}/{file_path}", encoding="utf-8") as file:
                         lines = file.readlines()
                         FILES_WITH_ISSUES[file_path] = lines
                 except FileNotFoundError:
-                    print(f"Error: The file '{file_path}' was not found.")
+                    print(f"Error: The file '{prefix}/{file_path}' was not found.")
 
             modified_content = FILES_WITH_ISSUES[file_path][
                 file_line_start - 1 : file_line_end - 1

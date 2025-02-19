@@ -173,7 +173,7 @@ fi
 
 add-apt-repository -y "${REPO_NAME}"
 apt-get update
-PKG="clang-$LLVM_VERSION lldb-$LLVM_VERSION lld-$LLVM_VERSION clangd-$LLVM_VERSION"
+PKG="clang-$LLVM_VERSION lldb-$LLVM_VERSION lld-$LLVM_VERSION clangd-$LLVM_VERSION clang-tidy-$LLVM_VERSION clang-format-$LLVM_VERSION clang-tools-$LLVM_VERSION"
 if [[ $ALL -eq 1 ]]; then
     # same as in test-install.sh
     # No worries if we have dups
