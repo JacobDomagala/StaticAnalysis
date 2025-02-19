@@ -318,7 +318,9 @@ def create_or_edit_comment(comment_body):
         pull_request.create_issue_comment(body=comment_body)
 
 
-def generate_output(is_note, prefix_and_file_path, file_line_start, file_line_end, description):
+def generate_output(
+    is_note, prefix_and_file_path, file_line_start, file_line_end, description
+):
     """
     Generate a formatted output string based on the details of a code issue.
 
