@@ -1,4 +1,4 @@
-FROM jdomagala/static_analysis:latest
+FROM jhyry9docks/static_analysis:clang19
 
 WORKDIR /src
 
