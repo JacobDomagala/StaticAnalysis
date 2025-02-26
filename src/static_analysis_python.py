@@ -74,7 +74,7 @@ def create_comment_for_output(tool_output, files_changed_in_pr, output_to_consol
     list_of_issues = []
     per_issue_string = ""
 
-    utils.debug_print(f"PyLint output:\n{tool_output}")
+    utils.debug_print(f"PyLint output:\n{tool_output}\n")
 
     for line in tool_output:
         file_path = line["path"]
@@ -105,7 +105,11 @@ def create_comment_for_output(tool_output, files_changed_in_pr, output_to_consol
             )
 
             new_line = utils.generate_output(
-                False, (utils.WORK_DIR, file_path), file_line_start, file_line_end, description
+                False,
+                (utils.WORK_DIR, file_path),
+                file_line_start,
+                file_line_end,
+                description,
             )
 
             if utils.check_for_char_limit(new_line):
