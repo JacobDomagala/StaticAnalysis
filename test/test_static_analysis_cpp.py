@@ -4,13 +4,13 @@ import sys
 import utils.helper_functions as utils
 
 try:
-    project_path = f"{os.sep}".join(os.path.abspath(__file__).split(os.sep)[:-2])
-    sys.path.append(project_path)
+    PROJECT_PATH = f"{os.sep}".join(os.path.abspath(__file__).split(os.sep)[:-2])
+    sys.path.append(PROJECT_PATH)
 except Exception as exception:
     print(f"Can not add project path to system path! Exiting!\nERROR: {exception}")
     raise SystemExit(1) from exception
 
-os.environ["GITHUB_WORKSPACE"] = f"{project_path}/test/utils/dummy_project"
+os.environ["GITHUB_WORKSPACE"] = f"{PROJECT_PATH}/test/utils/dummy_project"
 os.environ["INPUT_VERBOSE"] = "True"
 os.environ["INPUT_REPORT_PR_CHANGES_ONLY"] = "False"
 os.environ["INPUT_REPO"] = "RepoName"
