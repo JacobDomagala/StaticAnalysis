@@ -11,6 +11,11 @@ debug_print() {
     fi
 }
 
+if [ "$RUNNER_DEBUG" = "1" ]; then
+    export INPUT_VERBOSE="true"
+    debug_print "Runner is running in debug mode - enabling verbose output"
+fi
+
 print_to_console=${INPUT_FORCE_CONSOLE_PRINT}
 check_cpp=$( [ "${INPUT_LANGUAGE,,}" = "c++" ] && echo "true" || echo "false" )
 check_python=$( [ "${INPUT_LANGUAGE,,}" = "python" ] && echo "true" || echo "false" )

@@ -14,10 +14,9 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: CodeQuality
-        uses: JacobDomagala/StaticAnalysis@master
+        uses: JacobDomagala/StaticAnalysis@121-runpy-potential-for-unpredictable-behavior
         with:
           language: "Python"
-          verbose: True
           pylint_args: "--rcfile=.pylintrc --recursive=true"
           python_dirs: "src test"
           exclude_dir: "test/utils/"
