@@ -9,7 +9,7 @@ on:
 jobs:
   check:
     name: Run Linter
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v3
 
@@ -17,7 +17,6 @@ jobs:
         uses: JacobDomagala/StaticAnalysis@master
         with:
           language: "Python"
-          verbose: True
           pylint_args: "--rcfile=.pylintrc --recursive=true"
           python_dirs: "src test"
           exclude_dir: "test/utils/"
