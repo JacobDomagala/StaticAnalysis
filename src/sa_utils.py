@@ -345,6 +345,11 @@ def generate_output(
       FILES_WITH_ISSUES, and SHA which should be set before calling this function.
     """
 
+    # We assume that the file is not empty!
+    # In case the tool will reffer to line 0 (meaning entire file)
+    file_line_start = max(1, file_line_start)
+    file_line_end = max(1, file_line_end)
+
     if not is_note:
         prefix, file_path = prefix_and_file_path
         if TARGET_REPO_NAME != REPO_NAME:
