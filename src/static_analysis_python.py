@@ -2,7 +2,7 @@ import os
 import sys
 import json
 
-from . import sa_utils as utils
+from src import sa_utils as utils
 
 
 def parse_pylint_json(
