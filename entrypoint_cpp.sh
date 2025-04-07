@@ -14,7 +14,7 @@ CPPCHECK_ARGS="${INPUT_CPPCHECK_ARGS//$'\n'/}"
 
 cd build
 
-if [ -z "$INPUT_COMPILE_COMMANDS" ]; then
+if [ -n "$INPUT_COMPILE_COMMANDS" ]; then
     debug_print "Using compile_commands.json file."
     export INPUT_USE_CMAKE=false
 fi
@@ -55,7 +55,7 @@ num_proc=$(nproc)
 if [ -z "$files_to_check" ]; then
     echo "No files to check"
 else
-    if [ "$INPUT_USE_CMAKE" = true ] || [ -z "$INPUT_COMPILE_COMMANDS" ]; then
+    if [ "$INPUT_USE_CMAKE" = true ] || [ -n "$INPUT_COMPILE_COMMANDS" ]; then
         # Determine path to compile_commands.json
         if [ -n "$INPUT_COMPILE_COMMANDS" ]; then
             compile_commands_path="$INPUT_COMPILE_COMMANDS"
