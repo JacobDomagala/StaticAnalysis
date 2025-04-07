@@ -58,7 +58,7 @@ else
     if [ "$INPUT_USE_CMAKE" = true ] || [ -n "$INPUT_COMPILE_COMMANDS" ]; then
         # Determine path to compile_commands.json
         if [ -n "$INPUT_COMPILE_COMMANDS" ]; then
-            compile_commands_path="$INPUT_COMPILE_COMMANDS"
+            compile_commands_path="/github/workspace/$INPUT_COMPILE_COMMANDS"
         else
             compile_commands_path="compile_commands.json"
         fi
