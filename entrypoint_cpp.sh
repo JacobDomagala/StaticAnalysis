@@ -12,12 +12,15 @@ common_ancestor=${common_ancestor:-""}
 CLANG_TIDY_ARGS="${INPUT_CLANG_TIDY_ARGS//$'\n'/}"
 CPPCHECK_ARGS="${INPUT_CPPCHECK_ARGS//$'\n'/}"
 
-cd build
+
 
 if [ -n "$INPUT_COMPILE_COMMANDS" ]; then
-    debug_print "Using compile_commands.json file - use_cmake input is not being used!"
+    debug_print "Using compile_commands.json file ($INPUT_COMPILE_COMMANDS) - use_cmake input is not being used!"
     export INPUT_USE_CMAKE=false
+    python3 /src/patch_compile_commands.py "/github/workspace/$INPUT_COMPILE_COMMANDS" "$(pwd)"
 fi
+
+cd build
 
 if [ "$INPUT_REPORT_PR_CHANGES_ONLY" = true ]; then
   if [ -z "$preselected_files" ]; then
@@ -60,6 +63,7 @@ else
         if [ -n "$INPUT_COMPILE_COMMANDS" ]; then
             compile_commands_path="/github/workspace/$INPUT_COMPILE_COMMANDS"
             compile_commands_dir=$(dirname "$compile_commands_path")
+
         else
             compile_commands_path="compile_commands.json"
             compile_commands_dir=$(pwd)
