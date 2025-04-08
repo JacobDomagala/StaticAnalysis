@@ -15,7 +15,7 @@ CPPCHECK_ARGS="${INPUT_CPPCHECK_ARGS//$'\n'/}"
 cd build
 
 if [ -n "$INPUT_COMPILE_COMMANDS" ]; then
-    debug_print "Using compile_commands.json file."
+    debug_print "Using compile_commands.json file - use_cmake input is not being used!"
     export INPUT_USE_CMAKE=false
 fi
 
@@ -59,8 +59,10 @@ else
         # Determine path to compile_commands.json
         if [ -n "$INPUT_COMPILE_COMMANDS" ]; then
             compile_commands_path="/github/workspace/$INPUT_COMPILE_COMMANDS"
+            compile_commands_dir=$(dirname "$compile_commands_path")
         else
             compile_commands_path="compile_commands.json"
+            compile_commands_dir=$(pwd)
         fi
 
         for file in $files_to_check; do
@@ -79,8 +81,8 @@ else
         cat cppcheck_*.txt > cppcheck.txt
 
         # Excludes for clang-tidy are handled in python script
-        debug_print "Running run-clang-tidy-20 $CLANG_TIDY_ARGS -p $(pwd) $files_to_check >>clang_tidy.txt 2>&1"
-        eval run-clang-tidy-20 "$CLANG_TIDY_ARGS" -p "$(pwd)" "$files_to_check" > clang_tidy.txt 2>&1 || true
+        debug_print "Running run-clang-tidy-20 $CLANG_TIDY_ARGS -p $compile_commands_dir $files_to_check >>clang_tidy.txt 2>&1"
+        eval run-clang-tidy-20 "$CLANG_TIDY_ARGS" -p "$compile_commands_dir" "$files_to_check" > clang_tidy.txt 2>&1 || true
 
     else
         # Without compile_commands.json
