@@ -85,6 +85,7 @@ fi
 debug_print "GITHUB_WORKSPACE = ${GITHUB_WORKSPACE} INPUT_EXCLUDE_DIR = ${INPUT_EXCLUDE_DIR} use_extra_directory = ${use_extra_directory}"
 
 mkdir -p build
+chown -R "$(stat -c %u "$GITHUB_WORKSPACE")":"$(stat -c %g "$GITHUB_WORKSPACE")" build
 
 if [ -n "$INPUT_INIT_SCRIPT" ]; then
     # Use $original_root_dir here, just in case we're running in pull_request_target
