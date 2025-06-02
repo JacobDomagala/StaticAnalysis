@@ -12,12 +12,13 @@ common_ancestor=${common_ancestor:-""}
 CLANG_TIDY_ARGS="${INPUT_CLANG_TIDY_ARGS//$'\n'/}"
 CPPCHECK_ARGS="${INPUT_CPPCHECK_ARGS//$'\n'/}"
 
-
-
 if [ -n "$INPUT_COMPILE_COMMANDS" ]; then
     debug_print "Using compile_commands.json file ($INPUT_COMPILE_COMMANDS) - use_cmake input is not being used!"
     export INPUT_USE_CMAKE=false
-    python3 /src/patch_compile_commands.py "/github/workspace/$INPUT_COMPILE_COMMANDS" "$(pwd)"
+    if [ "$INPUT_COMPILE_COMMANDS_REPLACE_PREFIX" = true ]; then
+        debug_print "Replacing prefix inside user generated compile_commands.json file!"
+        python3 /src/patch_compile_commands.py "/github/workspace/$INPUT_COMPILE_COMMANDS"
+    fi
 fi
 
 cd build
