@@ -146,6 +146,8 @@ jobs:
 | `use_cmake`             | Determines wether CMake should be used to generate compile_commands.json file | `true` |
 | `cmake_args`            | Additional CMake arguments |`<empty>`|
 | `force_console_print`   | Output the action result to console, instead of creating the comment |`false`|
+| `compile_commands`   | User generated compile_commands.json |`<empty>`|
+| `compile_commands_replace_prefix`   | Whether we should replace the prefix of files inside user generated compile_commands.json file |`false`|
 
 **NOTE: `apt_pckgs` will run before `init_script`, just in case you need some packages installed before running the script**
 
