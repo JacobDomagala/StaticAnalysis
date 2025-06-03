@@ -4,58 +4,84 @@
 
 # Static Analysis
 
-This GitHub action is designed for C++/Python projects and performs static analysis using:
-- [cppcheck](http://cppcheck.sourceforge.net/) and [clang-tidy](https://clang.llvm.org/extra/clang-tidy/) for C++
-- [pylint](https://pylint.readthedocs.io/en/latest/index.html) for Python
+This GitHub Action is designed for **C++ and Python projects** and performs static analysis using:
+* [cppcheck](http://cppcheck.sourceforge.net/) and [clang-tidy](https://clang.llvm.org/extra/clang-tidy/) for C++
+* [pylint](https://pylint.readthedocs.io/en/latest/index.html) for Python
 
 It can be triggered by push and pull requests.
 
-For further information and guidance about setup and various inputs, please see sections dedicated to each language ([**C++**](https://github.com/JacobDomagala/StaticAnalysis?tab=readme-ov-file#c) and [**Python**](https://github.com/JacobDomagala/StaticAnalysis?tab=readme-ov-file#python))
+For further information and guidance on setup and various inputs, please see the sections dedicated to each language ([**C++**](https://github.com/JacobDomagala/StaticAnalysis?tab=readme-ov-file#c) and [**Python**](https://github.com/JacobDomagala/StaticAnalysis?tab=readme-ov-file#python)).
 
-## Pull Request comment
+---
 
-Created comment will contain code snippets with the issue description. When this action is run for the first time, the comment with the initial result will be created for current Pull Request. Consecutive runs will edit this comment with updated status.
+## Pull Request Comment
 
-Note that it's possible that the amount of issues detected can make the comment's body to be greater than the GitHub's character limit per PR comment (which is 65536). In that case, the created comment will contain only the issues found up to that point, and the information that the limit of characters was reached.
+The created comment will include code snippets and issue descriptions. When this action runs for the first time on a pull request, it creates a comment with the initial analysis results. Subsequent runs will update this same comment with the latest status.
 
-## Output example (C++)
+Note that the number of detected issues might cause the comment's body to exceed GitHub's character limit (currently 65,536 characters) per PR comment. If this occurs, the comment will contain issues up to the limit and indicate that the character limit was reached.
+
+---
+
+## Output Example (C++)
 ![output](https://github.com/JacobDomagala/StaticAnalysis/wiki/output_example.png)
 
-## Non Pull Request
+---
 
-For non Pull Requests, the output will be printed to GitHub's output console. This behaviour can also be forced via `force_console_print` input.
+## Non-Pull Request Events
 
-## Output example (C++)
+For non-pull request events, the output will be printed directly to the GitHub Actions console. This behavior can also be forced using the `force_console_print` input.
+
+---
+
+## Output Example (C++)
 ![output](https://github.com/JacobDomagala/StaticAnalysis/wiki/console_output_example.png)
 
-
-<br><br>
+---
 
 # C++
-While it's recommended that your project is CMake-based, it's not required (see the [**Inputs**](https://github.com/JacobDomagala/StaticAnalysis#inputs) section below). We also recommend using a ```.clang-tidy``` file in your root directory. If your project requires additional packages to be installed, you can use the `apt_pckgs` and/or `init_script` input variables to install them (see the [**Workflow example**](https://github.com/JacobDomagala/StaticAnalysis#workflow-example) or [**Inputs**](https://github.com/JacobDomagala/StaticAnalysis#inputs) sections below). If your repository allows contributions from forks, you must use this Action with the `pull_request_target` trigger event, as the GitHub API won't allow PR comments otherwise.
+
+While it's recommended that your project is CMake-based, it's not strictly required (see the [**Inputs**](https://github.com/JacobDomagala/StaticAnalysis#inputs) section below). We also recommend using a `.clang-tidy` file in your repository's root directory. If your project requires additional packages, you can install them using the `apt_pckgs` and/or `init_script` input variables (see the [**Workflow example**](https://github.com/JacobDomagala/StaticAnalysis#workflow-example) or [**Inputs**](https://github.com/JacobDomagala/StaticAnalysis#inputs) sections below). If your repository allows contributions from forks, you must use this Action with the `pull_request_target` trigger event, as the GitHub API won't allow PR comments otherwise.
 
 By default, **cppcheck** runs with the following flags:
 ```--enable=all --suppress=missingIncludeSystem --inline-suppr --inconclusive```
 You can use the `cppcheck_args` input to set your own flags.
 
-**clang-tidy** looks for the ```.clang-tidy``` file in your repository, but you can also set checks using the `clang_tidy_args` input.
+**Clang-Tidy** looks for a `.clang-tidy` file in your repository, but you can also specify checks using the `clang_tidy_args` input.
 
+---
 
-## Workflow example
+## Using a Custom `compile_commands.json` File
+
+You can use a pre-generated `compile_commands.json` file with the `compile_commands` input. This is incredibly useful when you need **more control over your compilation database**, whether you're working with a complex build system, have a specific build configuration, or simply want to reuse a file generated elsewhere.
+
+When using a custom `compile_commands.json` with this GitHub Action, you'll encounter a common technical challenge: a **mismatch between the directory where the file was originally generated and the path used by this GitHub Action** (specifically, inside its Docker container). This means the source file paths listed in your `compile_commands.json` might not be valid from the container's perspective.
+
+To resolve this, you have two main options:
+
+* **Manually replace the prefixes** in your `compile_commands.json` file (for example, change `/original/path/to/repo` to `/github/workspace`). This method gives you complete control over the path adjustments.
+* **Let the action try to replace the prefixes for you.** For simpler directory structures, you can enable this convenient feature using the `compile_commands_replace_prefix` input.
+
+---
+
+Beyond path adjustments, another important consideration when using a custom `compile_commands.json` file is **dependency resolution** for your static analysis tools. `clang-tidy` performs deep semantic analysis, which means it requires all necessary include files and headers to be found and accessible during its run. If these dependencies are missing or incorrectly referenced, `clang-tidy` may stop analyzing the affected file, leading to incomplete results. In contrast, `cppcheck` is generally more resilient to missing include paths, as it primarily focuses on lexical and syntactic analysis rather than full semantic parsing.
+
+---
+
+## Workflow Example
 
 ```yml
-name: Static analysis
+name: Static Analysis
 
 on:
-  # Will run on push when merging to 'branches'. The output will be shown in the console
+  # Runs on 'push' events to specified branches. Output will be printed to the console.
   push:
     branches:
       - develop
       - master
       - main
 
-  # 'pull_request_target' allows this Action to also run on forked repositories
-  # The output will be shown in PR comments (unless the 'force_console_print' flag is used)
+  # Uses 'pull_request_target' to allow analysis of forked repositories.
+  # Output will be shown in PR comments (unless 'force_console_print' is used).
   pull_request_target:
     branches:
       - "*"
@@ -78,10 +104,10 @@ jobs:
         echo \"Hello from the init script! First arg=\${root_dir} second arg=\${build_dir}\"
 
         add-apt-repository ppa:oibaf/graphics-drivers
-        apt update && apt upgrade
+        apt update && apt upgrade -y
         apt install -y libvulkan1 mesa-vulkan-drivers vulkan-utils" > init_script.sh
 
-    - name: Run static analysis
+    - name: Run Static Analysis
       uses: JacobDomagala/StaticAnalysis@master
       with:
         language: c++
@@ -91,16 +117,16 @@ jobs:
 
         use_cmake: true
 
-        # Additional apt packages that need to be installed before running Cmake
+        # Additional apt packages required before running CMake
         apt_pckgs: software-properties-common libglu1-mesa-dev freeglut3-dev mesa-common-dev
 
-        # Additional script that will be run (sourced) AFTER 'apt_pckgs' and before running Cmake
+        # Optional shell script that runs AFTER 'apt_pckgs' and before CMake
         init_script: init_script.sh
 
-        # (Optional) clang-tidy args
+        # Optional Clang-Tidy arguments
         clang_tidy_args: -checks='*,fuchsia-*,google-*,zircon-*,abseil-*,modernize-use-trailing-return-type'
 
-        # (Optional) cppcheck args
+        # Optional Cppcheck arguments
         cppcheck_args: --enable=all --suppress=missingIncludeSystem
 ```
 
@@ -120,6 +146,8 @@ jobs:
 | `use_cmake`             | Determines wether CMake should be used to generate compile_commands.json file | `true` |
 | `cmake_args`            | Additional CMake arguments |`<empty>`|
 | `force_console_print`   | Output the action result to console, instead of creating the comment |`false`|
+| `compile_commands`   | User generated compile_commands.json |`<empty>`|
+| `compile_commands_replace_prefix`   | Whether we should replace the prefix of files inside user generated compile_commands.json file |`false`|
 
 **NOTE: `apt_pckgs` will run before `init_script`, just in case you need some packages installed before running the script**
 

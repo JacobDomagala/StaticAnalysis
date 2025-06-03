@@ -32,5 +32,5 @@ jobs:
           use-mypy: true
           use-isort: false
           extra-mypy-options: "--ignore-missing-imports --show-error-codes"
-          extra-flake8-options: "--max-line-length=120 --ignore=E203,E402"
-          extra-pycodestyle-options: "--max-line-length=120 --ignore=E203,E402"
+          extra-flake8-options: "--max-line-length=120 --ignore=E203,E402,W503"
+          extra-pycodestyle-options: "--max-line-length=120 --ignore=E203,E402,W503"

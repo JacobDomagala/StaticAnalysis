@@ -24,6 +24,11 @@ inputs:
     description: 'Directories (space separated) which should be excluded from the raport'
   apt_pckgs:
     description: 'Additional (space separated) packages that need to be installed in order for project to compile'
+  compile_commands:
+    description: 'User generated compile_commands.json'
+  compile_commands_replace_prefix:
+    description: 'Whether we should replace the prefix of files inside user generated compile_commands.json file'
+    default: false
   init_script:
     description: |
       'Optional shell script that will be run before configuring project (i.e. running CMake command).'

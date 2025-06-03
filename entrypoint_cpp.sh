@@ -12,6 +12,15 @@ common_ancestor=${common_ancestor:-""}
 CLANG_TIDY_ARGS="${INPUT_CLANG_TIDY_ARGS//$'\n'/}"
 CPPCHECK_ARGS="${INPUT_CPPCHECK_ARGS//$'\n'/}"
 
+if [ -n "$INPUT_COMPILE_COMMANDS" ]; then
+    debug_print "Using compile_commands.json file ($INPUT_COMPILE_COMMANDS) - use_cmake input is not being used!"
+    export INPUT_USE_CMAKE=false
+    if [ "$INPUT_COMPILE_COMMANDS_REPLACE_PREFIX" = true ]; then
+        debug_print "Replacing prefix inside user generated compile_commands.json file!"
+        python3 /src/patch_compile_commands.py "/github/workspace/$INPUT_COMPILE_COMMANDS"
+    fi
+fi
+
 cd build
 
 if [ "$INPUT_REPORT_PR_CHANGES_ONLY" = true ]; then
@@ -50,7 +59,17 @@ num_proc=$(nproc)
 if [ -z "$files_to_check" ]; then
     echo "No files to check"
 else
-    if [ "$INPUT_USE_CMAKE" = true ]; then
+    if [ "$INPUT_USE_CMAKE" = true ] || [ -n "$INPUT_COMPILE_COMMANDS" ]; then
+        # Determine path to compile_commands.json
+        if [ -n "$INPUT_COMPILE_COMMANDS" ]; then
+            compile_commands_path="/github/workspace/$INPUT_COMPILE_COMMANDS"
+            compile_commands_dir=$(dirname "$compile_commands_path")
+
+        else
+            compile_commands_path="compile_commands.json"
+            compile_commands_dir=$(pwd)
+        fi
+
         for file in $files_to_check; do
             exclude_arg=""
             if [ -n "$INPUT_EXCLUDE_DIR" ]; then
@@ -60,23 +79,23 @@ else
             # Replace '/' with '_'
             file_name=$(echo "$file" | tr '/' '_')
 
-            debug_print "Running cppcheck --project=compile_commands.json $CPPCHECK_ARGS --file-filter=$file --output-file=cppcheck_$file_name.txt $exclude_arg"
-            eval cppcheck --project=compile_commands.json "$CPPCHECK_ARGS" --file-filter="$file" --output-file="cppcheck_$file_name.txt" "$exclude_arg" || true
+            debug_print "Running cppcheck --project=$compile_commands_path $CPPCHECK_ARGS --file-filter=$file --output-file=cppcheck_$file_name.txt $exclude_arg"
+            eval cppcheck --project="$compile_commands_path" "$CPPCHECK_ARGS" --file-filter="$file" --output-file="cppcheck_$file_name.txt" "$exclude_arg" || true
         done
 
         cat cppcheck_*.txt > cppcheck.txt
 
         # Excludes for clang-tidy are handled in python script
-        debug_print "Running run-clang-tidy-20 $CLANG_TIDY_ARGS -p $(pwd) $files_to_check >>clang_tidy.txt 2>&1"
-        eval run-clang-tidy-20 "$CLANG_TIDY_ARGS" -p "$(pwd)" "$files_to_check" >clang_tidy.txt 2>&1 || true
+        debug_print "Running run-clang-tidy-20 $CLANG_TIDY_ARGS -p $compile_commands_dir $files_to_check >>clang_tidy.txt 2>&1"
+        eval run-clang-tidy-20 "$CLANG_TIDY_ARGS" -p "$compile_commands_dir" "$files_to_check" > clang_tidy.txt 2>&1 || true
 
     else
-        # Excludes for clang-tidy are handled in python script
+        # Without compile_commands.json
         debug_print "Running cppcheck -j $num_proc $files_to_check $CPPCHECK_ARGS --output-file=cppcheck.txt ..."
         eval cppcheck -j "$num_proc" "$files_to_check" "$CPPCHECK_ARGS" --output-file=cppcheck.txt || true
 
         debug_print "Running run-clang-tidy-20 $CLANG_TIDY_ARGS $files_to_check >>clang_tidy.txt 2>&1"
-        eval run-clang-tidy-20 "$CLANG_TIDY_ARGS" "$files_to_check" >clang_tidy.txt 2>&1 || true
+        eval run-clang-tidy-20 "$CLANG_TIDY_ARGS" "$files_to_check" > clang_tidy.txt 2>&1 || true
     fi
 
     cd /
