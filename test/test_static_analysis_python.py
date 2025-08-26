@@ -2,6 +2,8 @@ import json
 import unittest
 import os
 import sys
+import tempfile
+from pathlib import Path
 
 try:
     PROJECT_PATH = f"{os.sep}".join(os.path.abspath(__file__).split(os.sep)[:-2])
@@ -17,7 +19,7 @@ os.environ["INPUT_REPO"] = "RepoName"
 os.environ["GITHUB_SHA"] = "1234"
 os.environ["INPUT_COMMENT_TITLE"] = "title"
 
-from src import static_analysis_python
+from src import static_analysis_python, get_files_to_check
 
 
 class TestStaticAnalysisPython(unittest.TestCase):
@@ -207,6 +209,40 @@ class TestStaticAnalysisPython(unittest.TestCase):
         print(result)
 
         self.assertEqual(result, (expected, 9))
+
+    def test_get_files_to_check_respects_python_dirs(self):
+        """
+        Test that python_dirs are used to scope discovered files.
+        """
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            src_dir = Path(temp_dir) / "src"
+            test_dir = Path(temp_dir) / "test"
+            scripts_dir = Path(temp_dir) / "scripts"
+            src_dir.mkdir()
+            test_dir.mkdir()
+            scripts_dir.mkdir()
+
+            main_file = src_dir / "main.py"
+            test_file = test_dir / "test_main.py"
+            helper_file = scripts_dir / "helper.py"
+            main_file.write_text("x = 1\n", encoding="utf-8")
+            test_file.write_text("x = 2\n", encoding="utf-8")
+            helper_file.write_text("x = 3\n", encoding="utf-8")
+
+            result = get_files_to_check.get_files_to_check(
+                temp_dir, None, [], "python", "src test"
+            )
+            result_files = sorted(filter(None, result.split(" ")))
+            expected_files = sorted(
+                [str(main_file.resolve()), str(test_file.resolve())]
+            )
+            self.assertEqual(result_files, expected_files)
+
+            result = get_files_to_check.get_files_to_check(
+                temp_dir, None, ["src/main.py", "scripts/helper.py"], "python", "src"
+            )
+            self.assertEqual(result, str(main_file.resolve()))
 
 
 if __name__ == "__main__":
