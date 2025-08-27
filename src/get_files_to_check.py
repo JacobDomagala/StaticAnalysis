@@ -10,7 +10,27 @@ def _normalize_path(path_in, base_directory):
 
 
 def _matches_include_prefixes(path_in, include_prefixes):
-    return len(include_prefixes) == 0 or path_in.startswith(tuple(include_prefixes))
+    return (not include_prefixes) or path_in.startswith(tuple(include_prefixes))
+
+
+def _build_prefixes(directory, raw_prefixes):
+    if not raw_prefixes:
+        return []
+    return [_normalize_path(prefix, directory) for prefix in raw_prefixes.split()]
+
+
+def _get_supported_extensions(lang):
+    if lang == "c++":
+        return (".h", ".hpp", ".hcc", ".c", ".cc", ".cpp", ".cxx")
+    if lang == "python":
+        return ".py"
+    raise RuntimeError(f"Unknown language {lang}")
+
+
+def _normalize_preselected(preselected_files, directory):
+    if isinstance(preselected_files, str):
+        preselected_files = preselected_files.split()
+    return [_normalize_path(file_path, directory) for file_path in preselected_files]
 
 
 def get_files_to_check(
@@ -32,29 +52,13 @@ def get_files_to_check(
     """
 
     directory = str(Path(directory_in).resolve())
-    exclude_prefixes = [f"{directory}/build"]
-
-    if excludes_in is not None:
-        excludes_list = excludes_in.split()
-        for exclude in excludes_list:
-            exclude_prefixes.append(_normalize_path(exclude, directory))
-
-    include_prefixes = []
-    if include_dirs_in:
-        include_dirs_list = include_dirs_in.split()
-        for include_dir in include_dirs_list:
-            include_prefixes.append(_normalize_path(include_dir, directory))
-
-    if lang == "c++":
-        supported_extensions = (".h", ".hpp", ".hcc", ".c", ".cc", ".cpp", ".cxx")
-    elif lang == "python":
-        supported_extensions = ".py"
-    else:
-        raise RuntimeError(f"Unknown language {lang}")
+    exclude_prefixes = [f"{directory}/build", *_build_prefixes(directory, excludes_in)]
+    include_prefixes = _build_prefixes(directory, include_dirs_in)
+    supported_extensions = _get_supported_extensions(lang)
 
     all_files = []
 
-    if len(preselected_files) == 0:
+    if not preselected_files:
         for path in Path(directory).rglob("*.*"):
             path_ = str(path.resolve())
             if (
@@ -64,15 +68,13 @@ def get_files_to_check(
             ):
                 all_files.append(path_)
     else:
-        if isinstance(preselected_files, str):
-            preselected_files = preselected_files.split()
-
-        for file in preselected_files:
-            file = _normalize_path(file, directory)
-            if not file.startswith(tuple(exclude_prefixes)) and _matches_include_prefixes(
-                file, include_prefixes
+        for file_path in _normalize_preselected(preselected_files, directory):
+            if not file_path.startswith(
+                tuple(exclude_prefixes)
+            ) and _matches_include_prefixes(
+                file_path, include_prefixes
             ):
-                all_files.append(file)
+                all_files.append(file_path)
 
     return " ".join(all_files)
 
