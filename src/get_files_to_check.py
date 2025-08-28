@@ -71,9 +71,7 @@ def get_files_to_check(
         for file_path in _normalize_preselected(preselected_files, directory):
             if not file_path.startswith(
                 tuple(exclude_prefixes)
-            ) and _matches_include_prefixes(
-                file_path, include_prefixes
-            ):
+            ) and _matches_include_prefixes(file_path, include_prefixes):
                 all_files.append(file_path)
 
     return " ".join(all_files)
