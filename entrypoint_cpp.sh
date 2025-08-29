@@ -46,13 +46,25 @@ if [ -z "$INPUT_EXCLUDE_DIR" ]; then
     files_to_check=$(python3 /src/get_files_to_check.py -dir="$GITHUB_WORKSPACE" -preselected="$preselected_files" -lang="c++")
     debug_print "Running: files_to_check=python3 /src/get_files_to_check.py -dir=\"$GITHUB_WORKSPACE\" -preselected=\"$preselected_files\" -lang=\"c++\")"
 else
-    files_to_check=$(python3 /src/get_files_to_check.py -exclude="$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR" -dir="$GITHUB_WORKSPACE" -preselected="$preselected_files" -lang="c++")
-    debug_print "Running: files_to_check=python3 /src/get_files_to_check.py -exclude=\"$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR\" -dir=\"$GITHUB_WORKSPACE\" -preselected=\"$preselected_files\" -lang=\"c++\")"
+    files_to_check=$(python3 /src/get_files_to_check.py -exclude="$INPUT_EXCLUDE_DIR" -dir="$GITHUB_WORKSPACE" -preselected="$preselected_files" -lang="c++")
+    debug_print "Running: files_to_check=python3 /src/get_files_to_check.py -exclude=\"$INPUT_EXCLUDE_DIR\" -dir=\"$GITHUB_WORKSPACE\" -preselected=\"$preselected_files\" -lang=\"c++\")"
 fi
 
 debug_print "Files to check = $files_to_check"
 debug_print "CPPCHECK_ARGS = $CPPCHECK_ARGS"
 debug_print "CLANG_TIDY_ARGS = $CLANG_TIDY_ARGS"
+
+cppcheck_exclude_args=""
+if [ -n "$INPUT_EXCLUDE_DIR" ]; then
+    read -r -a exclude_dirs <<< "$INPUT_EXCLUDE_DIR"
+    for exclude_dir in "${exclude_dirs[@]}"; do
+        exclude_path="$exclude_dir"
+        if [[ "$exclude_path" != /* ]]; then
+            exclude_path="$GITHUB_WORKSPACE/$exclude_path"
+        fi
+        cppcheck_exclude_args="$cppcheck_exclude_args -i$exclude_path"
+    done
+fi
 
 num_proc=$(nproc)
 
@@ -71,16 +83,12 @@ else
         fi
 
         for file in $files_to_check; do
-            exclude_arg=""
-            if [ -n "$INPUT_EXCLUDE_DIR" ]; then
-                exclude_arg="-i$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR"
-            fi
-
             # Replace '/' with '_'
             file_name=$(echo "$file" | tr '/' '_')
 
-            debug_print "Running cppcheck --project=$compile_commands_path $CPPCHECK_ARGS --file-filter=$file --output-file=cppcheck_$file_name.txt $exclude_arg"
-            eval cppcheck --project="$compile_commands_path" "$CPPCHECK_ARGS" --file-filter="$file" --output-file="cppcheck_$file_name.txt" "$exclude_arg" || true
+            debug_print "Running cppcheck --project=$compile_commands_path $CPPCHECK_ARGS --file-filter=$file --output-file=cppcheck_$file_name.txt $cppcheck_exclude_args"
+            cppcheck_cmd="cppcheck --project=\"$compile_commands_path\" $CPPCHECK_ARGS --file-filter=\"$file\" --output-file=\"cppcheck_$file_name.txt\"$cppcheck_exclude_args"
+            eval "$cppcheck_cmd" || true
         done
 
         cat cppcheck_*.txt > cppcheck.txt

@@ -208,6 +208,12 @@ def check_for_char_limit(incoming_line):
     return (CURRENT_COMMENT_LENGTH + len(incoming_line)) <= COMMENT_MAX_SIZE
 
 
+def _normalize_excluded_dir(path_in):
+    if os.path.isabs(path_in):
+        return os.path.realpath(path_in)
+    return os.path.realpath(f"{WORK_DIR}/{path_in}")
+
+
 def is_excluded_dir(line):
     """
     Determines if a given line is from a directory that should be excluded from processing.
@@ -219,17 +225,16 @@ def is_excluded_dir(line):
         bool: True if the line is from a directory that should be excluded, False otherwise.
     """
 
-    # In future this could be multiple different directories
     exclude_dir = os.getenv("INPUT_EXCLUDE_DIR")
     if not exclude_dir:
         return False
 
-    excluded_dir = f"{WORK_DIR}/{exclude_dir}"
-    debug_print(
-        f"{line} and {excluded_dir} with result {line.startswith(excluded_dir)}"
-    )
+    excluded_dirs = [_normalize_excluded_dir(path) for path in exclude_dir.split()]
+    result = any(line.startswith(excluded_dir) for excluded_dir in excluded_dirs)
 
-    return line.startswith(excluded_dir)
+    debug_print(f"{line} and {excluded_dirs} with result {result}")
+
+    return result
 
 
 def get_file_line_end(file_in, file_line_start_in):

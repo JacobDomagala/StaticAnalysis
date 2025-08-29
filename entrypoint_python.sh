@@ -18,8 +18,8 @@ if [ -z "$INPUT_EXCLUDE_DIR" ]; then
     debug_print "Running: files_to_check=\$(python3 /src/get_files_to_check.py -dir=\"$GITHUB_WORKSPACE\" -include=\"$INPUT_PYTHON_DIRS\" -preselected=\"$preselected_files\" -lang=\"python\")"
     files_to_check=$(python3 /src/get_files_to_check.py -dir="$GITHUB_WORKSPACE" -include="$INPUT_PYTHON_DIRS" -preselected="$preselected_files" -lang="python")
 else
-    debug_print "Running: files_to_check=\$(python3 /src/get_files_to_check.py -exclude=\"$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR\" -dir=\"$GITHUB_WORKSPACE\" -include=\"$INPUT_PYTHON_DIRS\" -preselected=\"$preselected_files\" -lang=\"python\")"
-    files_to_check=$(python3 /src/get_files_to_check.py -exclude="$GITHUB_WORKSPACE/$INPUT_EXCLUDE_DIR" -dir="$GITHUB_WORKSPACE" -include="$INPUT_PYTHON_DIRS" -preselected="$preselected_files" -lang="python")
+    debug_print "Running: files_to_check=\$(python3 /src/get_files_to_check.py -exclude=\"$INPUT_EXCLUDE_DIR\" -dir=\"$GITHUB_WORKSPACE\" -include=\"$INPUT_PYTHON_DIRS\" -preselected=\"$preselected_files\" -lang=\"python\")"
+    files_to_check=$(python3 /src/get_files_to_check.py -exclude="$INPUT_EXCLUDE_DIR" -dir="$GITHUB_WORKSPACE" -include="$INPUT_PYTHON_DIRS" -preselected="$preselected_files" -lang="python")
 fi
 
 debug_print "Files to check = $files_to_check"

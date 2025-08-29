@@ -210,6 +210,7 @@ class TestStaticAnalysisCpp(unittest.TestCase):
             "",
             "c++",
         )
+        self.assertEqual(to_list_and_sort(result), expected)
 
         # Preselected files present
         expected = [f"{pwd}/utils/dummy_project/DummyFile.cpp"]
@@ -219,6 +220,7 @@ class TestStaticAnalysisCpp(unittest.TestCase):
             f"{pwd}/utils/dummy_project/DummyFile.cpp {pwd}/utils/dummy_project/exclude_dir_1/ExcludedFile1.hpp",
             "c++",
         )
+        self.assertEqual(to_list_and_sort(result), expected)
 
 
 if __name__ == "__main__":
