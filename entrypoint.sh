@@ -66,8 +66,8 @@ if [ "$INPUT_REPORT_PR_CHANGES_ONLY" = true ]; then
     common_ancestor=$(git merge-base origin/"$GITHUB_BASE_REF" "origin/$GITHUB_HEAD_REF")
     debug_print "Common ancestor: $common_ancestor"
     if [ "$check_cpp" = "true" ]; then
-        preselected_files="$(git diff --name-only "$common_ancestor" "origin/$GITHUB_HEAD_REF" | grep -E '\.(c|cpp|h|hpp)$')" || true
-        output_string="No (C/C++) files changed in the PR! Only files ending with .c, .cpp, .h, or .hpp are considered."
+        preselected_files="$(git diff --name-only "$common_ancestor" "origin/$GITHUB_HEAD_REF" | grep -E '\.(c|cc|cpp|cxx|h|hpp|hcc)$')" || true
+        output_string="No (C/C++) files changed in the PR! Only files ending with .c, .cc, .cpp, .cxx, .h, .hpp, or .hcc are considered."
     fi
 
     if [ "$check_python" = "true" ]; then
