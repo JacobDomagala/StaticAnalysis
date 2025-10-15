@@ -51,6 +51,7 @@ jobs:
           git clone "https://${{secrets.TOKEN}}@github.com/JacobDomagala/TestRepo.git"
           cd TestRepo
           python ./switch_sa_branch.py -br=$BRANCH_NAME
+          sed -i "s|^      uses: JacobDomagala/StaticAnalysis@.*$|      uses: JacobDomagala/StaticAnalysis@${BRANCH_NAME}|" .github/workflows/test_python.yml
           if git diff --quiet && git diff --staged --quiet
           then
             git commit --allow-empty -m "Trigger StaticAnalysis test ($BRANCH_NAME)"

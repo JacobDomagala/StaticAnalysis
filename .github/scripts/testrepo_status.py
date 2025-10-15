@@ -15,12 +15,14 @@ from urllib.request import Request, urlopen
 
 API_ROOT = "https://api.github.com"
 TEST_REPO = "JacobDomagala/TestRepo"
-WORKFLOW_FILE = "test.yml"
+CPP_WORKFLOW_FILE = "test.yml"
+PYTHON_WORKFLOW_FILE = "test_python.yml"
 COMMENT_MARKER = "<!-- testrepo-integration-status -->"
-COMMENT_TITLES = (
+CPP_COMMENT_TITLES = (
     "SA CMake output",
     "SA non-CMake output",
 )
+PYTHON_COMMENT_TITLES = ("Python",)
 POLL_SECONDS = 15
 
 
@@ -97,7 +99,9 @@ def github_request(token: str, method: str, path: str, payload: Any = None) -> A
         ) from error
 
 
-def list_workflow_runs(token: str, event_name: str) -> list[dict[str, Any]]:
+def list_workflow_runs(
+    token: str, workflow_file: str, event_name: str
+) -> list[dict[str, Any]]:
     page = 1
     runs: list[dict[str, Any]] = []
     while True:
@@ -105,7 +109,7 @@ def list_workflow_runs(token: str, event_name: str) -> list[dict[str, Any]]:
         payload = github_request(
             token,
             "GET",
-            f"/repos/{TEST_REPO}/actions/workflows/{quote(WORKFLOW_FILE, safe='')}/runs?{query}",
+            f"/repos/{TEST_REPO}/actions/workflows/{quote(workflow_file, safe='')}/runs?{query}",
         )
         workflow_runs = payload.get("workflow_runs", [])
         runs.extend(workflow_runs)
@@ -146,8 +150,9 @@ def build_scenarios(args: argparse.Namespace) -> list[dict[str, Any]]:
     return [
         {
             "key": "push-main",
-            "label": "Push",
+            "label": "Push (C++)",
             "event": "push",
+            "workflow_file": CPP_WORKFLOW_FILE,
             "head_repo": TEST_REPO,
             "head_owner": "JacobDomagala",
             "head_branch": "main",
@@ -160,13 +165,14 @@ def build_scenarios(args: argparse.Namespace) -> list[dict[str, Any]]:
         },
         {
             "key": "test-static-analysis",
-            "label": "Pull Request",
+            "label": "Pull Request (C++)",
             "event": "pull_request_target",
+            "workflow_file": CPP_WORKFLOW_FILE,
             "head_repo": TEST_REPO,
             "head_owner": "JacobDomagala",
             "head_branch": "test-static-analysis",
             "head_sha": args.test_static_sha,
-            "comment_titles": list(COMMENT_TITLES),
+            "comment_titles": list(CPP_COMMENT_TITLES),
             "query_url": (
                 "https://github.com/JacobDomagala/TestRepo/actions/workflows/test.yml"
                 "?query=event%3Apull_request_target"
@@ -174,15 +180,61 @@ def build_scenarios(args: argparse.Namespace) -> list[dict[str, Any]]:
         },
         {
             "key": "test-branch-fork",
-            "label": "Fork Pull Request",
+            "label": "Fork Pull Request (C++)",
             "event": "pull_request_target",
+            "workflow_file": CPP_WORKFLOW_FILE,
             "head_repo": "JacobDTest/TestRepo",
             "head_owner": "JacobDTest",
             "head_branch": "test-branch-fork",
             "head_sha": args.fork_sha,
-            "comment_titles": list(COMMENT_TITLES),
+            "comment_titles": list(CPP_COMMENT_TITLES),
             "query_url": (
                 "https://github.com/JacobDomagala/TestRepo/actions/workflows/test.yml"
+                "?query=event%3Apull_request_target"
+            ),
+        },
+        {
+            "key": "push-main-python",
+            "label": "Push (Python)",
+            "event": "push",
+            "workflow_file": PYTHON_WORKFLOW_FILE,
+            "head_repo": TEST_REPO,
+            "head_owner": "JacobDomagala",
+            "head_branch": "main",
+            "head_sha": args.main_sha,
+            "comment_titles": [],
+            "query_url": (
+                "https://github.com/JacobDomagala/TestRepo/actions/workflows/test_python.yml"
+                "?query=event%3Apush+branch%3Amain"
+            ),
+        },
+        {
+            "key": "test-static-analysis-python",
+            "label": "Pull Request (Python)",
+            "event": "pull_request_target",
+            "workflow_file": PYTHON_WORKFLOW_FILE,
+            "head_repo": TEST_REPO,
+            "head_owner": "JacobDomagala",
+            "head_branch": "test-static-analysis",
+            "head_sha": args.test_static_sha,
+            "comment_titles": list(PYTHON_COMMENT_TITLES),
+            "query_url": (
+                "https://github.com/JacobDomagala/TestRepo/actions/workflows/test_python.yml"
+                "?query=event%3Apull_request_target"
+            ),
+        },
+        {
+            "key": "test-branch-fork-python",
+            "label": "Fork Pull Request (Python)",
+            "event": "pull_request_target",
+            "workflow_file": PYTHON_WORKFLOW_FILE,
+            "head_repo": "JacobDTest/TestRepo",
+            "head_owner": "JacobDTest",
+            "head_branch": "test-branch-fork",
+            "head_sha": args.fork_sha,
+            "comment_titles": list(PYTHON_COMMENT_TITLES),
+            "query_url": (
+                "https://github.com/JacobDomagala/TestRepo/actions/workflows/test_python.yml"
                 "?query=event%3Apull_request_target"
             ),
         },
@@ -313,15 +365,22 @@ def collect_status(args: argparse.Namespace) -> int:
     deadline = time.monotonic() + args.timeout_seconds
 
     while True:
-        runs_by_event = {
-            "push": list_workflow_runs(args.token, "push"),
-            "pull_request_target": list_workflow_runs(args.token, "pull_request_target"),
-        }
+        runs_by_workflow_and_event: dict[tuple[str, str], list[dict[str, Any]]] = {}
+        for scenario in scenarios:
+            cache_key = (scenario["workflow_file"], scenario["event"])
+            if cache_key not in runs_by_workflow_and_event:
+                runs_by_workflow_and_event[cache_key] = list_workflow_runs(
+                    args.token, scenario["workflow_file"], scenario["event"]
+                )
 
         all_ready = True
         for scenario in scenarios:
             run = find_matching_run(
-                runs_by_event[scenario["event"]], scenario, triggered_at
+                runs_by_workflow_and_event[
+                    (scenario["workflow_file"], scenario["event"])
+                ],
+                scenario,
+                triggered_at,
             )
             scenario["run"] = extract_run_metadata(run) if run else None
 
