@@ -66,12 +66,6 @@ jobs:
           git push -f
           echo "test_static_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-          # test PR (non CMake)
-          git checkout test-sa-without-cmake
-          git commit -as --amend --no-edit
-          git push -f
-          echo "test_without_cmake_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-
           # test pull_request_target
           git clone "https://${{secrets.TOKEN}}@github.com/JacobDTest/TestRepo.git"
           cd TestRepo
@@ -91,7 +85,6 @@ jobs:
             --triggered-at "${{ steps.trigger.outputs.triggered_at }}" \
             --main-sha "${{ steps.trigger.outputs.main_sha }}" \
             --test-static-sha "${{ steps.trigger.outputs.test_static_sha }}" \
-            --test-without-cmake-sha "${{ steps.trigger.outputs.test_without_cmake_sha }}" \
             --fork-sha "${{ steps.trigger.outputs.fork_sha }}" \
             --timeout-seconds 300 \
             --output "$RUNNER_TEMP/testrepo_started.json"
@@ -121,9 +114,8 @@ jobs:
             --triggered-at "${{ steps.trigger.outputs.triggered_at }}" \
             --main-sha "${{ steps.trigger.outputs.main_sha }}" \
             --test-static-sha "${{ steps.trigger.outputs.test_static_sha }}" \
-            --test-without-cmake-sha "${{ steps.trigger.outputs.test_without_cmake_sha }}" \
             --fork-sha "${{ steps.trigger.outputs.fork_sha }}" \
-            --timeout-seconds 1800 \
+            --timeout-seconds 600 \
             --output "$RUNNER_TEMP/testrepo_completed.json"
 
       - name: Update status comment

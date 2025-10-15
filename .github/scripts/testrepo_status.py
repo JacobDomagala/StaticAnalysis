@@ -32,7 +32,6 @@ def parse_args() -> argparse.Namespace:
     collect.add_argument("--triggered-at", required=True)
     collect.add_argument("--main-sha", required=True)
     collect.add_argument("--test-static-sha", required=True)
-    collect.add_argument("--test-without-cmake-sha", required=True)
     collect.add_argument("--fork-sha", required=True)
     collect.add_argument("--timeout-seconds", type=int, default=300)
     collect.add_argument("--output", required=True)
@@ -153,26 +152,12 @@ def build_scenarios(args: argparse.Namespace) -> list[dict[str, Any]]:
         },
         {
             "key": "test-static-analysis",
-            "label": "PR branch test-static-analysis",
+            "label": "PR branch test-static-analysis (CMake and non-CMake)",
             "event": "pull_request_target",
             "head_repo": TEST_REPO,
             "head_owner": "JacobDomagala",
             "head_branch": "test-static-analysis",
             "head_sha": args.test_static_sha,
-            "comment_titles": list(COMMENT_TITLES),
-            "query_url": (
-                "https://github.com/JacobDomagala/TestRepo/actions/workflows/test.yml"
-                "?query=event%3Apull_request_target"
-            ),
-        },
-        {
-            "key": "test-sa-without-cmake",
-            "label": "PR branch test-sa-without-cmake",
-            "event": "pull_request_target",
-            "head_repo": TEST_REPO,
-            "head_owner": "JacobDomagala",
-            "head_branch": "test-sa-without-cmake",
-            "head_sha": args.test_without_cmake_sha,
             "comment_titles": list(COMMENT_TITLES),
             "query_url": (
                 "https://github.com/JacobDomagala/TestRepo/actions/workflows/test.yml"
