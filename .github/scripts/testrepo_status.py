@@ -138,7 +138,7 @@ def build_scenarios(args: argparse.Namespace) -> list[dict[str, Any]]:
     return [
         {
             "key": "push-main",
-            "label": "Push on TestRepo/main",
+            "label": "Push",
             "event": "push",
             "head_repo": TEST_REPO,
             "head_owner": "JacobDomagala",
@@ -152,7 +152,7 @@ def build_scenarios(args: argparse.Namespace) -> list[dict[str, Any]]:
         },
         {
             "key": "test-static-analysis",
-            "label": "PR branch test-static-analysis (CMake and non-CMake)",
+            "label": "Pull Request",
             "event": "pull_request_target",
             "head_repo": TEST_REPO,
             "head_owner": "JacobDomagala",
@@ -166,7 +166,7 @@ def build_scenarios(args: argparse.Namespace) -> list[dict[str, Any]]:
         },
         {
             "key": "test-branch-fork",
-            "label": "Fork PR branch JacobDTest/test-branch-fork",
+            "label": "Fork Pull Request",
             "event": "pull_request_target",
             "head_repo": "JacobDTest/TestRepo",
             "head_owner": "JacobDTest",
@@ -365,6 +365,10 @@ def human_status(scenario: dict[str, Any]) -> str:
     return conclusion.replace("_", " ")
 
 
+def display_status(scenario: dict[str, Any]) -> str:
+    return human_status(scenario).capitalize()
+
+
 def overall_status(status_data: dict[str, Any]) -> str:
     scenarios = status_data["scenarios"]
     if any(scenario.get("run") is None for scenario in scenarios):
@@ -384,6 +388,53 @@ def overall_status(status_data: dict[str, Any]) -> str:
     return "Completed successfully"
 
 
+def render_link_cell(label: str, url: str) -> str:
+    return f"[{label}]({url})"
+
+
+def render_comment_links(comment_links: list[dict[str, Any]]) -> str:
+    if not comment_links:
+        return "n/a"
+    return "<br>".join(
+        render_link_cell(link["title"], link["url"]) for link in comment_links
+    )
+
+
+def render_run_link(scenario: dict[str, Any]) -> str:
+    run = scenario.get("run")
+    if run is not None:
+        return render_link_cell("Workflow run", run["html_url"])
+
+    if scenario.get("query_url"):
+        return render_link_cell("Workflow query", scenario["query_url"])
+
+    return "n/a"
+
+
+def render_pr_link(scenario: dict[str, Any]) -> str:
+    pr = scenario.get("pr")
+    if pr is not None:
+        return render_link_cell("PR", pr["html_url"])
+
+    if scenario["event"] == "pull_request_target":
+        return "not found"
+
+    return "n/a"
+
+
+def render_comment_cell(scenario: dict[str, Any]) -> str:
+    comment_links = scenario.get("comment_links", [])
+    if comment_links:
+        return render_comment_links(comment_links)
+
+    pr = scenario.get("pr")
+    run = scenario.get("run")
+    if pr is not None and run is not None and run["status"] == "completed":
+        return "not found"
+
+    return "n/a"
+
+
 def render_comment_body(
     status_data: dict[str, Any], run_url: str, run_label: str
 ) -> str:
@@ -392,48 +443,40 @@ def render_comment_body(
         "",
         COMMENT_MARKER,
         "",
-        f"Source workflow: [{run_label}]({run_url})",
-        f"Overall status: {overall_status(status_data)}",
-        f"Last updated: {format_now()}",
+        "| Summary | Value |",
+        "| --- | --- |",
+        f"| Overall status | `{overall_status(status_data)}` |",
+        f"| Source workflow | [{run_label}]({run_url}) |",
+        f"| Last updated | `{format_now()}` |",
         "",
     ]
 
     if status_data.get("timed_out"):
         lines.extend(
             [
-                "Timed out while waiting for at least one downstream workflow state change.",
+                "> Timed out while waiting for at least one downstream workflow state change.",
                 "",
             ]
         )
 
+    lines.extend(
+        [
+            "### Scenarios",
+            "",
+            "| Scenario | Status | Workflow | PR | Result comments |",
+            "| --- | --- | --- | --- | --- |",
+        ]
+    )
+
     for scenario in status_data["scenarios"]:
-        parts = []
-        run = scenario.get("run")
-        pr = scenario.get("pr")
-        comment_links = scenario.get("comment_links", [])
-
-        if run is not None:
-            parts.append(f"[workflow run]({run['html_url']})")
-        elif scenario.get("query_url"):
-            parts.append(f"[workflow query]({scenario['query_url']})")
-
-        if pr is not None:
-            parts.append(f"[PR]({pr['html_url']})")
-        elif scenario["event"] == "pull_request_target":
-            parts.append("PR: not found")
-
-        if comment_links:
-            rendered_links = ", ".join(
-                f"[{link['title']}]({link['url']})" for link in comment_links
-            )
-            parts.append(f"Comments: {rendered_links}")
-        elif pr is not None and run is not None and run["status"] == "completed":
-            parts.append("Comments: not found")
-
-        line = f"- `{scenario['label']}`: {human_status(scenario)}."
-        if parts:
-            line += " " + " ".join(parts)
-        lines.append(line)
+        lines.append(
+            "| "
+            f"{scenario['label']} | "
+            f"`{display_status(scenario)}` | "
+            f"{render_run_link(scenario)} | "
+            f"{render_pr_link(scenario)} | "
+            f"{render_comment_cell(scenario)} |"
+        )
 
     return "\n".join(lines)
 
