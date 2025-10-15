@@ -196,17 +196,45 @@ def build_scenarios(args: argparse.Namespace) -> list[dict[str, Any]]:
     ]
 
 
+def candidate_head_branches(run: dict[str, Any]) -> set[str]:
+    branches = {run.get("head_branch")}
+    for pull_request in run.get("pull_requests") or []:
+        head = pull_request.get("head") or {}
+        branches.add(head.get("ref"))
+    return {branch for branch in branches if branch}
+
+
+def candidate_head_repos(run: dict[str, Any]) -> set[str]:
+    repos = {((run.get("head_repository") or {}).get("full_name"))}
+    for pull_request in run.get("pull_requests") or []:
+        head = pull_request.get("head") or {}
+        repo = head.get("repo") or {}
+        repos.add(repo.get("full_name"))
+    return {repo for repo in repos if repo}
+
+
+def candidate_head_shas(run: dict[str, Any]) -> set[str]:
+    shas = {run.get("head_sha"), ((run.get("head_commit") or {}).get("id"))}
+    for pull_request in run.get("pull_requests") or []:
+        head = pull_request.get("head") or {}
+        shas.add(head.get("sha"))
+    return {sha for sha in shas if sha}
+
+
 def matching_run(run: dict[str, Any], scenario: dict[str, Any], triggered_at: datetime) -> bool:
     if run.get("event") != scenario["event"]:
         return False
-    if run.get("head_branch") != scenario["head_branch"]:
-        return False
-    if run.get("head_sha") != scenario["head_sha"]:
+
+    branches = candidate_head_branches(run)
+    if branches and scenario["head_branch"] not in branches:
         return False
 
-    head_repository = run.get("head_repository") or {}
-    head_repo_name = head_repository.get("full_name")
-    if scenario["head_repo"] and head_repo_name and head_repo_name != scenario["head_repo"]:
+    shas = candidate_head_shas(run)
+    if scenario["event"] == "push" and shas and scenario["head_sha"] not in shas:
+        return False
+
+    repos = candidate_head_repos(run)
+    if scenario["head_repo"] and repos and scenario["head_repo"] not in repos:
         return False
 
     created_at = parse_github_datetime(run["created_at"])
