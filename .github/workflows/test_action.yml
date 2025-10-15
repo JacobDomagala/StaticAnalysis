@@ -6,6 +6,14 @@ on:
       - master
   pull_request:
 
+concurrency:
+  group: test-action-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   check:
     name: Test Action
@@ -18,9 +26,14 @@ jobs:
         with:
           python-version: 3.13.0
 
-      - name: Test the action
+      - name: Trigger TestRepo workflows
+        id: trigger
         shell: bash
+        env:
+          TEST_TOKEN: ${{ secrets.TOKEN }}
         run: |
+          set -euo pipefail
+
           git config --global user.email ${{ secrets.USER_EMAIL }}
           git config --global user.name ${{ secrets.USER_NAME }}
 
@@ -31,21 +44,32 @@ jobs:
             BRANCH_NAME=${GITHUB_HEAD_REF}
           fi
 
+          echo "sa_ref=${BRANCH_NAME}" >> "$GITHUB_OUTPUT"
+          echo "triggered_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> "$GITHUB_OUTPUT"
+
           git clone "https://${{secrets.TOKEN}}@github.com/JacobDomagala/TestRepo.git"
           cd TestRepo
           python ./switch_sa_branch.py -br=$BRANCH_NAME
-          git diff --quiet && git diff --staged --quiet || git commit -am"Update branch name: ($BRANCH_NAME)"
+          if git diff --quiet && git diff --staged --quiet
+          then
+            git commit --allow-empty -m "Trigger StaticAnalysis test ($BRANCH_NAME)"
+          else
+            git commit -am"Update branch name: ($BRANCH_NAME)"
+          fi
           git push
+          echo "main_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
           # test PR (CMake)
           git checkout test-static-analysis
           git commit -as --amend --no-edit
           git push -f
+          echo "test_static_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
           # test PR (non CMake)
           git checkout test-sa-without-cmake
           git commit -as --amend --no-edit
           git push -f
+          echo "test_without_cmake_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
           # test pull_request_target
           git clone "https://${{secrets.TOKEN}}@github.com/JacobDTest/TestRepo.git"
@@ -53,24 +77,70 @@ jobs:
           git checkout test-branch-fork
           git commit -as --amend --no-edit
           git push -f
+          echo "fork_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Output results (PR)
+      - name: Locate downstream workflows
+        env:
+          TEST_TOKEN: ${{ secrets.TOKEN }}
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/testrepo_status.py collect \
+            --token "$TEST_TOKEN" \
+            --phase started \
+            --triggered-at "${{ steps.trigger.outputs.triggered_at }}" \
+            --main-sha "${{ steps.trigger.outputs.main_sha }}" \
+            --test-static-sha "${{ steps.trigger.outputs.test_static_sha }}" \
+            --test-without-cmake-sha "${{ steps.trigger.outputs.test_without_cmake_sha }}" \
+            --fork-sha "${{ steps.trigger.outputs.fork_sha }}" \
+            --timeout-seconds 300 \
+            --output "$RUNNER_TEMP/testrepo_started.json"
+
+      - name: Create status comment
         if: github.event_name == 'pull_request'
-        uses: mshick/add-pr-comment@v2
-        with:
-          message: |
-            ## Test Action results
-            ***
-            ### [Result for push](https://github.com/JacobDomagala/TestRepo/actions/workflows/test.yml?query=branch%3Amain)
+        env:
+          TEST_TOKEN: ${{ secrets.TOKEN }}
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/testrepo_status.py upsert-comment \
+            --token "$TEST_TOKEN" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --pr-number "${{ github.event.pull_request.number }}" \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --run-label "${{ github.workflow }} #${{ github.run_number }}" \
+            --status-file "$RUNNER_TEMP/testrepo_started.json"
 
-            ***
-            ### [Result for pull_request (CMake)](https://github.com/JacobDomagala/TestRepo/pull/3#issuecomment-1404081176)
+      - name: Wait for downstream workflows
+        env:
+          TEST_TOKEN: ${{ secrets.TOKEN }}
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/testrepo_status.py collect \
+            --token "$TEST_TOKEN" \
+            --phase completed \
+            --triggered-at "${{ steps.trigger.outputs.triggered_at }}" \
+            --main-sha "${{ steps.trigger.outputs.main_sha }}" \
+            --test-static-sha "${{ steps.trigger.outputs.test_static_sha }}" \
+            --test-without-cmake-sha "${{ steps.trigger.outputs.test_without_cmake_sha }}" \
+            --fork-sha "${{ steps.trigger.outputs.fork_sha }}" \
+            --timeout-seconds 1800 \
+            --output "$RUNNER_TEMP/testrepo_completed.json"
 
-            ***
-            ### [Result for pull_request (non CMake)](https://github.com/JacobDomagala/TestRepo/pull/3#issuecomment-1404102205)
+      - name: Update status comment
+        if: always() && github.event_name == 'pull_request'
+        env:
+          TEST_TOKEN: ${{ secrets.TOKEN }}
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/testrepo_status.py upsert-comment \
+            --token "$TEST_TOKEN" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --pr-number "${{ github.event.pull_request.number }}" \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --run-label "${{ github.workflow }} #${{ github.run_number }}" \
+            --status-file "$RUNNER_TEMP/testrepo_completed.json"
 
-            ***
-            ### [Result for pull_request_target (CMake)](https://github.com/JacobDomagala/TestRepo/pull/7#issuecomment-1404081052)
-
-            ***
-            ### [Result for pull_request_target (non CMake)](https://github.com/JacobDomagala/TestRepo/pull/7#issuecomment-1404101648)
+      - name: Verify downstream workflow results
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/testrepo_status.py assert-success \
+            --status-file "$RUNNER_TEMP/testrepo_completed.json"
