@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 
 import argparse
+import difflib
 import json
+import re
 import sys
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError
 from urllib.parse import quote, urlencode
@@ -17,7 +20,6 @@ COMMENT_MARKER = "<!-- testrepo-integration-status -->"
 COMMENT_TITLES = (
     "SA CMake output",
     "SA non-CMake output",
-    "Static analysis result",
 )
 POLL_SECONDS = 15
 
@@ -43,6 +45,12 @@ def parse_args() -> argparse.Namespace:
     comment.add_argument("--run-url", required=True)
     comment.add_argument("--run-label", required=True)
     comment.add_argument("--status-file", required=True)
+
+    verify_comments = subparsers.add_parser("verify-comments")
+    verify_comments.add_argument("--token", required=True)
+    verify_comments.add_argument("--status-file", required=True)
+    verify_comments.add_argument("--fixtures-dir", required=True)
+    verify_comments.add_argument("--diff-output", required=False)
 
     assert_success = subparsers.add_parser("assert-success")
     assert_success.add_argument("--status-file", required=True)
@@ -248,32 +256,49 @@ def extract_run_metadata(run: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def find_comment_links(
-    token: str, pr_number: int, run_metadata: dict[str, Any], titles: list[str]
-) -> list[dict[str, Any]]:
-    comments = list_issue_comments(token, TEST_REPO, pr_number)
-    run_started_at = parse_github_datetime(run_metadata["created_at"])
+def comments_by_title(
+    comments: list[dict[str, Any]], titles: list[str], updated_after: datetime | None = None
+) -> dict[str, list[dict[str, Any]]]:
+    matches: dict[str, list[dict[str, Any]]] = {title: [] for title in titles}
 
-    latest_by_title: dict[str, dict[str, Any]] = {}
     for comment in comments:
         body = comment.get("body") or ""
         updated_at = parse_github_datetime(comment["updated_at"])
-        if updated_at < run_started_at:
+        if updated_after is not None and updated_at < updated_after:
             continue
 
         for title in titles:
-            if title not in body:
-                continue
+            if title in body:
+                matches[title].append(
+                    {
+                        "title": title,
+                        "url": comment["html_url"],
+                        "body": body,
+                        "updated_at": comment["updated_at"],
+                    }
+                )
 
-            previous = latest_by_title.get(title)
-            if previous is None or updated_at > parse_github_datetime(
-                previous["updated_at"]
-            ):
-                latest_by_title[title] = {
-                    "title": title,
-                    "url": comment["html_url"],
-                    "updated_at": comment["updated_at"],
-                }
+    return {title: items for title, items in matches.items() if items}
+
+
+def find_matching_comments(
+    token: str, pr_number: int, run_metadata: dict[str, Any], titles: list[str]
+) -> dict[str, dict[str, Any]]:
+    comments = list_issue_comments(token, TEST_REPO, pr_number)
+    run_started_at = parse_github_datetime(run_metadata["created_at"])
+    recent_comments = comments_by_title(comments, titles, updated_after=run_started_at)
+
+    latest_by_title: dict[str, dict[str, Any]] = {}
+    for title, matches in recent_comments.items():
+        latest_by_title[title] = max(matches, key=lambda comment: comment["updated_at"])
+
+    return latest_by_title
+
+
+def find_comment_links(
+    token: str, pr_number: int, run_metadata: dict[str, Any], titles: list[str]
+) -> list[dict[str, Any]]:
+    latest_by_title = find_matching_comments(token, pr_number, run_metadata, titles)
 
     return [
         {"title": title, "url": latest_by_title[title]["url"]}
@@ -488,6 +513,101 @@ def render_comment_cell(scenario: dict[str, Any]) -> str:
     return "n/a"
 
 
+def slugify_title(title: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+
+
+def fixture_path(fixtures_dir: str, scenario_key: str, title: str) -> Path:
+    return Path(fixtures_dir) / f"{scenario_key}__{slugify_title(title)}.md"
+
+
+def normalize_comment_body(body: str) -> str:
+    normalized = body.replace("\r\n", "\n").replace("\r", "\n")
+    normalized = re.sub(
+        r"(https://github\.com/[^/]+/[^/]+/blob/)[0-9a-f]{40}(/)",
+        r"\1<SHA>\2",
+        normalized,
+    )
+    normalized = "\n".join(line.rstrip() for line in normalized.split("\n")).strip()
+    return normalized + "\n"
+
+
+def verify_comments(args: argparse.Namespace) -> int:
+    with open(args.status_file, "r", encoding="utf-8") as file:
+        status_data = json.load(file)
+
+    fixtures_dir = Path(args.fixtures_dir)
+    failures = []
+    diff_output_lines = []
+
+    for scenario in status_data["scenarios"]:
+        if scenario["event"] != "pull_request_target":
+            continue
+
+        run = scenario.get("run")
+        pr = scenario.get("pr")
+        if run is None or pr is None:
+            failures.append(
+                f"{scenario['label']}: can not verify comments without a completed run and PR"
+            )
+            continue
+
+        pr_comments = list_issue_comments(args.token, TEST_REPO, pr["number"])
+        title_matches = comments_by_title(pr_comments, scenario["comment_titles"])
+
+        for title in scenario["comment_titles"]:
+            fixture = fixture_path(str(fixtures_dir), scenario["key"], title)
+            if title not in title_matches:
+                failures.append(f"{scenario['label']} / {title}: comment was not found")
+                continue
+
+            if not fixture.exists():
+                failures.append(f"{scenario['label']} / {title}: fixture is missing at {fixture}")
+                continue
+
+            matches = title_matches[title]
+            if len(matches) != 1:
+                failures.append(
+                    f"{scenario['label']} / {title}: expected exactly one matching comment, found {len(matches)}"
+                )
+                continue
+
+            actual = normalize_comment_body(matches[0]["body"])
+            expected = normalize_comment_body(fixture.read_text(encoding="utf-8"))
+
+            if actual != expected:
+                failures.append(f"{scenario['label']} / {title}: comment body does not match fixture")
+                diff_output_lines.extend(
+                    [
+                        f"=== {scenario['label']} / {title} ===",
+                        *difflib.unified_diff(
+                            expected.splitlines(),
+                            actual.splitlines(),
+                            fromfile=str(fixture),
+                            tofile=f"actual:{scenario['key']}:{title}",
+                            lineterm="",
+                        ),
+                        "",
+                    ]
+                )
+
+    if args.diff_output:
+        Path(args.diff_output).write_text(
+            "\n".join(diff_output_lines).rstrip() + ("\n" if diff_output_lines else ""),
+            encoding="utf-8",
+        )
+
+    if failures:
+        for failure in failures:
+            print(failure)
+        if diff_output_lines:
+            print("\nSnapshot diffs:\n")
+            print("\n".join(diff_output_lines))
+        return 1
+
+    return 0
+
+
 def render_comment_body(
     status_data: dict[str, Any], run_url: str, run_label: str
 ) -> str:
@@ -584,6 +704,8 @@ def main() -> int:
         return collect_status(args)
     if args.command == "upsert-comment":
         return upsert_comment(args)
+    if args.command == "verify-comments":
+        return verify_comments(args)
     if args.command == "assert-success":
         return assert_success(args)
 

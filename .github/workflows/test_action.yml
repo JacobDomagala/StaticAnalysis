@@ -138,6 +138,33 @@ jobs:
             --run-label "${{ github.workflow }} #${{ github.run_number }}" \
             --status-file "$status_file"
 
+      - name: Verify generated TestRepo comments
+        env:
+          TEST_TOKEN: ${{ secrets.TOKEN }}
+        run: |
+          set -euo pipefail
+
+          diff_file="$RUNNER_TEMP/testrepo_comment_diff.txt"
+          status=0
+
+          python3 .github/scripts/testrepo_status.py verify-comments \
+            --token "$TEST_TOKEN" \
+            --status-file "$RUNNER_TEMP/testrepo_completed.json" \
+            --fixtures-dir ".github/testrepo_comment_fixtures" \
+            --diff-output "$diff_file" || status=$?
+
+          if [ -s "$diff_file" ]; then
+            {
+              echo "### TestRepo Comment Snapshot Diff"
+              echo
+              echo '```diff'
+              cat "$diff_file"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          exit "$status"
+
       - name: Verify downstream workflow results
         run: |
           set -euo pipefail
