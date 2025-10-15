@@ -12,6 +12,7 @@ concurrency:
 
 permissions:
   contents: read
+  issues: write
   pull-requests: write
 
 jobs:
@@ -98,11 +99,11 @@ jobs:
       - name: Create status comment
         if: github.event_name == 'pull_request'
         env:
-          TEST_TOKEN: ${{ secrets.TOKEN }}
+          COMMENT_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           python3 .github/scripts/testrepo_status.py upsert-comment \
-            --token "$TEST_TOKEN" \
+            --token "$COMMENT_TOKEN" \
             --repo "${GITHUB_REPOSITORY}" \
             --pr-number "${{ github.event.pull_request.number }}" \
             --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
@@ -128,16 +129,22 @@ jobs:
       - name: Update status comment
         if: always() && github.event_name == 'pull_request'
         env:
-          TEST_TOKEN: ${{ secrets.TOKEN }}
+          COMMENT_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+
+          status_file="$RUNNER_TEMP/testrepo_completed.json"
+          if [ ! -f "$status_file" ]; then
+            status_file="$RUNNER_TEMP/testrepo_started.json"
+          fi
+
           python3 .github/scripts/testrepo_status.py upsert-comment \
-            --token "$TEST_TOKEN" \
+            --token "$COMMENT_TOKEN" \
             --repo "${GITHUB_REPOSITORY}" \
             --pr-number "${{ github.event.pull_request.number }}" \
             --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
             --run-label "${{ github.workflow }} #${{ github.run_number }}" \
-            --status-file "$RUNNER_TEMP/testrepo_completed.json"
+            --status-file "$status_file"
 
       - name: Verify downstream workflow results
         run: |
