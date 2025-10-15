@@ -365,8 +365,55 @@ def human_status(scenario: dict[str, Any]) -> str:
     return conclusion.replace("_", " ")
 
 
+def scenario_verification_error(scenario: dict[str, Any]) -> str | None:
+    run = scenario.get("run")
+    if run is None:
+        return "workflow run was not detected"
+
+    if run["status"] != "completed":
+        return "workflow run did not complete"
+
+    if scenario["event"] != "pull_request_target":
+        return None
+
+    if scenario.get("pr") is None:
+        return "pull request was not found"
+
+    if not scenario.get("comment_links"):
+        return "result comments were not found"
+
+    return None
+
+
 def display_status(scenario: dict[str, Any]) -> str:
-    return human_status(scenario).capitalize()
+    error = scenario_verification_error(scenario)
+    if error is not None:
+        if scenario.get("run") is None:
+            return "Waiting"
+        if scenario.get("run", {}).get("status") != "completed":
+            return "In progress"
+        return "Needs attention"
+
+    run = scenario.get("run")
+    if run is None:
+        return "Waiting"
+
+    if scenario["event"] == "pull_request_target":
+        return "Comments captured"
+
+    if run.get("conclusion") == "success":
+        return "Completed"
+
+    return "Completed with findings"
+
+
+def verification_failures(status_data: dict[str, Any]) -> list[str]:
+    failures = []
+    for scenario in status_data["scenarios"]:
+        error = scenario_verification_error(scenario)
+        if error is not None:
+            failures.append(f"{scenario['label']}: {error}")
+    return failures
 
 
 def overall_status(status_data: dict[str, Any]) -> str:
@@ -379,12 +426,18 @@ def overall_status(status_data: dict[str, Any]) -> str:
         if scenario.get("run") is not None
     ):
         return "Waiting for downstream workflows to finish"
+
+    failures = verification_failures(status_data)
+    if failures:
+        return "Completed with missing verification artifacts"
+
     if any(
-        (scenario["run"].get("conclusion") != "success")
+        scenario["run"].get("conclusion") != "success"
         for scenario in scenarios
         if scenario.get("run") is not None
     ):
-        return "Completed with failures"
+        return "Completed, findings were reported as expected"
+
     return "Completed successfully"
 
 
@@ -515,19 +568,7 @@ def assert_success(args: argparse.Namespace) -> int:
     with open(args.status_file, "r", encoding="utf-8") as file:
         status_data = json.load(file)
 
-    failures = []
-    for scenario in status_data["scenarios"]:
-        run = scenario.get("run")
-        if run is None:
-            failures.append(f"{scenario['label']}: workflow run was not detected")
-            continue
-        if run["status"] != "completed":
-            failures.append(f"{scenario['label']}: workflow run did not complete")
-            continue
-        if run.get("conclusion") != "success":
-            failures.append(
-                f"{scenario['label']}: workflow concluded with '{run.get('conclusion')}'"
-            )
+    failures = verification_failures(status_data)
 
     if failures:
         for failure in failures:
