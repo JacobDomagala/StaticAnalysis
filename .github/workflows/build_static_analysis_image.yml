@@ -37,6 +37,20 @@ jobs:
           set -euo pipefail
           docker image inspect static-analysis-base:ci >/dev/null
 
+      - name: Print image size
+        run: |
+          set -euo pipefail
+          size_bytes="$(docker image inspect static-analysis-base:ci --format '{{.Size}}')"
+          size_human="$(numfmt --to=iec-i --suffix=B "$size_bytes")"
+
+          echo "static-analysis-base:ci size: ${size_human} (${size_bytes} bytes)"
+
+          {
+            echo "### Docker Image Size"
+            echo
+            echo "- \`static-analysis-base:ci\`: ${size_human} (${size_bytes} bytes)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Smoke test toolchain
         run: |
           set -euo pipefail
@@ -57,5 +71,5 @@ jobs:
             cmake --version | head -n 1
             python --version
             pylint --version | head -n 1
-            python -c "import github; print(github.__version__)"
+            python -c "from github import Github; import importlib.metadata; print(f\"PyGithub {importlib.metadata.version('PyGithub')}\")"
           '
