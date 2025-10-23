@@ -71,5 +71,5 @@ jobs:
             cmake --version | head -n 1
             python --version
             pylint --version | head -n 1
-            python -c "from github import Github; import importlib.metadata; print(f\"PyGithub {importlib.metadata.version('PyGithub')}\")"
+            python -c "from github import Github; import importlib.metadata; print(\"PyGithub \" + importlib.metadata.version(\"PyGithub\"))"
           '
