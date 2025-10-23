@@ -1,0 +1,61 @@
+name: Build Static Analysis Image
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - docker/static_analysis.dockerfile
+      - .github/workflows/build_static_analysis_image.yml
+  pull_request:
+    paths:
+      - docker/static_analysis.dockerfile
+      - .github/workflows/build_static_analysis_image.yml
+  workflow_dispatch:
+
+concurrency:
+  group: build-static-analysis-image-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and Verify Base Image
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: |
+          set -euo pipefail
+          docker build \
+            --file docker/static_analysis.dockerfile \
+            --tag static-analysis-base:ci \
+            .
+
+      - name: Verify image exists
+        run: |
+          set -euo pipefail
+          docker image inspect static-analysis-base:ci >/dev/null
+
+      - name: Smoke test toolchain
+        run: |
+          set -euo pipefail
+          docker run --rm static-analysis-base:ci bash -lc '
+            set -euo pipefail
+
+            clang_tidy_bin="$(compgen -c | grep "^clang-tidy-[0-9]\+$" | head -n 1)"
+            run_clang_tidy_bin="$(compgen -c | grep "^run-clang-tidy-[0-9]\+$" | head -n 1)"
+
+            test -n "$clang_tidy_bin"
+            test -n "$run_clang_tidy_bin"
+
+            cppcheck --version
+            clang --version | head -n 1
+            clang++ --version | head -n 1
+            "$clang_tidy_bin" --version
+            command -v "$run_clang_tidy_bin"
+            cmake --version | head -n 1
+            python --version
+            pylint --version | head -n 1
+            python -c "import github; print(github.__version__)"
+          '
