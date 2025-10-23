@@ -11,6 +11,12 @@ common_ancestor=${common_ancestor:-""}
 
 CLANG_TIDY_ARGS="${INPUT_CLANG_TIDY_ARGS//$'\n'/}"
 CPPCHECK_ARGS="${INPUT_CPPCHECK_ARGS//$'\n'/}"
+RUN_CLANG_TIDY_BIN="${RUN_CLANG_TIDY_BIN:-$(command -v run-clang-tidy || command -v "run-clang-tidy-${CLANG_VERSION:-20}" || compgen -c | grep '^run-clang-tidy-[0-9]\+$' | head -n 1 || true)}"
+
+if [ -z "$RUN_CLANG_TIDY_BIN" ]; then
+    debug_print "Error: run-clang-tidy executable not found in PATH."
+    exit 1
+fi
 
 if [ -n "$INPUT_COMPILE_COMMANDS" ]; then
     debug_print "Using compile_commands.json file ($INPUT_COMPILE_COMMANDS) - use_cmake input is not being used!"
@@ -94,16 +100,16 @@ else
         cat cppcheck_*.txt > cppcheck.txt
 
         # Excludes for clang-tidy are handled in python script
-        debug_print "Running run-clang-tidy-20 $CLANG_TIDY_ARGS -p $compile_commands_dir $files_to_check >>clang_tidy.txt 2>&1"
-        eval run-clang-tidy-20 "$CLANG_TIDY_ARGS" -p "$compile_commands_dir" "$files_to_check" > clang_tidy.txt 2>&1 || true
+        debug_print "Running $RUN_CLANG_TIDY_BIN $CLANG_TIDY_ARGS -p $compile_commands_dir $files_to_check >>clang_tidy.txt 2>&1"
+        eval "$RUN_CLANG_TIDY_BIN" "$CLANG_TIDY_ARGS" -p "$compile_commands_dir" "$files_to_check" > clang_tidy.txt 2>&1 || true
 
     else
         # Without compile_commands.json
         debug_print "Running cppcheck -j $num_proc $files_to_check $CPPCHECK_ARGS --output-file=cppcheck.txt ..."
         eval cppcheck -j "$num_proc" "$files_to_check" "$CPPCHECK_ARGS" --output-file=cppcheck.txt || true
 
-        debug_print "Running run-clang-tidy-20 $CLANG_TIDY_ARGS $files_to_check >>clang_tidy.txt 2>&1"
-        eval run-clang-tidy-20 "$CLANG_TIDY_ARGS" "$files_to_check" > clang_tidy.txt 2>&1 || true
+        debug_print "Running $RUN_CLANG_TIDY_BIN $CLANG_TIDY_ARGS $files_to_check >>clang_tidy.txt 2>&1"
+        eval "$RUN_CLANG_TIDY_BIN" "$CLANG_TIDY_ARGS" "$files_to_check" > clang_tidy.txt 2>&1 || true
     fi
 
     cd /

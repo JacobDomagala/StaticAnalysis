@@ -57,19 +57,37 @@ jobs:
           docker run --rm static-analysis-base:ci bash -lc '
             set -euo pipefail
 
-            clang_tidy_bin="$(compgen -c | grep "^clang-tidy-[0-9]\+$" | head -n 1)"
-            run_clang_tidy_bin="$(compgen -c | grep "^run-clang-tidy-[0-9]\+$" | head -n 1)"
-
-            test -n "$clang_tidy_bin"
-            test -n "$run_clang_tidy_bin"
-
             cppcheck --version
             clang --version | head -n 1
             clang++ --version | head -n 1
-            "$clang_tidy_bin" --version
-            command -v "$run_clang_tidy_bin"
+            clang-tidy --version
+            command -v run-clang-tidy
             cmake --version | head -n 1
             python --version
             pylint --version | head -n 1
             python -c "from github import Github; import importlib.metadata; print(\"PyGithub \" + importlib.metadata.version(\"PyGithub\"))"
+
+            mkdir -p /tmp/smoke
+            cd /tmp/smoke
+
+            cat <<EOF > CMakeLists.txt
+            cmake_minimum_required(VERSION 3.20)
+            project(smoke LANGUAGES CXX)
+            add_executable(smoke main.cpp)
+            EOF
+
+            cat <<EOF > main.cpp
+            #include <iostream>
+
+            int main() {
+                std::cout << "smoke" << std::endl;
+                return 0;
+            }
+            EOF
+
+            cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+            test -f build/compile_commands.json
+            cppcheck --project=build/compile_commands.json --file-filter=main.cpp
+            run-clang-tidy -p build main.cpp >/tmp/clang-tidy-smoke.txt 2>&1 || true
+            test -f /tmp/clang-tidy-smoke.txt
           '

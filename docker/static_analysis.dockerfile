@@ -23,40 +23,74 @@ RUN git clone --branch "${CPPCHECK_VERSION}" --depth 1 https://github.com/danmar
     && strip /opt/cppcheck/bin/cppcheck
 
 
+FROM ubuntu:24.04 AS python-tools-builder
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        python3 \
+        python3-pip \
+    && python3 -m pip install --break-system-packages --no-cache-dir --no-compile \
+        --target /opt/python-tools \
+        PyGithub \
+        pylint \
+    && find /opt/python-tools -type d -name "__pycache__" -prune -exec rm -rf {} + \
+    && find /opt/python-tools -type f -name "*.pyc" -delete \
+    && rm -rf /var/lib/apt/lists/*
+
+
+FROM ubuntu:24.04 AS llvm-repo
+
+ARG CLANG_VERSION=20
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        gnupg \
+        wget \
+    && wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /llvm.gpg \
+    && printf "deb [signed-by=/usr/share/keyrings/llvm.gpg] http://apt.llvm.org/noble/ llvm-toolchain-noble-%s main\n" "${CLANG_VERSION}" > /llvm.list \
+    && rm -rf /var/lib/apt/lists/*
+
+
 FROM ubuntu:24.04 AS base
 
 ARG CLANG_VERSION=20
 ENV DEBIAN_FRONTEND=noninteractive \
+    CLANG_VERSION=${CLANG_VERSION} \
     CC=clang \
     CXX=clang++ \
-    VIRTUAL_ENV=/opt/venv \
-    PATH="/opt/venv/bin:/opt/cppcheck/bin:${PATH}"
+    PATH="/opt/cppcheck/bin:${PATH}" \
+    PYTHONPATH="/opt/python-tools"
+
+COPY --from=python-tools-builder /opt/python-tools /opt/python-tools
+COPY --from=cppcheck-builder /opt/cppcheck /opt/cppcheck
+COPY --from=llvm-repo /llvm.gpg /usr/share/keyrings/llvm.gpg
+COPY --from=llvm-repo /llvm.list /etc/apt/sources.list.d/llvm.list
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        build-essential \
         ca-certificates \
         cmake \
         git \
-        gnupg \
+        make \
         python3 \
-        python3-venv \
-        wget \
-    && wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /usr/share/keyrings/llvm.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/llvm.gpg] http://apt.llvm.org/noble/ llvm-toolchain-noble-${CLANG_VERSION} main" \
-        > /etc/apt/sources.list.d/llvm.list \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
-        clang-${CLANG_VERSION} \
         clang-tidy-${CLANG_VERSION} \
-        clang-tools-${CLANG_VERSION} \
-    && python3 -m venv "${VIRTUAL_ENV}" \
-    && "${VIRTUAL_ENV}/bin/pip" install --no-cache-dir PyGithub pylint \
     && ln -sf "/usr/bin/clang++-${CLANG_VERSION}" /usr/bin/clang++ \
     && ln -sf "/usr/bin/clang-${CLANG_VERSION}" /usr/bin/clang \
+    && ln -sf "/usr/bin/clang-tidy-${CLANG_VERSION}" /usr/bin/clang-tidy \
+    && ln -sf "/usr/bin/run-clang-tidy-${CLANG_VERSION}" /usr/bin/run-clang-tidy \
     && ln -sf /usr/bin/python3 /usr/bin/python \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY --from=cppcheck-builder /opt/cppcheck /opt/cppcheck
+    && printf '%s\n' '#!/bin/sh' 'exec python3 -m pylint "$@"' > /usr/local/bin/pylint \
+    && chmod +x /usr/local/bin/pylint \
+    && rm -rf \
+        /var/lib/apt/lists/* \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/locale/*
 
 WORKDIR /opt
