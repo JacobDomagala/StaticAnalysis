@@ -1,40 +1,62 @@
+FROM ubuntu:24.04 AS cppcheck-builder
+
+ARG CPPCHECK_VERSION=2.16.0
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        cmake \
+        git \
+        ninja-build \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /tmp
+
+RUN git clone --branch "${CPPCHECK_VERSION}" --depth 1 https://github.com/danmar/cppcheck.git \
+    && cmake -S /tmp/cppcheck -B /tmp/cppcheck/build -G Ninja \
+        -DCMAKE_BUILD_TYPE=MinSizeRel \
+        -DCMAKE_INSTALL_PREFIX=/opt/cppcheck \
+    && cmake --build /tmp/cppcheck/build --parallel \
+    && cmake --install /tmp/cppcheck/build \
+    && strip /opt/cppcheck/bin/cppcheck
+
+
 FROM ubuntu:24.04 AS base
 
-# Define versions as environment variables
-ENV CLANG_VERSION=20 \
-    CPPCHECK_VERSION=2.16.0 \
-    CXX=clang++ \
+ARG CLANG_VERSION=20
+ENV DEBIAN_FRONTEND=noninteractive \
     CC=clang \
-    DEBIAN_FRONTEND=noninteractive
+    CXX=clang++ \
+    VIRTUAL_ENV=/opt/venv \
+    PATH="/opt/venv/bin:/opt/cppcheck/bin:${PATH}"
 
-# Copy the llvm.sh installation script
-COPY llvm.sh /llvm.sh
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        cmake \
+        git \
+        gnupg \
+        python3 \
+        python3-venv \
+        wget \
+    && wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /usr/share/keyrings/llvm.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/llvm.gpg] http://apt.llvm.org/noble/ llvm-toolchain-noble-${CLANG_VERSION} main" \
+        > /etc/apt/sources.list.d/llvm.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        clang-${CLANG_VERSION} \
+        clang-tidy-${CLANG_VERSION} \
+        clang-tools-${CLANG_VERSION} \
+    && python3 -m venv "${VIRTUAL_ENV}" \
+    && "${VIRTUAL_ENV}/bin/pip" install --no-cache-dir PyGithub pylint \
+    && ln -sf "/usr/bin/clang++-${CLANG_VERSION}" /usr/bin/clang++ \
+    && ln -sf "/usr/bin/clang-${CLANG_VERSION}" /usr/bin/clang \
+    && ln -sf /usr/bin/python3 /usr/bin/python \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
-RUN apt-get update && apt-get install -y \
-        build-essential python3 python3-pip git wget libssl-dev ninja-build \
-        lsb-release software-properties-common gnupg \
-    # Execute the LLVM install script with the version number
-    && chmod +x /llvm.sh && /llvm.sh $CLANG_VERSION \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    # Install Python packages
-    && pip3 install --break-system-packages PyGithub pylint \
-    # Create symlinks for clang and clang++
-    && ln -s "$(which clang++-$CLANG_VERSION)" /usr/bin/clang++ \
-    && ln -s "$(which clang-$CLANG_VERSION)" /usr/bin/clang \
-    && ln -s /usr/bin/python3 /usr/bin/python
+COPY --from=cppcheck-builder /opt/cppcheck /opt/cppcheck
 
 WORKDIR /opt
-
-# Build CMake from source
-RUN git clone https://github.com/Kitware/CMake.git \
-    && cd CMake \
-    && ./bootstrap && make -j$(nproc) && make install
-
-# Install cppcheck
-RUN git clone https://github.com/danmar/cppcheck.git \
-    && cd cppcheck \
-    && git checkout tags/$CPPCHECK_VERSION \
-    && mkdir build && cd build \
-    && cmake -G Ninja .. && ninja all && ninja install
