@@ -1,0 +1,10 @@
+##[error] Issues found!
+cppcheck results:
+/github/workspace/source.cpp:9: warning: Class 'Example' does not have a copy constructor which is recommended since it has dynamic memory/resource allocation(s). [noCopyConstructor]
+/github/workspace/source.cpp:9: warning: Class 'Example' does not have a operator= which is recommended since it has dynamic memory/resource allocation(s). [noOperatorEq]
+/github/workspace/source.cpp:36: error: Null pointer dereference: ptr [nullPointer]
+/github/workspace/source.cpp:35: note: Assignment 'ptr=nullptr', assigned value is 0
+/github/workspace/source.cpp:36: note: Null pointer dereference
+/github/workspace/source.cpp:35: style: Variable 'ptr' can be declared as pointer to const [constVariablePointer]
+/github/workspace/source.cpp:39: error: Out of bounds access in expression 'vec[10]' because 'vec' is empty. [containerOutOfBounds]
+/github/workspace/source.cpp:41: style: Unused variable: unusedvec [unusedVariable]

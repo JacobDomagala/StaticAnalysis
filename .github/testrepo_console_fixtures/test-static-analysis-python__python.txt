@@ -1,0 +1,8 @@
+##[error] Issues found!
+PyLint results:
+source.py:42: E0001: Parsing failed: 'Missing parentheses in call to 'print'. Did you mean print(...)? (source, line 42)' (syntax-error)
+local.py:31: C0301: Line too long (182/100) (line-too-long)
+local.py:1: C0114: Missing module docstring (missing-module-docstring)
+local.py:1: C0116: Missing function or method docstring (missing-function-docstring)
+local.py:1: W0621: Redefining name 'patch' from outer scope (line 29) (redefined-outer-name)
+local.py:29: C0103: Constant name "patch" doesn't conform to UPPER_CASE naming style (invalid-name)
