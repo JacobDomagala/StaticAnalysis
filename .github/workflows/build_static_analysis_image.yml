@@ -21,6 +21,8 @@ jobs:
   build:
     name: Build and Verify Base Image
     runs-on: ubuntu-24.04
+    env:
+      DOCKERHUB_IMAGE: jdomagala/static_analysis
     steps:
       - uses: actions/checkout@v4
 
@@ -91,3 +93,34 @@ jobs:
             run-clang-tidy -p build main.cpp >/tmp/clang-tidy-smoke.txt 2>&1 || true
             test -f /tmp/clang-tidy-smoke.txt
           '
+
+      - name: Log in to Docker Hub
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: docker/login-action@v3
+        with:
+          username: jdomagala
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push image to Docker Hub
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        env:
+          GIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          short_sha="${GIT_SHA::12}"
+          latest_tag="${DOCKERHUB_IMAGE}:latest"
+          sha_tag="${DOCKERHUB_IMAGE}:sha-${short_sha}"
+
+          docker tag static-analysis-base:ci "$latest_tag"
+          docker tag static-analysis-base:ci "$sha_tag"
+
+          docker push "$latest_tag"
+          docker push "$sha_tag"
+
+          {
+            echo "### Published Docker Tags"
+            echo
+            echo "- \`$latest_tag\`"
+            echo "- \`$sha_tag\`"
+          } >> "$GITHUB_STEP_SUMMARY"
