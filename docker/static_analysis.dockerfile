@@ -1,6 +1,6 @@
 FROM ubuntu:24.04 AS cppcheck-builder
 
-ARG CPPCHECK_VERSION=2.16.0
+ARG CPPCHECK_VERSION=2.20.0
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
@@ -44,7 +44,7 @@ RUN apt-get update \
 
 FROM ubuntu:24.04 AS llvm-repo
 
-ARG CLANG_VERSION=20
+ARG CLANG_VERSION=23
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
@@ -59,7 +59,7 @@ RUN apt-get update \
 
 FROM ubuntu:24.04 AS base
 
-ARG CLANG_VERSION=20
+ARG CLANG_VERSION=23
 ENV DEBIAN_FRONTEND=noninteractive \
     CLANG_VERSION=${CLANG_VERSION} \
     CC=clang \
