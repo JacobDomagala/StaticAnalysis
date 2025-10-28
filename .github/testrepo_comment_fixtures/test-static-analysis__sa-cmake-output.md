@@ -4,7 +4,7 @@
 
 https://github.com/JacobDomagala/TestRepo/blob/<SHA>/source.cpp#L9-L14
 ```diff
-!Line: 9 - warning: Class 'Example' does not have a copy constructor which is recommended since it has dynamic memory/resource allocation(s). [noCopyConstructor]
+!Line: 9 - warning: Class 'Example' does not have a copy constructor which is recommended since it has dynamic memory/resource management. [noCopyConstructor]
 
 ```
  <br>
@@ -13,7 +13,7 @@ https://github.com/JacobDomagala/TestRepo/blob/<SHA>/source.cpp#L9-L14
 
 https://github.com/JacobDomagala/TestRepo/blob/<SHA>/source.cpp#L9-L14
 ```diff
-!Line: 9 - warning: Class 'Example' does not have a operator= which is recommended since it has dynamic memory/resource allocation(s). [noOperatorEq]
+!Line: 9 - warning: Class 'Example' does not have a operator= which is recommended since it has dynamic memory/resource management. [noOperatorEq]
 
 ```
  <br>
@@ -57,7 +57,7 @@ https://github.com/JacobDomagala/TestRepo/blob/<SHA>/source.cpp#L41-L44
  </details>
 
  ***
-<details> <summary> <b> :red_circle: clang-tidy found 21 issues! Click here to see details. </b> </summary> <br>
+<details> <summary> <b> :red_circle: clang-tidy found 24 issues! Click here to see details. </b> </summary> <br>
 
 https://github.com/JacobDomagala/TestRepo/blob/<SHA>/another_source.cpp#L1-L3
 ```diff
@@ -71,6 +71,15 @@ https://github.com/JacobDomagala/TestRepo/blob/<SHA>/another_source.cpp#L1-L3
 https://github.com/JacobDomagala/TestRepo/blob/<SHA>/source.cpp#L2-L7
 ```diff
 !Line: 2 - error: included header string is not used directly [misc-include-cleaner,-warnings-as-errors]
+
+```
+ <br>
+
+
+
+https://github.com/JacobDomagala/TestRepo/blob/<SHA>/source.cpp#L5-L10
+```diff
+!Line: 5 - error: class 'Example' can be moved into an anonymous namespace to enforce internal linkage [misc-use-internal-linkage,-warnings-as-errors]
 
 ```
  <br>
@@ -214,7 +223,25 @@ https://github.com/JacobDomagala/TestRepo/blob/<SHA>/source.cpp#L33-L38
 
 https://github.com/JacobDomagala/TestRepo/blob/<SHA>/source.cpp#L36-L41
 ```diff
+!Line: 35 - error: pointee of variable 'ptr' of type 'int *' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
+
+```
+ <br>
+
+
+
+https://github.com/JacobDomagala/TestRepo/blob/<SHA>/source.cpp#L36-L41
+```diff
 !Line: 36 - error: do not use 'std::endl' with streams; use '\n' instead [performance-avoid-endl,-warnings-as-errors]
+
+```
+ <br>
+
+
+
+https://github.com/JacobDomagala/TestRepo/blob/<SHA>/source.cpp#L39-L44
+```diff
+!Line: 39 - error: possibly unsafe 'operator[]', consider bounds-safe alternatives [cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,-warnings-as-errors]
 
 ```
  <br>
