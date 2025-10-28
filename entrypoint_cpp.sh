@@ -11,7 +11,7 @@ common_ancestor=${common_ancestor:-""}
 
 CLANG_TIDY_ARGS="${INPUT_CLANG_TIDY_ARGS//$'\n'/}"
 CPPCHECK_ARGS="${INPUT_CPPCHECK_ARGS//$'\n'/}"
-RUN_CLANG_TIDY_BIN="${RUN_CLANG_TIDY_BIN:-$(command -v run-clang-tidy || command -v "run-clang-tidy-${CLANG_VERSION:-20}" || compgen -c | grep '^run-clang-tidy-[0-9]\+$' | head -n 1 || true)}"
+RUN_CLANG_TIDY_BIN="${RUN_CLANG_TIDY_BIN:-$(command -v run-clang-tidy || command -v "run-clang-tidy-${CLANG_VERSION:-23}" || compgen -c | grep '^run-clang-tidy-[0-9]\+$' | head -n 1 || true)}"
 
 if [ -z "$RUN_CLANG_TIDY_BIN" ]; then
     debug_print "Error: run-clang-tidy executable not found in PATH."
