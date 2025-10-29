@@ -232,15 +232,6 @@ https://github.com/JacobDomagala/TestRepo/blob/<SHA>/source.cpp#L35-L40
 
 https://github.com/JacobDomagala/TestRepo/blob/<SHA>/source.cpp#L36-L41
 ```diff
-!Line: 35 - error: pointee of variable 'ptr' of type 'int *' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
-
-```
- <br>
-
-
-
-https://github.com/JacobDomagala/TestRepo/blob/<SHA>/source.cpp#L36-L41
-```diff
 !Line: 36 - error: do not use 'std::endl' with streams; use '\n' instead [performance-avoid-endl,-warnings-as-errors]
 
 ```
