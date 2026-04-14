@@ -74,6 +74,8 @@ def get_files_to_check(
             ) and _matches_include_prefixes(file_path, include_prefixes):
                 all_files.append(file_path)
 
+    all_files.sort()
+
     return " ".join(all_files)
 
 
