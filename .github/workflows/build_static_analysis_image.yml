@@ -1,0 +1,217 @@
+name: Build Static Analysis Image
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - Dockerfile
+      - docker/static_analysis.dockerfile
+      - .github/scripts/verify_console_output.py
+      - .github/testrepo_console_fixtures/**
+      - .github/workflows/build_static_analysis_image.yml
+  pull_request:
+    paths:
+      - Dockerfile
+      - docker/static_analysis.dockerfile
+      - .github/scripts/verify_console_output.py
+      - .github/testrepo_console_fixtures/**
+      - .github/workflows/build_static_analysis_image.yml
+  workflow_dispatch:
+
+concurrency:
+  group: build-static-analysis-image-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and Verify Base Image
+    runs-on: ubuntu-24.04
+    env:
+      DOCKERHUB_IMAGE: jdomagala/static_analysis
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: |
+          set -euo pipefail
+          docker build \
+            --file docker/static_analysis.dockerfile \
+            --tag static-analysis-base:ci \
+            .
+
+      - name: Verify image exists
+        run: |
+          set -euo pipefail
+          docker image inspect static-analysis-base:ci >/dev/null
+
+      - name: Print image size
+        run: |
+          set -euo pipefail
+          size_bytes="$(docker image inspect static-analysis-base:ci --format '{{.Size}}')"
+          size_human="$(numfmt --to=iec-i --suffix=B "$size_bytes")"
+
+          echo "static-analysis-base:ci size: ${size_human} (${size_bytes} bytes)"
+
+          {
+            echo "### Docker Image Size"
+            echo
+            echo "- \`static-analysis-base:ci\`: ${size_human} (${size_bytes} bytes)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build action image
+        run: |
+          set -euo pipefail
+          docker build \
+            --build-arg BASE_IMAGE=static-analysis-base:ci \
+            --tag static-analysis-action:ci \
+            .
+
+      - name: Smoke test action on TestRepo
+        run: |
+          set -euo pipefail
+
+          test_repo="$RUNNER_TEMP/TestRepo"
+          fixtures_dir="$GITHUB_WORKSPACE/.github/testrepo_console_fixtures"
+          cppcheck_args="--enable=all --suppress=missingIncludeSystem"
+          cppcheck_args+=" --suppress=functionStatic --suppress=unusedFunction"
+          cppcheck_args+=" --inline-suppr --inconclusive"
+          git clone --depth 1 --branch test-static-analysis https://github.com/JacobDomagala/TestRepo.git "$test_repo"
+          test_sha="$(git -C "$test_repo" rev-parse HEAD)"
+
+          cat > "$test_repo/init_script.sh" <<'EOF'
+          #!/bin/bash
+          set -euo pipefail
+          root_dir="${1}"
+          build_dir="${2}"
+          echo "Hello from the init script! First arg=${root_dir} second arg=${build_dir}"
+          EOF
+
+          common_docker_args=(
+            --volume "$test_repo:/github/workspace"
+            --env GITHUB_WORKSPACE=/github/workspace
+            --env GITHUB_EVENT_NAME=push
+            --env GITHUB_SHA="$test_sha"
+            --env GITHUB_REPOSITORY=JacobDomagala/TestRepo
+            --env GITHUB_REF=refs/heads/test-static-analysis
+            --env GITHUB_REF_NAME=test-static-analysis
+            --env GITHUB_BASE_REF=
+            --env GITHUB_HEAD_REF=
+            --env INPUT_GITHUB_TOKEN=
+            --env INPUT_REPO=JacobDomagala/TestRepo
+            --env INPUT_PR_NUM=
+            --env INPUT_PR_REPO=
+            --env INPUT_PR_HEAD=
+            --env INPUT_FORCE_CONSOLE_PRINT=true
+            --env INPUT_VERBOSE=true
+            --env INPUT_REPORT_PR_CHANGES_ONLY=false
+            --env INPUT_APT_PCKGS=
+            --env INPUT_INIT_SCRIPT=init_script.sh
+            --env INPUT_EXCLUDE_DIR=lib
+          )
+
+          run_entrypoint() {
+            local label="$1"
+            shift
+
+            local log_file="$RUNNER_TEMP/static-analysis-${label}.log"
+            echo "::group::${label}"
+            set +e
+            docker run --rm \
+              --workdir /github/workspace \
+              "${common_docker_args[@]}" \
+              --env INPUT_COMMENT_TITLE="$label" \
+              "$@" \
+              static-analysis-action:ci 2>&1 | tee "$log_file"
+            local status="${PIPESTATUS[0]}"
+            set -e
+            echo "::endgroup::"
+
+            if grep -q "Traceback (most recent call last)" "$log_file"; then
+              echo "${label} crashed with a Python traceback"
+              exit 1
+            fi
+
+            if ! grep -q "##\\[error\\] Issues found!" "$log_file"; then
+              echo "${label} did not reach the expected static-analysis findings output"
+              exit 1
+            fi
+
+            if [ "$status" -ge 128 ]; then
+              echo "${label} exited with unexpected status ${status}"
+              exit "$status"
+            fi
+
+            echo "${label} completed entrypoint smoke test with expected findings (exit ${status})."
+          }
+
+          verify_console_output() {
+            local log_file="$1"
+            local fixture="$2"
+
+            python3 .github/scripts/verify_console_output.py \
+              --log "$log_file" \
+              --fixture "$fixture"
+          }
+
+          run_entrypoint "SA CMake output" \
+            --env INPUT_LANGUAGE=C++ \
+            --env INPUT_USE_CMAKE=true \
+            --env INPUT_CMAKE_ARGS=-DCMAKE_BUILD_TYPE=Debug \
+            --env INPUT_COMPILE_COMMANDS= \
+            --env INPUT_COMPILE_COMMANDS_REPLACE_PREFIX=false \
+            --env INPUT_CLANG_TIDY_ARGS=-extra-arg=-std=c++20 \
+            --env INPUT_CPPCHECK_ARGS="$cppcheck_args"
+
+          test -f "$test_repo/build/compile_commands.json"
+          verify_console_output "$RUNNER_TEMP/static-analysis-SA CMake output.log" \
+            "$fixtures_dir/test-static-analysis__sa-cmake-output.txt"
+
+          run_entrypoint "SA non-CMake output" \
+            --env INPUT_LANGUAGE=C++ \
+            --env INPUT_USE_CMAKE=false \
+            --env INPUT_CMAKE_ARGS=-DCMAKE_BUILD_TYPE=Debug \
+            --env INPUT_COMPILE_COMMANDS= \
+            --env INPUT_COMPILE_COMMANDS_REPLACE_PREFIX=false \
+            --env INPUT_CLANG_TIDY_ARGS=-extra-arg=-std=c++20 \
+            --env INPUT_CPPCHECK_ARGS="$cppcheck_args"
+          verify_console_output "$RUNNER_TEMP/static-analysis-SA non-CMake output.log" \
+            "$fixtures_dir/test-static-analysis__sa-non-cmake-output.txt"
+
+          run_entrypoint "Python" \
+            --env INPUT_LANGUAGE=Python \
+            --env INPUT_PYTHON_DIRS=. \
+            --env INPUT_PYLINT_ARGS=
+          verify_console_output "$RUNNER_TEMP/static-analysis-Python.log" \
+            "$fixtures_dir/test-static-analysis-python__python.txt"
+
+      - name: Log in to Docker Hub
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: docker/login-action@v3
+        with:
+          username: jdomagala
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push image to Docker Hub
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        env:
+          GIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          short_sha="${GIT_SHA::12}"
+          latest_tag="${DOCKERHUB_IMAGE}:latest"
+          sha_tag="${DOCKERHUB_IMAGE}:sha-${short_sha}"
+
+          docker tag static-analysis-base:ci "$latest_tag"
+          docker tag static-analysis-base:ci "$sha_tag"
+
+          docker push "$latest_tag"
+          docker push "$sha_tag"
+
+          {
+            echo "### Published Docker Tags"
+            echo
+            echo "- \`$latest_tag\`"
+            echo "- \`$sha_tag\`"
+          } >> "$GITHUB_STEP_SUMMARY"

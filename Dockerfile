@@ -1,4 +1,5 @@
-FROM jdomagala/static_analysis:latest
+ARG BASE_IMAGE=jdomagala/static_analysis:latest
+FROM ${BASE_IMAGE}
 
 WORKDIR /src
 
