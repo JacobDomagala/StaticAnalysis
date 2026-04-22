@@ -1,7 +1,7 @@
 ##[error] Issues found!
 cppcheck results:
-/github/workspace/source.cpp:9: warning: Class 'Example' does not have a copy constructor which is recommended since it has dynamic memory/resource allocation(s). [noCopyConstructor]
-/github/workspace/source.cpp:9: warning: Class 'Example' does not have a operator= which is recommended since it has dynamic memory/resource allocation(s). [noOperatorEq]
+/github/workspace/source.cpp:9: warning: Class 'Example' does not have a copy constructor which is recommended since it has dynamic memory/resource management. [noCopyConstructor]
+/github/workspace/source.cpp:9: warning: Class 'Example' does not have a operator= which is recommended since it has dynamic memory/resource management. [noOperatorEq]
 /github/workspace/source.cpp:36: error: Null pointer dereference: ptr [nullPointer]
 /github/workspace/source.cpp:35: note: Assignment 'ptr=nullptr', assigned value is 0
 /github/workspace/source.cpp:36: note: Null pointer dereference
@@ -11,6 +11,7 @@ cppcheck results:
 clang-tidy results:
 /github/workspace/another_source.cpp:1: error: function 'do_nothing' can be made static or moved into an anonymous namespace to enforce internal linkage [misc-use-internal-linkage,-warnings-as-errors]
 /github/workspace/source.cpp:2: error: included header string is not used directly [misc-include-cleaner,-warnings-as-errors]
+/github/workspace/source.cpp:5: error: class 'Example' can be moved into an anonymous namespace to enforce internal linkage [misc-use-internal-linkage,-warnings-as-errors]
 /github/workspace/source.cpp:5: error: class 'Example' defines a non-default destructor but does not define a copy constructor, a copy assignment operator, a move constructor or a move assignment operator [cppcoreguidelines-special-member-functions,hicpp-special-member-functions,-warnings-as-errors]
 /github/workspace/source.cpp:9: error: 42 is a magic number; consider replacing it with a named constant [cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers,-warnings-as-errors]
 /github/workspace/source.cpp:11: error: parameter name 'p' is too short, expected at least 3 characters [readability-identifier-length,-warnings-as-errors]
@@ -26,7 +27,9 @@ clang-tidy results:
 /github/workspace/source.cpp:32: error: variable 'y' of type 'int' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
 /github/workspace/source.cpp:32: error: variable name 'y' is too short, expected at least 3 characters [readability-identifier-length,-warnings-as-errors]
 /github/workspace/source.cpp:33: error: do not use 'std::endl' with streams; use '\n' instead [performance-avoid-endl,-warnings-as-errors]
+/github/workspace/source.cpp:35: error: pointee of variable 'ptr' of type 'int *' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
 /github/workspace/source.cpp:36: error: do not use 'std::endl' with streams; use '\n' instead [performance-avoid-endl,-warnings-as-errors]
+/github/workspace/source.cpp:39: error: possibly unsafe 'operator[]', consider bounds-safe alternatives [cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,-warnings-as-errors]
 /github/workspace/source.cpp:39: error: 10 is a magic number; consider replacing it with a named constant [cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers,-warnings-as-errors]
 /github/workspace/source.cpp:39: error: do not use 'std::endl' with streams; use '\n' instead [performance-avoid-endl,-warnings-as-errors]
 /github/workspace/source.cpp:41: error: variable 'unusedvec' of type 'std::vector<int>' can be declared 'const' [misc-const-correctness,-warnings-as-errors]

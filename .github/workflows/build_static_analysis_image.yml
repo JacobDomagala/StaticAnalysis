@@ -48,15 +48,39 @@ jobs:
       - name: Print image size
         run: |
           set -euo pipefail
-          size_bytes="$(docker image inspect static-analysis-base:ci --format '{{.Size}}')"
-          size_human="$(numfmt --to=iec-i --suffix=B "$size_bytes")"
 
-          echo "static-analysis-base:ci size: ${size_human} (${size_bytes} bytes)"
+          human_size() {
+            numfmt --to=iec-i --suffix=B "$1"
+          }
+
+          compressed_size() {
+            local image="$1"
+            docker save "$image" | gzip -c | wc -c | tr -d ' '
+          }
+
+          ci_image="static-analysis-base:ci"
+          latest_image="${DOCKERHUB_IMAGE}:latest"
+
+          docker pull "$latest_image" >/dev/null
+
+          latest_uncompressed_bytes="$(docker image inspect "$latest_image" --format '{{.Size}}')"
+          latest_compressed_bytes="$(compressed_size "$latest_image")"
+          ci_uncompressed_bytes="$(docker image inspect "$ci_image" --format '{{.Size}}')"
+          ci_compressed_bytes="$(compressed_size "$ci_image")"
+
+          printf "%-34s %14s %14s\n" "Image" "Uncompressed" "Compressed"
+          printf "%-34s %14s %14s\n" "$latest_image" "$(human_size "$latest_uncompressed_bytes")" "$(human_size "$latest_compressed_bytes")"
+          printf "%-34s %14s %14s\n" "$ci_image" "$(human_size "$ci_uncompressed_bytes")" "$(human_size "$ci_compressed_bytes")"
 
           {
             echo "### Docker Image Size"
             echo
-            echo "- \`static-analysis-base:ci\`: ${size_human} (${size_bytes} bytes)"
+            echo "| Image | Uncompressed | Compressed |"
+            echo "| --- | ---: | ---: |"
+            echo "| Current Docker Hub latest | $(human_size "$latest_uncompressed_bytes") | $(human_size "$latest_compressed_bytes") |"
+            echo "| New build | $(human_size "$ci_uncompressed_bytes") | $(human_size "$ci_compressed_bytes") |"
+            echo
+            echo "<sub>Compressed size is measured with \`docker save | gzip\`.</sub>"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build action image

@@ -1,6 +1,6 @@
 FROM ubuntu:24.04 AS cppcheck-builder
 
-ARG CPPCHECK_VERSION=2.16.0
+ARG CPPCHECK_VERSION=2.20.0
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
@@ -44,7 +44,7 @@ RUN apt-get update \
 
 FROM ubuntu:24.04 AS llvm-repo
 
-ARG CLANG_VERSION=20
+ARG CLANG_VERSION=23
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
@@ -53,13 +53,13 @@ RUN apt-get update \
         gnupg \
         wget \
     && wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /llvm.gpg \
-    && printf "deb [signed-by=/usr/share/keyrings/llvm.gpg] http://apt.llvm.org/noble/ llvm-toolchain-noble-%s main\n" "${CLANG_VERSION}" > /llvm.list \
+    && printf "deb [signed-by=/usr/share/keyrings/llvm.gpg] http://apt.llvm.org/noble/ llvm-toolchain-noble main\n" > /llvm.list \
     && rm -rf /var/lib/apt/lists/*
 
 
 FROM ubuntu:24.04 AS base
 
-ARG CLANG_VERSION=20
+ARG CLANG_VERSION=23
 ENV DEBIAN_FRONTEND=noninteractive \
     CLANG_VERSION=${CLANG_VERSION} \
     CC=clang \
@@ -69,12 +69,16 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 COPY --from=python-tools-builder /opt/python-tools /opt/python-tools
 COPY --from=cppcheck-builder /opt/cppcheck /opt/cppcheck
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=llvm-repo /llvm.gpg /usr/share/keyrings/llvm.gpg
 COPY --from=llvm-repo /llvm.list /etc/apt/sources.list.d/llvm.list
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        ca-certificates \
         cmake \
         git \
         make \

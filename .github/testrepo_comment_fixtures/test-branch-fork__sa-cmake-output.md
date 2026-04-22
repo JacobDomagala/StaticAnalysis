@@ -54,7 +54,7 @@ int evaluate(int x) {
 ```
 
 ```diff
-!Line: 9 - warning: Class 'DataProcessor' does not have a copy constructor which is recommended since it has dynamic memory/resource allocation(s). [noCopyConstructor]
+!Line: 9 - warning: Class 'DataProcessor' does not have a copy constructor which is recommended since it has dynamic memory/resource management. [noCopyConstructor]
 
 ```
  <br>
@@ -74,7 +74,7 @@ int evaluate(int x) {
 ```
 
 ```diff
-!Line: 9 - warning: Class 'DataProcessor' does not have a operator= which is recommended since it has dynamic memory/resource allocation(s). [noOperatorEq]
+!Line: 9 - warning: Class 'DataProcessor' does not have a operator= which is recommended since it has dynamic memory/resource management. [noOperatorEq]
 
 ```
  <br>
