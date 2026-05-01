@@ -221,7 +221,7 @@ https://github.com/JacobDomagala/TestRepo/blob/<SHA>/source.cpp#L33-L38
 
 
 
-https://github.com/JacobDomagala/TestRepo/blob/<SHA>/source.cpp#L36-L41
+https://github.com/JacobDomagala/TestRepo/blob/<SHA>/source.cpp#L35-L40
 ```diff
 !Line: 35 - error: pointee of variable 'ptr' of type 'int *' can be declared 'const' [misc-const-correctness,-warnings-as-errors]
 
